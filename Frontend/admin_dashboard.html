@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+  <link href="assets/css/shared.css" rel="stylesheet">
+  <style>
+    body { font-family:'Poppins',sans-serif;background:#f4f6f8;margin:0;padding:24px;color:#111 }
+    header { display:flex;justify-content:space-between;align-items:center;margin-bottom:20px }
+    .card { background:#fff;padding:16px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    .grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px }
+    label{display:block;margin-top:8px;font-size:13px}
+    input,select{width:100%;padding:8px;margin-top:6px;border:1px solid #ddd;border-radius:4px}
+    button{margin-top:12px;padding:10px 12px;border-radius:6px;border:none;background:#1845ad;color:#fff;cursor:pointer}
+    .logout{background:#d9534f}
+
+    /* ---- ADD: prevent global glass-form rules from styling dashboard card forms ---- */
+    .card form {
+      /* remove glass/card look applied by shared.css */
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+
+    /* make inputs visible on white card */
+    .card form input,
+    .card form select,
+    .card form textarea {
+      background: #fff !important;
+      color: #111 !important;
+      border: 1px solid #e6e6e6 !important;
+      box-shadow: none !important;
+      height: 44px;
+    }
+
+    /* button styles inside card */
+    .card form button {
+      width: 100%;
+      display: inline-block;
+      padding: 10px 14px;
+      margin-top: 12px;
+      background: #1845ad;
+      color: #fff;
+      border-radius: 6px;
+      box-shadow: none;
+      border: none;
+    }
+
+    /* make labels visible on white card */
+    .card form label {
+      color: #111 !important;
+      font-weight: 600;
+      margin-top: 12px;
+      display: block;
+    }
+
+    /* ensure placeholder text is subtle but readable */
+    .card form input::placeholder,
+    .card form textarea::placeholder {
+      color: #9aa0a6 !important;
+      opacity: 1;
+    }
+
+    /* ensure help text / small text inside card is dark */
+    .card form .help,
+    .card form small {
+      color: #666 !important;
+    }
+
+    .card h3 { margin-top: 0; }
+    /* ------------------------------------------------------------ */
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Admin Dashboard — RentProx</h2>
+    <div>
+      <button id="gotoListings" class="card" style="margin-right:8px">Property Listings</button>
+      <button id="logout" class="logout">Logout</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h3>Create Owner / Tenant</h3>
+      <form id="createUserForm">
+        <label for="name">Name</label>
+        <input id="name" required>
+
+        <label for="email">Email</label>
+        <input id="email" type="email" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password" required>
+
+        <label for="role">Role</label>
+        <select id="role">
+          <option value="owner">Owner</option>
+          <option value="tenant">Tenant</option>
+        </select>
+
+        <button type="submit">Create User</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h3>Recent Requests / Contracts</h3>
+      <div id="requestsList">Loading...</div>
+    </section>
+  </main>
+
+</body>
+</html>
