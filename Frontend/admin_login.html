@@ -4,15 +4,15 @@
   <meta charset="utf-8" />
   <title>Admin Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
-  <link href="assets/css/shared.css" rel="stylesheet">
+  <link href="../assets/css/shared.css" rel="stylesheet">
 </head>
 <body>
   <div class="background">
     <div class="shape"></div>
     <div class="shape"></div>
   </div>
-
-  <form id="adminLoginForm">
+<hr> <br><br><br>
+  <form id="adminLoginForm" class="glass-form"> <!-- add class -->
     <h3>Admin Panel Login</h3>
 
     <label for="adminEmail">Email</label>
@@ -24,6 +24,31 @@
     <button type="submit">Sign In</button>
   </form>
 
-  
+  <script>
+    document.getElementById('adminLoginForm').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value;
+
+      try {
+        const res = await fetch('http://localhost:3000/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          // login successful — redirect to admin dashboard
+          window.location.href = 'admin_dashboard.html';
+        } else {
+          alert(data.message || 'Login failed');
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        alert('Unable to contact server');
+      }
+    });
+  </script>
 </body>
 </html>
