@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -22,12 +23,21 @@ db.connect(err => {
   }
 });
 
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, '..', 'Frontend')));
+
+// Ensure root serves the admin login page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'Frontend', 'admin_login.html'));
+});
+
 // Login route using MD5(password) in query
 app.post('/login', (req, res) => {
+    
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password required' });
 
-  const query = 'SELECT * FROM employee WHERE email = ? AND password = MD5(?)';
+  const query = 'SELECT * FROM users WHERE email = ? AND password_hash = MD5(?)';
   db.query(query, [email, password], (err, results) => {
     if (err) {
       console.error('Login query error:', err);
