@@ -99,11 +99,18 @@ app.get('/api/admins', authenticate, (req, res) => {
 
 // Protected API to create a new admin
 app.post('/api/admins', authenticate, (req, res) => {
-  const { name, email, password, is_active } = req.body;
+  let { name, email, password, is_active } = req.body;
+  name = (name || '').trim();
+  email = (email || '').trim().toLowerCase();
+  password = password || '';
+
   if (!name || !email || !password) return res.status(400).json({ success: false, message: 'name,email,password required' });
 
-  const q = `INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, MD5(?), 'admin', ?)`;
-  db.query(q, [name, email, password, is_active ? 1 : 0], (err, result) => {
+  // Normalize is_active: input may come as '0' or '1' strings from the client
+  is_active = Number(is_active) === 1 ? 1 : 0;
+
+  const q = `INSERT INTO users (name, email, password_hash, role, is_active, created_at) VALUES (?, ?, MD5(?), 'admin', ?, NOW())`;
+  db.query(q, [name, email, password, is_active], (err, result) => {
     if (err) {
       console.error('Create admin error:', err);
       if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ success: false, message: 'Email already exists' });
