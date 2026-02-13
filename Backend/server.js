@@ -26,6 +26,9 @@ db.connect(err => {
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '..', 'Frontend')));
 
+// Serve top-level assets (images, css) that live at project root /assets
+app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
+
 // Ensure root serves the admin login page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'Frontend', 'admin_login.html'));
@@ -35,6 +38,7 @@ app.get('/', (req, res) => {
 app.post('/login', (req, res) => {
     
   const { email, password } = req.body;
+  console.log('Login attempt:', { email });
   if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password required' });
 
   const query = 'SELECT * FROM users WHERE email = ? AND password_hash = MD5(?)';
@@ -43,6 +47,8 @@ app.post('/login', (req, res) => {
       console.error('Login query error:', err);
       return res.status(500).json({ success: false, message: 'Server error' });
     }
+
+    console.log('Login query results length:', results && results.length);
 
     if (results && results.length > 0) {
       // login success — return a simple token placeholder or success flag
