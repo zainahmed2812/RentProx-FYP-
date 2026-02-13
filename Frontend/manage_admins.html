@@ -193,7 +193,6 @@ body {
 
         <div class="form-actions">
           <button class="primary-btn" id="createAdminBtn">Create Admin</button>
-          <button class="secondary-btn" id="cancelBtn">Cancel</button>
         </div>
 
       </div>
@@ -207,88 +206,118 @@ body {
 </div>
 
 <script>
-(async function(){
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = 'admin_login.html';
-      return;
+// Accept token from URL and store in localStorage (so navigation via query works)
+(function(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlToken = urlParams.get('token');
+  if (urlToken) {
+    localStorage.setItem('token', urlToken);
+    // remove token from URL without reloading
+    const newUrl = window.location.origin + window.location.pathname;
+    history.replaceState({}, '', newUrl);
+  }
+
+  // Intercept clicks to protected HTML pages so token is sent via query param
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    const protectedPaths = ['admin_dashboard.html', 'manage_admins.html'];
+    if (href && protectedPaths.includes(href)) {
+      e.preventDefault();
+      const token = localStorage.getItem('token');
+      if (!token) return window.location.href = 'admin_login.html';
+      const sep = href.includes('?') ? '&' : '?';
+      window.location.href = href + sep + 'token=' + encodeURIComponent(token);
     }
+  });
 
-    const res = await fetch('/api/admins', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
+  // get token from storage (after possibly copying from URL)
+  const token = localStorage.getItem('token');
+  if (!token) { window.location.href = 'admin_login.html'; return; }
 
-    if (res.status === 401) {
-      // token invalid or expired
-      localStorage.removeItem('token');
-      window.location.href = 'admin_login.html';
-      return;
-    }
+  // API base (ensure requests go to backend)
+  const API_BASE = 'http://localhost:3000';
 
-    if (!res.ok) {
-      document.getElementById('adminsList').innerText = 'Failed to load admins';
-      return;
-    }
-
-    const data = await res.json();
-    if (!data.success) {
-      document.getElementById('adminsList').innerText = data.message || 'No admins';
-      return;
-    }
-
-    const list = data.admins;
-    if (!list || list.length === 0) {
-      document.getElementById('adminsList').innerText = 'No admins found.';
-      return;
-    }
-
-    const container = document.getElementById('adminsList');
-    container.innerHTML = '';
-    const table = document.createElement('table');
-    table.style.width = '100%';
-    table.style.borderCollapse = 'collapse';
-    const thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th style="text-align:left; padding:8px;">ID</th><th style="text-align:left; padding:8px;">Name</th><th style="text-align:left; padding:8px;">Email</th><th style="text-align:left; padding:8px;">Active</th></tr>';
-    table.appendChild(thead);
-    const tbody = document.createElement('tbody');
-    list.forEach(a => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td style="padding:8px; border-top:1px solid #eee">${a.id}</td><td style="padding:8px; border-top:1px solid #eee">${a.name || ''}</td><td style="padding:8px; border-top:1px solid #eee">${a.email}</td><td style="padding:8px; border-top:1px solid #eee">${a.is_active ? 'Yes' : 'No'}</td>`;
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    container.appendChild(table);
-
-    // Wire Create Admin button (simple POST)
-    document.getElementById('createAdminBtn').addEventListener('click', async function(){
+  // Wire Create Admin button immediately so it works even if admin list is empty
+  const createBtn = document.getElementById('createAdminBtn');
+  if (createBtn) {
+    createBtn.addEventListener('click', async function(){
       const name = document.getElementById('adminName').value.trim();
       const email = document.getElementById('adminEmail').value.trim();
       const password = document.getElementById('adminPassword').value;
       const is_active = document.getElementById('adminStatus').value;
       if (!name || !email || !password) return alert('Fill all fields');
 
-      const resp = await fetch('/api/admins', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ name, email, password, is_active })
-      });
+      createBtn.disabled = true;
+      createBtn.textContent = 'Creating...';
+      try {
+        const url = API_BASE + '/api/admins';
+        console.log('Creating admin ->', { url, token, name, email, is_active });
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ name, email, password, is_active })
+        });
 
-      if (resp.status === 401) { localStorage.removeItem('token'); window.location.href='admin_login.html'; return; }
-      const jr = await resp.json();
-      if (!jr.success) return alert(jr.message || 'Create failed');
-      alert('Admin created');
-      window.location.reload();
+        // If server returned non-JSON (like HTML error page), show it
+        const ct = resp.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) {
+          const text = await resp.text();
+          console.error('Non-JSON response from server', resp.status, text);
+          if (resp.status === 401) { localStorage.removeItem('token'); window.location.href='admin_login.html'; return; }
+          alert('Server error: ' + (text || resp.status));
+          return;
+        }
+
+        if (resp.status === 401) { localStorage.removeItem('token'); window.location.href='admin_login.html'; return; }
+        const jr = await resp.json();
+        if (!jr.success) return alert(jr.message || 'Create failed');
+        alert('Admin created');
+        window.location.reload();
+      } catch (err) {
+        console.error('Create admin error', err);
+        alert('Network or server error creating admin - see console');
+      } finally {
+        createBtn.disabled = false;
+        createBtn.textContent = 'Create Admin';
+      }
     });
-
-    document.getElementById('cancelBtn').addEventListener('click', function(){
-      window.location.href = 'admin_dashboard.html';
-    });
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById('adminsList').innerText = 'Error loading admins';
   }
+
+  // Fetch and render admins list (separate from wiring create button)
+  (async function loadAdmins(){
+    try {
+      const res = await fetch(API_BASE + '/api/admins', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (res.status === 401) { localStorage.removeItem('token'); window.location.href = 'admin_login.html'; return; }
+      if (!res.ok) { document.getElementById('adminsList').innerText = 'Failed to load admins'; return; }
+      const data = await res.json();
+      if (!data.success) { document.getElementById('adminsList').innerText = data.message || 'No admins'; return; }
+      const list = data.admins || [];
+      const container = document.getElementById('adminsList');
+      container.innerHTML = '';
+      if (list.length === 0) { container.innerText = 'No admins found.'; return; }
+
+      const table = document.createElement('table');
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      const thead = document.createElement('thead');
+      thead.innerHTML = '<tr><th style="text-align:left; padding:8px;">ID</th><th style="text-align:left; padding:8px;">Name</th><th style="text-align:left; padding:8px;">Email</th><th style="text-align:left; padding:8px;">Active</th></tr>';
+      table.appendChild(thead);
+      const tbody = document.createElement('tbody');
+      list.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td style="padding:8px; border-top:1px solid #eee">${a.id}</td><td style="padding:8px; border-top:1px solid #eee">${a.name || ''}</td><td style="padding:8px; border-top:1px solid #eee">${a.email}</td><td style="padding:8px; border-top:1px solid #eee">${a.is_active ? 'Yes' : 'No'}</td>`;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      container.appendChild(table);
+    } catch (err) {
+      console.error(err);
+      document.getElementById('adminsList').innerText = 'Error loading admins';
+    }
+  })();
+
 })();
 </script>
 
