@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken'); require('dotenv').config(); const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
@@ -6,6 +7,26 @@ const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Authentication middleware using JWT
+function authenticate(req, res, next) {
+  const authHeader = req.headers.authorization || req.query.token || req.headers['x-access-token'];
+  if (!authHeader) return res.status(401).send('Unauthorized');
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
+    next();
+  } catch (err) {
+    console.error('Token verify error:', err && err.message);
+    return res.status(401).send('Invalid token');
+  }
+}
+
+// Protected admin page route (will run before static middleware below)
+app.get('/admin_dashboard.html', authenticate, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'Frontend', 'admin_dashboard.html'));
+});
 
 const db = mysql.createConnection({
   host: 'localhost',
@@ -51,8 +72,13 @@ app.post('/login', (req, res) => {
     console.log('Login query results length:', results && results.length);
 
     if (results && results.length > 0) {
-      // login success — return a simple token placeholder or success flag
-      return res.status(200).json({ success: true, token: '123456', message: 'Login successful' });
+      const user = results[0];
+      const token = jwt.sign(
+        { id: user.id, email: user.email, role: user.role },
+        JWT_SECRET,
+        { expiresIn: '2h' }
+      );
+      return res.status(200).json({ success: true, token, message: 'Login successful' });
     }
 
     return res.status(401).json({ success: false, message: 'Invalid credentials' });
