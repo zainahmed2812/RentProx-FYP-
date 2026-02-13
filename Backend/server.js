@@ -85,6 +85,34 @@ app.post('/login', (req, res) => {
   });
 });
 
+// Protected API to list admins
+app.get('/api/admins', authenticate, (req, res) => {
+  const q = `SELECT id, name, email, role, is_active, created_at FROM users WHERE role = 'admin'`;
+  db.query(q, (err, results) => {
+    if (err) {
+      console.error('Admins query error:', err);
+      return res.status(500).json({ success: false, message: 'Server error' });
+    }
+    return res.json({ success: true, admins: results });
+  });
+});
+
+// Protected API to create a new admin
+app.post('/api/admins', authenticate, (req, res) => {
+  const { name, email, password, is_active } = req.body;
+  if (!name || !email || !password) return res.status(400).json({ success: false, message: 'name,email,password required' });
+
+  const q = `INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, MD5(?), 'admin', ?)`;
+  db.query(q, [name, email, password, is_active ? 1 : 0], (err, result) => {
+    if (err) {
+      console.error('Create admin error:', err);
+      if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ success: false, message: 'Email already exists' });
+      return res.status(500).json({ success: false, message: 'Server error' });
+    }
+    return res.json({ success: true, id: result.insertId });
+  });
+});
+
 
 
 const PORT = process.env.PORT || 3000;
