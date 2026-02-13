@@ -135,7 +135,7 @@ body {
     <h2>RentProx</h2>
     <ul>
       <li><a href="#" class="active">Dashboard</a></li>
-      <li><a href="#">Manage Admins</a></li>
+      <li><a href="#" id="manageAdminsLink">Manage Admins</a></li>
       <li><a href="#">Manage Users</a></li>
       <li><a href="#">Requests</a></li>
       <li><a href="#">Listings</a></li>
@@ -215,10 +215,21 @@ body {
           window.location.href = 'admin_login.html';
         });
       }
+
+      // Manage Admins navigation
+      const manageAdmins = document.getElementById('manageAdminsLink');
+      if (manageAdmins) {
+        manageAdmins.addEventListener('click', function(e){
+          e.preventDefault();
+          window.location.href = 'manage_admin.html';
+        });
+      }
+
     } catch (err) {
       console.error('Auth handling error', err);
     }
   })();
+
 </script>
 
 </body>
