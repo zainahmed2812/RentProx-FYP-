@@ -39,8 +39,11 @@
 
         const data = await res.json();
         if (res.ok && data.success) {
-          // login successful — redirect to admin dashboard
-          window.location.href = 'admin_dashboard.html';
+          // login successful — redirect to admin dashboard with token in query string
+          const token = data.token;
+          // store token locally as well
+          try { localStorage.setItem('token', token); } catch (e) { /* ignore */ }
+          window.location.href = 'admin_dashboard.html?token=' + encodeURIComponent(token);
         } else {
           alert(data.message || 'Login failed');
         }
