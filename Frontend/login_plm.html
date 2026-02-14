@@ -128,5 +128,43 @@ body{
   </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const loginBtn = document.querySelector('.login-btn');
+  loginBtn.addEventListener('click', async function(e) {
+    e.preventDefault();
+    const email = document.querySelector('input[placeholder="Email"]').value.trim();
+    const password = document.querySelector('input[placeholder="Password"]').value;
+    if (!email || !password) {
+      alert('Please enter both email and password.');
+      return;
+    }
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Signing In...';
+    try {
+      const resp = await fetch('http://localhost:3000/api/public_users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await resp.json();
+      if (data.success && data.token) {
+        // Save token and redirect (customize destination as needed)
+        localStorage.setItem('token', data.token);
+        alert('Login successful!');
+        window.location.href = 'index.html'; // or dashboard page
+      } else {
+        alert(data.message || 'Login failed.');
+      }
+    } catch (err) {
+      alert('Network or server error.');
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'SIGN IN';
+    }
+  });
+});
+</script>
+
 </body>
 </html>

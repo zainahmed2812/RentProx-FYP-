@@ -136,8 +136,11 @@ app.delete('/api/admins/:id', authenticate, (req, res) => {
   });
 });
 
+
 const listingsRouter = require('./listings');
 app.use('/api/listings', listingsRouter);
+// Mount public user routes at /api/public_users
+app.use('/api/public_users', listingsRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
