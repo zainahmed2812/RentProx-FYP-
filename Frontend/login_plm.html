@@ -14,22 +14,25 @@
   font-family:'Poppins',sans-serif;
 }
 
+
 body{
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+  min-height:100vh;
   background: linear-gradient(135deg,#6C63FF,#8E7CFF);
+  margin:0;
+  padding:0;
 }
 
 .auth-container{
   width:850px;
-  height:480px;
+  min-height:480px;
   background:#fff;
   border-radius:20px;
   display:flex;
   box-shadow:0 20px 40px rgba(0,0,0,0.15);
   overflow:hidden;
+  margin: 60px auto 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .left{
@@ -44,25 +47,7 @@ body{
   margin-bottom:10px;
 }
 
-.role-toggle{
-  display:flex;
-  gap:10px;
-  margin:20px 0;
-}
 
-.role-toggle button{
-  flex:1;
-  padding:8px;
-  border:none;
-  border-radius:20px;
-  cursor:pointer;
-  background:#f1f1f1;
-}
-
-.role-toggle button.active{
-  background:#6C63FF;
-  color:#fff;
-}
 
 .input-group{
   margin-bottom:15px;
@@ -117,40 +102,30 @@ body{
 
 <body>
 
+<nav style="width:100vw; position:fixed; top:0; left:0; background: linear-gradient(90deg,#6C63FF,#8E7CFF); padding: 18px 0 18px 40px; z-index:10; box-shadow:0 2px 12px rgba(0,0,0,0.07);">
+  <span style="color: #fff; font-size: 1.7rem; font-weight: 600; letter-spacing: 1px;">RentProx</span>
+</nav>
 <div class="auth-container">
-
   <div class="left">
     <h2>Hello!</h2>
     <p>Sign in to RentProx</p>
-
-    <div class="role-toggle">
-      <button class="active">Tenant</button>
-      <button>Owner</button>
-      <button>Admin</button>
-    </div>
-
     <div class="input-group">
       <input type="email" placeholder="Email">
     </div>
-
     <div class="input-group">
       <input type="password" placeholder="Password">
     </div>
-
     <button class="login-btn">SIGN IN</button>
-
     <div class="signup-link">
       Don't have an account? <a href="signup.html">Create</a>
     </div>
   </div>
-
   <div class="right">
     <div>
       <h1>Welcome Back!</h1>
       <p>Manage properties. Discover rentals. Simplify housing with RentProx.</p>
     </div>
   </div>
-
 </div>
 
 </body>
