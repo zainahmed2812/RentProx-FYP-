@@ -111,13 +111,13 @@ body{
       <input type="email" placeholder="Email">
     </div>
     <div class="input-group">
-      <input type="tel" placeholder="Phone Number">
-    </div>
-    <div class="input-group">
       <input type="password" placeholder="Password">
     </div>
     <div class="input-group">
       <input type="password" placeholder="Confirm Password">
+    </div>
+     <div class="input-group">
+      <input type="tel" placeholder="Phone Number">
     </div>
     <button class="signup-btn">SIGN UP</button>
     <div class="login-link">
@@ -131,6 +131,50 @@ body{
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const signupBtn = document.querySelector('.signup-btn');
+  signupBtn.addEventListener('click', async function(e) {
+    e.preventDefault();
+    const name = document.querySelector('input[placeholder="Full Name"]').value.trim();
+    const email = document.querySelector('input[placeholder="Email"]').value.trim();
+    const phone = document.querySelector('input[placeholder="Phone Number"]').value.trim();
+    const password = document.querySelector('input[placeholder="Password"]').value;
+    const confirmPassword = document.querySelector('input[placeholder="Confirm Password"]').value;
+
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      alert('Please fill all fields.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert('Passwords do not match.');
+      return;
+    }
+    signupBtn.disabled = true;
+    signupBtn.textContent = 'Signing Up...';
+    try {
+      const resp = await fetch('http://localhost:3000/api/public_users/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, password })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        alert('Signup successful! Please login.');
+        window.location.href = 'login.html';
+      } else {
+        alert(data.message || 'Signup failed.');
+      }
+    } catch (err) {
+      alert('Network or server error.');
+    } finally {
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'SIGN UP';
+    }
+  });
+});
+</script>
 
 </body>
 </html>
