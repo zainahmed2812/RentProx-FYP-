@@ -121,7 +121,7 @@ body{
     </div>
     <button class="signup-btn">SIGN UP</button>
     <div class="login-link">
-      Already have an account? <a href="login.html">Login</a>
+      Already have an account? <a href="login_plm.html">Login</a>
     </div>
   </div>
   <div class="right">
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const data = await resp.json();
       if (data.success) {
         alert('Signup successful! Please login.');
-        window.location.href = 'login.html';
+        window.location.href = 'login_plm.html';
       } else {
         alert(data.message || 'Signup failed.');
       }
