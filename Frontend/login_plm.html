@@ -1,152 +1,157 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Login - RentProx</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <style>
-      :root{
-        --bg:#f4f7fb;
-        --card:#ffffff;
-        --accent:#0d6efd; /* blue */
-        --accent-2:#7c3aed; /* purple */
-        --muted:#6c757d;
-      }
-      html,body{height:100%;}
-      body { background: linear-gradient(180deg,var(--bg),#eef4ff 60%); font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; color:#222; }
-      .site-header { background: linear-gradient(90deg,var(--card),#fbfdff); border-bottom: 1px solid rgba(13,110,253,0.06); }
-      .brand { font-weight:700; color:var(--accent); text-decoration:none; letter-spacing:0.2px; }
-      .page-card { max-width:540px; margin: 36px auto; }
-      footer.site-footer { background:#fff; border-top:1px solid #eef2ff; padding:18px 0; margin-top:32px; }
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentProx - Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-      /* Card styling */
-      .card.shadow-sm{ border:0; border-radius:12px; overflow:hidden; box-shadow: 0 8px 24px rgba(17,24,39,0.06); }
-      .card-body{ padding:28px; }
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
 
-      /* Accent button */
-      .btn-primary{ background:linear-gradient(90deg,var(--accent),var(--accent-2)); border:0; box-shadow:none; }
-      .btn-primary:hover{ filter:brightness(.95); }
+body{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background: linear-gradient(135deg,#6C63FF,#8E7CFF);
+}
 
-      /* Inputs */
-      .form-control:focus{ box-shadow: 0 0 0 0.15rem rgba(13,110,253,0.12); border-color: var(--accent); }
-      label.form-label{ font-weight:600; color:var(--muted); }
+.auth-container{
+  width:850px;
+  height:480px;
+  background:#fff;
+  border-radius:20px;
+  display:flex;
+  box-shadow:0 20px 40px rgba(0,0,0,0.15);
+  overflow:hidden;
+}
 
-      /* compact layout */
-      .page-quiet{ max-width:420px; margin: 28px auto; }
+.left{
+  flex:1;
+  padding:50px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
 
-      /* small helpers */
-      .muted{ color:var(--muted); }
+.left h2{
+  margin-bottom:10px;
+}
 
-      @media (min-width:1200px){ .page-card{ margin-top:64px; } }
-    </style>
-  </head>
-  <body class="bg-light">
+.role-toggle{
+  display:flex;
+  gap:10px;
+  margin:20px 0;
+}
 
-    <!-- Header -->
-    <header class="site-header py-3">
-      <div class="container d-flex align-items-center justify-content-between">
-        <a class="brand h4 mb-0" href="/">RentProx</a>
-        <nav>
-          <a class="btn btn-link" href="login_plm.html">Login</a>
-          <a class="btn btn-outline-primary ms-2" href="property-listing">Browse listings</a>
-        </nav>
-      </div>
-    </header>
+.role-toggle button{
+  flex:1;
+  padding:8px;
+  border:none;
+  border-radius:20px;
+  cursor:pointer;
+  background:#f1f1f1;
+}
 
-    <main class="container page-card">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h3 class="card-title mb-2">Welcome back</h3>
-          <p class="text-muted mb-4">Sign in to access your dashboard and manage properties</p>
-          <form id="login_plm" name="login_plm">
-            <div class="mb-3">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-control" id="email" name="email" required />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Password</label>
-              <input type="password" class="form-control" id="password" name="password" required />
-            </div>
-            <div class="d-grid gap-2">
-              <button class="btn btn-primary w-100" type="submit">Login</button>
-              <a class="btn btn-outline-secondary" href="property-listing">Browse listings without account</a>
-            </div>
-          </form>
-          <div class="mt-3 text-center">
-            <small class="muted">Don't have an account? <a href="signup_plm.html">Sign up</a></small>
-          </div>
+.role-toggle button.active{
+  background:#6C63FF;
+  color:#fff;
+}
 
-        </div>
-      </div>
-    </main>
+.input-group{
+  margin-bottom:15px;
+}
 
-    <!-- Footer -->
-    <footer class="site-footer">
-      <div class="container d-flex justify-content-between align-items-center">
-        <div>
-          <strong>RentProx</strong> &copy; 2026
-        </div>
-        <div>
-          <a class="me-3 text-muted" href="#">About</a>
-          <a class="me-3 text-muted" href="#">Contact</a>
-          <a class="text-muted" href="#">Privacy</a>
-        </div>
-      </div>
-    </footer>
+.input-group input{
+  width:100%;
+  padding:12px;
+  border-radius:25px;
+  border:1px solid #ddd;
+  outline:none;
+}
 
-    <script>
-      (function(){
-        const clearAndProtect = (formId) => {
-          const f = document.getElementById(formId);
-          if(!f) return;
-          // add invisible dummy fields to consume autofill
-          if(!f.querySelector('[name="fakeusernameremembered"]')){
-            const userDummy = document.createElement('input');
-            userDummy.type = 'text'; userDummy.name = 'fakeusernameremembered'; userDummy.autocomplete = 'username'; userDummy.style.display = 'none';
-            const passDummy = document.createElement('input');
-            passDummy.type = 'password'; passDummy.name = 'fakepasswordremembered'; passDummy.autocomplete = 'current-password'; passDummy.style.display = 'none';
-            f.insertBefore(userDummy, f.firstChild);
-            f.insertBefore(passDummy, f.firstChild);
-          }
+.login-btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:25px;
+  background:linear-gradient(90deg,#6C63FF,#8E7CFF);
+  color:white;
+  font-weight:500;
+  cursor:pointer;
+  margin-top:10px;
+}
 
-          // disable autocomplete and clear values
-          f.setAttribute('autocomplete', 'off');
-          const inputs = Array.from(f.querySelectorAll('input'));
-          inputs.forEach(i => {
-            i.setAttribute('autocomplete', 'off');
-            i.setAttribute('autocorrect', 'off');
-            i.setAttribute('autocapitalize', 'off');
-            i.setAttribute('spellcheck', 'false');
-            try { i.value = ''; } catch (e) {}
-            // temporary readonly trick to prevent autofill
-            i.readOnly = true;
-            i.addEventListener('focus', () => { i.readOnly = false; });
-          });
+.signup-link{
+  margin-top:15px;
+  font-size:14px;
+}
 
-          try { f.reset(); } catch (e) {}
-          window.addEventListener('pageshow', (ev) => { if (ev.persisted) { try { f.reset(); } catch (e) {} } });
-          setTimeout(() => { inputs.forEach(i => i.readOnly = false); }, 50);
-        };
+.signup-link a{
+  color:#6C63FF;
+  text-decoration:none;
+}
 
-        document.addEventListener('DOMContentLoaded', () => clearAndProtect('login_plm'));
+.right{
+  flex:1;
+  background:linear-gradient(135deg,#6C63FF,#8E7CFF);
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:40px;
+}
 
-        // Reattach login submit handler
-        document.addEventListener('DOMContentLoaded', () => {
-          const form = document.getElementById('login_plm');
-          if(!form) return;
-          form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const users = JSON.parse(localStorage.getItem('rp_users') || '[]');
-            const user = users.find(u => u.email === email && u.password === password);
-            if (!user) { alert('Invalid credentials'); return; }
-            sessionStorage.setItem('rp_current_user', JSON.stringify(user));
-            window.location.href = 'property-listing';
-          });
-        });
-      })();
-    </script>
-  </body>
+.right h1{
+  font-size:28px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="auth-container">
+
+  <div class="left">
+    <h2>Hello!</h2>
+    <p>Sign in to RentProx</p>
+
+    <div class="role-toggle">
+      <button class="active">Tenant</button>
+      <button>Owner</button>
+      <button>Admin</button>
+    </div>
+
+    <div class="input-group">
+      <input type="email" placeholder="Email">
+    </div>
+
+    <div class="input-group">
+      <input type="password" placeholder="Password">
+    </div>
+
+    <button class="login-btn">SIGN IN</button>
+
+    <div class="signup-link">
+      Don't have an account? <a href="signup.html">Create</a>
+    </div>
+  </div>
+
+  <div class="right">
+    <div>
+      <h1>Welcome Back!</h1>
+      <p>Manage properties. Discover rentals. Simplify housing with RentProx.</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
 </html>
