@@ -175,7 +175,7 @@ body {
   <div class="main">
     <div class="topbar">
       <h1>Manage Admins</h1>
-      <div class="profile">Admin</div>
+      <div class="profile" id="profileName">Admin</div>
     </div>
 
     <div class="content-box">
@@ -253,6 +253,25 @@ body {
   // API base (ensure requests go to backend)
   const API_BASE = 'http://localhost:3000';
 
+  // Set profile name in top right
+  fetch(API_BASE + '/api/admins', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data && data.success && Array.isArray(data.admins)) {
+      let profileName = 'Admin';
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userId = payload.id;
+        const found = data.admins.find(a => a.id === userId);
+        if (found && found.name) profileName = found.name;
+        else if (payload.email) profileName = payload.email;
+      } catch (e) {}
+      document.getElementById('profileName').textContent = profileName;
+    }
+  });
+
   // Wire Create Admin button immediately so it works even if admin list is empty
   const createBtn = document.getElementById('createAdminBtn');
   if (createBtn) {
@@ -316,7 +335,7 @@ body {
       table.style.width = '100%';
       table.style.borderCollapse = 'collapse';
       const thead = document.createElement('thead');
-  thead.innerHTML = '<tr><th style="text-align:left; padding:8px;">ID</th><th style="text-align:left; padding:8px;">Name</th><th style="text-align:left; padding:8px;">Email</th><th style="text-align:left; padding:8px;">Actions</th></tr>';
+      thead.innerHTML = '<tr><th style="text-align:left; padding:8px;">ID</th><th style="text-align:left; padding:8px;">Name</th><th style="text-align:left; padding:8px;">Email</th><th style="text-align:left; padding:8px;">Actions</th></tr>';
       table.appendChild(thead);
       const tbody = document.createElement('tbody');
       list.forEach(a => {
@@ -327,8 +346,6 @@ body {
       });
       table.appendChild(tbody);
       container.appendChild(table);
-
-
 
       container.addEventListener('click', async function(e){
         const btn = e.target.closest('.admin-delete-btn');

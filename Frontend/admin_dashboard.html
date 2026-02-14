@@ -149,14 +149,14 @@ body {
     <!-- Topbar -->
     <div class="topbar">
       <h1>Admin Dashboard</h1>
-      <div class="profile">Admin</div>
+  <div class="profile" id="profileName">Admin</div>
     </div>
 
     <!-- Stats Cards -->
     <div class="stats">
       <div class="card">
         <h3>Total Admins</h3>
-        <h2>5</h2>
+        <h2 id="adminCount">...</h2>
       </div>
 
       <div class="card">
@@ -205,13 +205,38 @@ body {
         return;
       }
 
+      // Fetch admin count and profile name
+      fetch('http://localhost:3000/api/admins', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.admins)) {
+          document.getElementById('adminCount').textContent = data.admins.length;
+          // Try to get current admin's name from token (JWT) or fallback to email
+          let profileName = 'Admin';
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const userId = payload.id;
+            const found = data.admins.find(a => a.id === userId);
+            if (found && found.name) profileName = found.name;
+            else if (payload.email) profileName = payload.email;
+          } catch (e) {}
+          document.getElementById('profileName').textContent = profileName;
+        } else {
+          document.getElementById('adminCount').textContent = '?';
+        }
+      })
+      .catch(() => {
+        document.getElementById('adminCount').textContent = '?';
+      });
+
       // Logout button
       const logout = document.getElementById('logoutBtn');
       if (logout) {
         logout.addEventListener('click', function(e){
           e.preventDefault();
           localStorage.removeItem('token');
-          // optional: notify server about logout
           window.location.href = 'admin_login.html';
         });
       }
