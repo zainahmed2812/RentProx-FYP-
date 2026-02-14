@@ -136,5 +136,8 @@ app.delete('/api/admins/:id', authenticate, (req, res) => {
   });
 });
 
+const listingsRouter = require('./listings');
+app.use('/api/listings', listingsRouter);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
