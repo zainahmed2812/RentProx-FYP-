@@ -130,6 +130,26 @@ body {
   box-shadow: 0 0 0 2px rgba(108,99,255,0.15);
 }
 
+/* Admin list controls */
+.admin-active-select {
+  min-width: 110px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #111;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+.admin-delete-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+  cursor: pointer;
+}
+
+.admin-delete-btn:disabled { opacity: 0.6; cursor: default; }
+
 /* Actions */
 .form-actions {
   margin-top: 25px;
@@ -181,13 +201,7 @@ body {
             <input type="password" id="adminPassword" placeholder="Enter password">
           </div>
 
-          <div class="form-group">
-            <label>Status</label>
-            <select id="adminStatus">
-              <option value="1">Active</option>
-              <option value="0">Inactive</option>
-            </select>
-          </div>
+
 
         </div>
 
@@ -246,18 +260,18 @@ body {
       const name = document.getElementById('adminName').value.trim();
       const email = document.getElementById('adminEmail').value.trim();
       const password = document.getElementById('adminPassword').value;
-      const is_active = document.getElementById('adminStatus').value;
+
       if (!name || !email || !password) return alert('Fill all fields');
 
       createBtn.disabled = true;
       createBtn.textContent = 'Creating...';
       try {
         const url = API_BASE + '/api/admins';
-        console.log('Creating admin ->', { url, token, name, email, is_active });
+        console.log('Creating admin ->', { url, token, name, email });
         const resp = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ name, email, password, is_active })
+          body: JSON.stringify({ name, email, password })
         });
 
         // If server returned non-JSON (like HTML error page), show it
@@ -302,16 +316,48 @@ body {
       table.style.width = '100%';
       table.style.borderCollapse = 'collapse';
       const thead = document.createElement('thead');
-      thead.innerHTML = '<tr><th style="text-align:left; padding:8px;">ID</th><th style="text-align:left; padding:8px;">Name</th><th style="text-align:left; padding:8px;">Email</th><th style="text-align:left; padding:8px;">Active</th></tr>';
+  thead.innerHTML = '<tr><th style="text-align:left; padding:8px;">ID</th><th style="text-align:left; padding:8px;">Name</th><th style="text-align:left; padding:8px;">Email</th><th style="text-align:left; padding:8px;">Actions</th></tr>';
       table.appendChild(thead);
       const tbody = document.createElement('tbody');
       list.forEach(a => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td style="padding:8px; border-top:1px solid #eee">${a.id}</td><td style="padding:8px; border-top:1px solid #eee">${a.name || ''}</td><td style="padding:8px; border-top:1px solid #eee">${a.email}</td><td style="padding:8px; border-top:1px solid #eee">${a.is_active ? 'Yes' : 'No'}</td>`;
+        const deleteBtn = `<button class="secondary-btn admin-delete-btn" data-id="${a.id}" style="margin-left:8px;">Delete</button>`;
+        tr.innerHTML = `<td style="padding:8px; border-top:1px solid #eee">${a.id}</td><td style="padding:8px; border-top:1px solid #eee">${a.name || ''}</td><td style="padding:8px; border-top:1px solid #eee">${a.email}</td><td style="padding:8px; border-top:1px solid #eee">${deleteBtn}</td>`;
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
       container.appendChild(table);
+
+
+
+      container.addEventListener('click', async function(e){
+        const btn = e.target.closest('.admin-delete-btn');
+        if (!btn) return;
+        const id = btn.dataset.id;
+        if (!confirm('Delete this admin?')) return;
+        btn.disabled = true;
+        try {
+          const r = await fetch(API_BASE + '/api/admins/' + encodeURIComponent(id), {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (!r.ok) {
+            const txt = await r.text();
+            console.error('Delete admin failed', r.status, txt);
+            alert('Failed to delete admin');
+            btn.disabled = false;
+            return;
+          }
+          // remove the row from UI
+          const row = btn.closest('tr');
+          if (row) row.remove();
+        } catch (err) {
+          console.error('Delete admin error', err);
+          alert('Network error deleting admin');
+          btn.disabled = false;
+        }
+      });
+
     } catch (err) {
       console.error(err);
       document.getElementById('adminsList').innerText = 'Error loading admins';
