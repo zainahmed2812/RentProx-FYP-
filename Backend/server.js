@@ -8,6 +8,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Debug middleware for API requests
+app.use('/api', (req, res, next) => {
+  console.log('API Request:', req.method, req.originalUrl, 'Authorization:', !!req.headers.authorization, 'Query.token:', !!req.query.token);
+  next();
+});
+
 // Authentication middleware using JWT
 function authenticate(req, res, next) {
   const authHeader = req.headers.authorization || req.query.token || req.headers['x-access-token'];
@@ -57,37 +63,33 @@ app.get('/', (req, res) => {
 
 // Login route using MD5(password) in query
 app.post('/login', (req, res) => {
-    
   const { email, password } = req.body;
   console.log('Login attempt:', { email });
   if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password required' });
 
+  // Verify email and password only
   const query = 'SELECT * FROM users WHERE email = ? AND password_hash = MD5(?)';
   db.query(query, [email, password], (err, results) => {
     if (err) {
       console.error('Login query error:', err);
       return res.status(500).json({ success: false, message: 'Server error' });
     }
-
-    console.log('Login query results length:', results && results.length);
-
     if (results && results.length > 0) {
-      const user = results[0];
+      const u = results[0];
       const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
+        { id: u.id, email: u.email, role: u.role },
         JWT_SECRET,
         { expiresIn: '2h' }
       );
       return res.status(200).json({ success: true, token, message: 'Login successful' });
     }
-
     return res.status(401).json({ success: false, message: 'Invalid credentials' });
   });
 });
 
 // Protected API to list admins
 app.get('/api/admins', authenticate, (req, res) => {
-  const q = `SELECT id, name, email, role, is_active, created_at FROM users WHERE role = 'admin'`;
+  const q = `SELECT id, name, email, role, created_at FROM users WHERE role = 'admin'`;
   db.query(q, (err, results) => {
     if (err) {
       console.error('Admins query error:', err);
@@ -99,18 +101,15 @@ app.get('/api/admins', authenticate, (req, res) => {
 
 // Protected API to create a new admin
 app.post('/api/admins', authenticate, (req, res) => {
-  let { name, email, password, is_active } = req.body;
+  let { name, email, password } = req.body;
   name = (name || '').trim();
   email = (email || '').trim().toLowerCase();
   password = password || '';
 
   if (!name || !email || !password) return res.status(400).json({ success: false, message: 'name,email,password required' });
 
-  // Normalize is_active: input may come as '0' or '1' strings from the client
-  is_active = Number(is_active) === 1 ? 1 : 0;
-
-  const q = `INSERT INTO users (name, email, password_hash, role, is_active, created_at) VALUES (?, ?, MD5(?), 'admin', ?, NOW())`;
-  db.query(q, [name, email, password, is_active], (err, result) => {
+  const q = `INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, MD5(?), 'admin', NOW())`;
+  db.query(q, [name, email, password], (err, result) => {
     if (err) {
       console.error('Create admin error:', err);
       if (err.code === 'ER_DUP_ENTRY') return res.status(400).json({ success: false, message: 'Email already exists' });
@@ -121,6 +120,21 @@ app.post('/api/admins', authenticate, (req, res) => {
 });
 
 
+
+// Delete admin - protected
+app.delete('/api/admins/:id', authenticate, (req, res) => {
+  const id = Number(req.params.id) || 0;
+  if (!id) return res.status(400).json({ success: false, message: 'Invalid id' });
+  const q = 'DELETE FROM users WHERE id = ? AND role = "admin"';
+  db.query(q, [id], (err, result) => {
+    if (err) {
+      console.error('Delete admin error:', err);
+      return res.status(500).json({ success: false, message: 'Server error' });
+    }
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Admin not found' });
+    return res.json({ success: true });
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
