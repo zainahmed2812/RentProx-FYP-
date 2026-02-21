@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentProx - Sign Up</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+
+
+body{
+  min-height:100vh;
+  background: linear-gradient(135deg,#6C63FF,#8E7CFF);
+  margin:0;
+  padding:0;
+}
+
+.auth-container{
+  width:850px;
+  min-height:520px;
+  background:#fff;
+  border-radius:20px;
+  display:flex;
+  box-shadow:0 20px 40px rgba(0,0,0,0.15);
+  overflow:hidden;
+  margin: 60px auto 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.left{
+  flex:1;
+  padding:50px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+
+
+.input-group{
+  margin-bottom:15px;
+}
+
+.input-group input{
+  width:100%;
+  padding:12px;
+  border-radius:25px;
+  border:1px solid #ddd;
+  outline:none;
+}
+
+.signup-btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:25px;
+  background:linear-gradient(90deg,#6C63FF,#8E7CFF);
+  color:white;
+  font-weight:500;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+.login-link{
+  margin-top:15px;
+  font-size:14px;
+}
+
+.login-link a{
+  color:#6C63FF;
+  text-decoration:none;
+}
+
+.right{
+  flex:1;
+  background:linear-gradient(135deg,#6C63FF,#8E7CFF);
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:40px;
+}
+
+.right h1{
+  font-size:28px;
+}
+</style>
+</head>
+
+<body>
+
+<nav style="width:100vw; position:fixed; top:0; left:0; background: linear-gradient(90deg,#6C63FF,#8E7CFF); padding: 18px 0 18px 40px; z-index:10; box-shadow:0 2px 12px rgba(0,0,0,0.07);">
+  <span style="color: #fff; font-size: 1.7rem; font-weight: 600; letter-spacing: 1px;">RentProx</span>
+</nav>
+<div class="auth-container">
+  <div class="left">
+    <h2>Create Account</h2>
+    <div class="input-group">
+      <input type="text" placeholder="Full Name">
+    </div>
+    <div class="input-group">
+      <input type="email" placeholder="Email">
+    </div>
+    <div class="input-group">
+      <input type="password" placeholder="Password">
+    </div>
+    <div class="input-group">
+      <input type="password" placeholder="Confirm Password">
+    </div>
+     <div class="input-group">
+      <input type="tel" placeholder="Phone Number">
+    </div>
+    <button class="signup-btn">SIGN UP</button>
+    <div class="login-link">
+      Already have an account? <a href="login_plm.html">Login</a>
+    </div>
+  </div>
+  <div class="right">
+    <div>
+      <h1>Join RentProx</h1>
+      <p>List your property or find your next rental easily.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const signupBtn = document.querySelector('.signup-btn');
+  signupBtn.addEventListener('click', async function(e) {
+    e.preventDefault();
+    const name = document.querySelector('input[placeholder="Full Name"]').value.trim();
+    const email = document.querySelector('input[placeholder="Email"]').value.trim();
+    const phone = document.querySelector('input[placeholder="Phone Number"]').value.trim();
+    const password = document.querySelector('input[placeholder="Password"]').value;
+    const confirmPassword = document.querySelector('input[placeholder="Confirm Password"]').value;
+
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      alert('Please fill all fields.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert('Passwords do not match.');
+      return;
+    }
+    signupBtn.disabled = true;
+    signupBtn.textContent = 'Signing Up...';
+    try {
+      const resp = await fetch('http://localhost:3000/api/public_users/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, password })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        alert('Signup successful! Please login.');
+        window.location.href = 'login_plm.html';
+      } else {
+        alert(data.message || 'Signup failed.');
+      }
+    } catch (err) {
+      alert('Network or server error.');
+    } finally {
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'SIGN UP';
+    }
+  });
+});
+</script>
+
+</body>
+</html>

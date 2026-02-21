@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentProx - Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+
+
+body{
+  min-height:100vh;
+  background: linear-gradient(135deg,#6C63FF,#8E7CFF);
+  margin:0;
+  padding:0;
+}
+
+.auth-container{
+  width:850px;
+  min-height:480px;
+  background:#fff;
+  border-radius:20px;
+  display:flex;
+  box-shadow:0 20px 40px rgba(0,0,0,0.15);
+  overflow:hidden;
+  margin: 60px auto 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.left{
+  flex:1;
+  padding:50px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.left h2{
+  margin-bottom:10px;
+}
+
+
+
+.input-group{
+  margin-bottom:15px;
+}
+
+.input-group input{
+  width:100%;
+  padding:12px;
+  border-radius:25px;
+  border:1px solid #ddd;
+  outline:none;
+}
+
+.login-btn{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:25px;
+  background:linear-gradient(90deg,#6C63FF,#8E7CFF);
+  color:white;
+  font-weight:500;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+.signup-link{
+  margin-top:15px;
+  font-size:14px;
+}
+
+.signup-link a{
+  color:#6C63FF;
+  text-decoration:none;
+}
+
+.right{
+  flex:1;
+  background:linear-gradient(135deg,#6C63FF,#8E7CFF);
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:40px;
+}
+
+.right h1{
+  font-size:28px;
+}
+</style>
+</head>
+
+<body>
+
+<nav style="width:100vw; position:fixed; top:0; left:0; background: linear-gradient(90deg,#6C63FF,#8E7CFF); padding: 18px 0 18px 40px; z-index:10; box-shadow:0 2px 12px rgba(0,0,0,0.07);">
+  <span style="color: #fff; font-size: 1.7rem; font-weight: 600; letter-spacing: 1px;">RentProx</span>
+</nav>
+<div class="auth-container">
+  <div class="left">
+    <h2>Hello!</h2>
+    <p>Sign in to RentProx</p>
+    <div class="input-group">
+      <input type="email" placeholder="Email">
+    </div>
+    <div class="input-group">
+      <input type="password" placeholder="Password">
+    </div>
+    <button class="login-btn">SIGN IN</button>
+    <div class="signup-link">
+      Don't have an account? <a href="signup.html">Create</a>
+    </div>
+  </div>
+  <div class="right">
+    <div>
+      <h1>Welcome Back!</h1>
+      <p>Manage properties. Discover rentals. Simplify housing with RentProx.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const loginBtn = document.querySelector('.login-btn');
+  loginBtn.addEventListener('click', async function(e) {
+    e.preventDefault();
+    const email = document.querySelector('input[placeholder="Email"]').value.trim();
+    const password = document.querySelector('input[placeholder="Password"]').value;
+    if (!email || !password) {
+      alert('Please enter both email and password.');
+      return;
+    }
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Signing In...';
+    try {
+      const resp = await fetch('http://localhost:3000/api/public_users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await resp.json();
+      if (data.success && data.token) {
+        // Save token and redirect (customize destination as needed)
+        localStorage.setItem('token', data.token);
+        alert('Login successful!');
+        window.location.href = 'index.html'; // or dashboard page
+      } else {
+        alert(data.message || 'Login failed.');
+      }
+    } catch (err) {
+      alert('Network or server error.');
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'SIGN IN';
+    }
+  });
+});
+</script>
+
+</body>
+</html>

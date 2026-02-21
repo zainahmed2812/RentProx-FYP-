@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentProx Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: #F5F7FB;
+}
+
+/* ===== Layout ===== */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 240px;
+  background: #1F1F2E;
+  color: #fff;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+.sidebar ul {
+  list-style: none;
+}
+
+.sidebar ul li {
+  margin-bottom: 15px;
+}
+
+.sidebar ul li a {
+  text-decoration: none;
+  color: #CFCFE8;
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+.sidebar ul li a:hover,
+.sidebar ul li a.active {
+  background: linear-gradient(90deg, #6C63FF, #8E7CFF);
+  color: #fff;
+}
+
+/* ===== Main Section ===== */
+.main {
+  flex: 1;
+  padding: 30px;
+}
+
+/* ===== Topbar ===== */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.topbar h1 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.profile {
+  background: #fff;
+  padding: 8px 15px;
+  border-radius: 30px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* ===== Stats Cards ===== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card h3 {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.card h2 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* ===== Content Section Placeholder ===== */
+.content-box {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>RentProx</h2>
+    <ul>
+      <li><a href="#" class="active">Dashboard</a></li>
+      <li><a href="#" id="manageAdminsLink">Manage Admins</a></li>
+      <li><a href="#">Manage Users</a></li>
+      <li><a href="#">Requests</a></li>
+      <li><a href="#">Listings</a></li>
+      <li><a href="#" id="logoutBtn">Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <h1>Admin Dashboard</h1>
+  <div class="profile" id="profileName">Admin</div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats">
+      <div class="card">
+        <h3>Total Admins</h3>
+        <h2 id="adminCount">...</h2>
+      </div>
+
+      <div class="card">
+        <h3>Total Owners</h3>
+        <h2>42</h2>
+      </div>
+
+      <div class="card">
+        <h3>Total Tenants</h3>
+        <h2>128</h2>
+      </div>
+
+      <div class="card">
+        <h3>Pending Requests</h3>
+        <h2>9</h2>
+      </div>
+    </div>
+
+    <!-- Placeholder for Table or Actions -->
+    <div class="content-box">
+      Recent Activity / Requests will appear here
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+  // Read token from URL (token param) and save to localStorage, then remove it from URL
+  (function(){
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tokenFromUrl = params.get('token');
+      if (tokenFromUrl) {
+        localStorage.setItem('token', tokenFromUrl);
+        params.delete('token');
+        const newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+        window.history.replaceState({}, '', newUrl);
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // no token -> redirect to login
+        window.location.href = 'admin_login.html';
+        return;
+      }
+
+      // Fetch admin count and profile name
+      fetch('http://localhost:3000/api/admins', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.admins)) {
+          document.getElementById('adminCount').textContent = data.admins.length;
+          // Try to get current admin's name from token (JWT) or fallback to email
+          let profileName = 'Admin';
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const userId = payload.id;
+            const found = data.admins.find(a => a.id === userId);
+            if (found && found.name) profileName = found.name;
+            else if (payload.email) profileName = payload.email;
+          } catch (e) {}
+          document.getElementById('profileName').textContent = profileName;
+        } else {
+          document.getElementById('adminCount').textContent = '?';
+        }
+      })
+      .catch(() => {
+        document.getElementById('adminCount').textContent = '?';
+      });
+
+      // Logout button
+      const logout = document.getElementById('logoutBtn');
+      if (logout) {
+        logout.addEventListener('click', function(e){
+          e.preventDefault();
+          localStorage.removeItem('token');
+          window.location.href = 'admin_login.html';
+        });
+      }
+
+      // Manage Admins navigation
+      const manageAdmins = document.getElementById('manageAdminsLink');
+      if (manageAdmins) {
+        manageAdmins.addEventListener('click', function(e){
+          e.preventDefault();
+          window.location.href = 'manage_admins.html';
+        });
+      }
+
+    } catch (err) {
+      console.error('Auth handling error', err);
+    }
+  })();
+
+</script>
+
+</body>
+</html>

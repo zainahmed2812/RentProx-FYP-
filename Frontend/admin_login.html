@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+  <link href="../assets/css/shared.css" rel="stylesheet">
+</head>
+<body>
+  <div class="background">
+    <div class="shape"></div>
+    <div class="shape"></div>
+  </div>
+<hr> <br><br><br>
+  <form id="adminLoginForm" class="glass-form"> <!-- add class -->
+    <h3>Admin Panel Login</h3>
+
+    <label for="adminEmail">Email</label>
+    <input id="adminEmail" type="email" placeholder="admin@example.com" required>
+
+    <label for="adminPassword">Password</label>
+    <input id="adminPassword" type="password" placeholder="Password" required>
+
+    <button type="submit">Sign In</button>
+  </form>
+
+  <script>
+    document.getElementById('adminLoginForm').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value;
+
+      try {
+        const res = await fetch('http://localhost:3000/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          // login successful — redirect to admin dashboard with token in query string
+          const token = data.token;
+          // store token locally as well
+          try { localStorage.setItem('token', token); } catch (e) { /* ignore */ }
+          window.location.href = 'admin_dashboard.html?token=' + encodeURIComponent(token);
+        } else {
+          alert(data.message || 'Login failed');
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        alert('Unable to contact server');
+      }
+    });
+  </script>
+</body>
+</html>
