@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Property — RentProx</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-green: #28b446;
+      --bg-light: #f8f9fa;
+      --sidebar-width: 260px;
+      --text-dark: #333333;
+      --text-muted: #666666;
+      --border-color: #ededed;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
+      --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    * { box-sizing: border-box; transition: all 0.2s ease; }
+    body {
+      margin: 0; font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-light); color: var(--text-dark);
+      display: flex; height: 100vh; overflow: hidden;
+    }
+
+    /* ══ SIDEBAR ══ */
+    .sidebar {
+      width: var(--sidebar-width); background: #fff; border-right: 1px solid var(--border-color);
+      display: flex; flex-direction: column; padding: 20px 0; z-index: 100;
+    }
+    .sidebar-logo { padding: 0 24px 30px; font-weight: 800; color: var(--primary-green); font-size: 1.4rem; }
+    .sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-logout-side {
+  width: 100%;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.btn-logout-side:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+    .nav-group { flex: 1; }
+    .nav-link {
+      display: flex; align-items: center; gap: 12px; padding: 12px 24px;
+      text-decoration: none; color: var(--text-muted); font-weight: 500; font-size: 0.95rem;
+    }
+    .nav-link:hover { color: var(--primary-green); background: #f0fdf4; }
+    .nav-link.active { color: var(--primary-green); background: #e8f5e9; border-right: 4px solid var(--primary-green); font-weight: 700; }
+
+  /* ══ MAIN CONTENT ══ */
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+    .top-bar {
+      height: 70px; background: #fff; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; padding: 15px 30px; position: sticky; top: 0; z-index: 90;
+    }
+    
+    /* PROFILE DROPDOWN (image_06151d.png) */
+    .profile-container { position: relative; }
+    .profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* smaller spacing like screenshot */
+  padding: 6px 12px; /* tighter padding */
+  border: 1.5px solid var(--primary-green);
+  border-radius: 30px;
+  cursor: pointer;
+  background: #fff;
+}
+    .profile-trigger span { color: var(--primary-green); font-weight: 600; font-size: 0.9rem; }
+    .trigger-avatar-circle {
+  width: 28px;  /* avatar slightly smaller */
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+}
+    .profile-dropdown {
+      position: absolute; top: calc(100% + 10px); right: 0; width: 280px; background: #fff; 
+      border-radius: 12px; box-shadow: var(--shadow-md); border: 1px solid var(--border-color);
+      display: none; flex-direction: column; z-index: 1000; overflow: hidden;
+    }
+    .profile-dropdown.active { display: flex; }
+    .dropdown-header { display: flex; align-items: center; gap: 12px; padding: 20px; border-bottom: 1px solid #f5f5f5; }
+    .header-avatar { width: 44px; height: 44px; border-radius: 10px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; }
+    .user-name { font-weight: 700; font-size: 0.95rem; color: #334155; }
+    .user-email { font-size: 0.75rem; color: var(--text-muted); }
+    .dropdown-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; text-decoration: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+    .dropdown-item:hover { background: #f8fafc; color: var(--text-dark); }
+    .dropdown-item.logout { color: #ef4444; border-top: 1px solid #f5f5f5; }
+
+
+    /* ══ VIEW SECTIONS ══ */
+    .view-content { display: none; padding: 30px 40px; }
+    .view-content.active { display: block; }
+
+    /* ══ FORM CONTENT ══ */
+    .form-container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+    .hero-banner {
+      background: #fff; border-radius: 12px; padding: 30px; border: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;
+    }
+    .hero-text h1 { margin: 0; font-size: 1.4rem; font-weight: 700; color: #1a1d23; }
+    .hero-text p { margin: 5px 0 0; color: var(--text-muted); font-size: 0.9rem; }
+
+    .form-section {
+      background: #fff; border-radius: 12px; padding: 32px; border: 1px solid var(--border-color);
+      margin-bottom: 24px; box-shadow: var(--shadow-sm);
+    }
+    .section-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+    
+    /* Selection Pills */
+    .pill-group { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .pill {
+      padding: 10px 24px; border: 1px solid var(--border-color); border-radius: 30px;
+      font-size: 0.85rem; font-weight: 600; color: var(--text-muted); cursor: pointer; background: #fff;
+    }
+    .pill.active { background: var(--primary-green); color: #fff; border-color: var(--primary-green); }
+
+    /* Inputs */
+    .grid-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
+    .field-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+    .input-box {
+      padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px;
+      background: #fcfcfc; font-family: inherit; outline: none;
+    }
+    .input-box:focus { border-color: var(--primary-green); }
+
+    /* Toggles */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+    .switch {
+      position: relative; display: inline-block; width: 44px; height: 22px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; inset: 0; background-color: #ccc; border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--primary-green); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    .btn-submit {
+      width: 100%; padding: 16px; background: var(--primary-green); color: #fff;
+      border: none; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; margin-bottom: 50px;
+    }
+    .btn-submit:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+
+  <nav class="sidebar">
+    <div class="sidebar-logo">RentProx</div>
+    <div class="nav-group">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="addproperty.html" class="nav-link active">Add Property</a>
+      <a href="properties.html" class="nav-link">Property Management</a>
+      <a href="ledger.html" class="nav-link">Rent Ledger</a>
+    </div>
+     <button class="btn-logout-side" onclick="window.location.href='../login_plm.html'">
+    Log Out
+  </button>
+  </nav>
+
+ <div class="main-wrapper">
+   <header class="top-bar">
+    <div style="font-weight: 700; color: var(--text-muted);" id="view-title">Add New Property</div>
+    <div class="profile-container">
+        <div class="profile-trigger" id="profile-trigger">
+  <span>Syed Hunain Ahmad</span>
+  <div class="trigger-avatar-circle">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  </div>
+</div>
+        <div class="profile-dropdown" id="profile-dropdown">
+          <div class="dropdown-header">
+            <div class="header-avatar">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="header-info">
+              <div class="user-name">Syed Hunain Ahmad</div>
+              <div class="user-email">24891@students.riphah.edu.pk</div>
+            </div>
+          </div>
+          <a href="#" class="dropdown-item">Account Settings</a>
+          <a href="../login_plm.html" class="dropdown-item logout">Logout</a>
+        </div>
+  </div>
+</header>
+
+    <div class="form-container">
+      <div class="hero-banner">
+        <div class="hero-text">
+          <h1>Reach Millions of Buyers on our Platforms</h1>
+          <p>In a few simple steps!</p>
+        </div>
+        <img src="https://via.placeholder.com/150x80?text=Listing+Icon" alt="listing icon">
+      </div>
+
+      <section class="form-section">
+        <div class="section-title">Location and Purpose</div>
+        <div class="field-label" style="margin-bottom:10px">Select Purpose</div>
+        <div class="pill-group" id="purpose-pills">
+          <button class="pill" onclick="togglePill(this, 'purpose-pills')">Rent</button>
+        </div>
+
+        <div class="field-label" style="margin-bottom:10px">Select Property Type</div>
+        <div class="pill-group" id="type-pills">
+          <button class="pill active" onclick="togglePill(this, 'type-pills')">Home</button>
+          <button class="pill" onclick="togglePill(this, 'type-pills')">Flats</button>
+          <button class="pill" onclick="togglePill(this, 'type-pills')">Commercial</button>
+        </div>
+
+        <div class="grid-fields">
+          <div class="field-group">
+            <label class="field-label">City</label>
+            <input type="text" class="input-box" placeholder="Select City">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Location</label>
+            <input type="text" class="input-box" placeholder="Search Location">
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="section-title">Price and Area</div>
+        <div class="grid-fields">
+          <div class="field-group">
+            <label class="field-label">Area Size</label>
+            <input type="number" class="input-box" placeholder="Enter Size">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Total Price (PKR)</label>
+            <input type="number" class="input-box" placeholder="Enter Price">
+          </div>
+        </div>
+        <div class="toggle-row">
+          <span class="field-label">Installment available</span>
+          <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+        </div>
+        
+      </section>
+
+      <section class="form-section">
+        <div class="section-title">Features and Amenities</div>
+        <div class="field-label" style="margin-bottom:10px">Bedrooms</div>
+        <div class="pill-group" id="bed-pills">
+          <button class="pill" onclick="togglePill(this, 'bed-pills')">1</button>
+          <button class="pill" onclick="togglePill(this, 'bed-pills')">2</button>
+          <button class="pill active" onclick="togglePill(this, 'bed-pills')">3</button>
+          <button class="pill" onclick="togglePill(this, 'bed-pills')">4</button>
+          <button class="pill" onclick="togglePill(this, 'bed-pills')">5+</button>
+        </div>
+        
+        <div class="field-group">
+          <label class="field-label">Description</label>
+          <textarea class="input-box" style="height:120px" placeholder="Describe your property..."></textarea>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="section-title">Contact Information</div>
+        <div class="field-group" style="margin-bottom:15px">
+          <label class="field-label">Email</label>
+          <input type="email" class="input-box" value="" readonly>
+        </div>
+        <div class="grid-fields">
+          <div class="field-group">
+            <label class="field-label">Mobile Number</label>
+            <input type="text" class="input-box" placeholder="+92">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Landline</label>
+            <input type="text" class="input-box" placeholder="+92">
+          </div>
+        </div>
+      </section>
+
+      <button class="btn-submit" onclick="submitProperty()">Submit Property Listing</button>
+    </div>
+  </div>
+
+  <script>
+    // Toggle Pill Active State
+    function togglePill(element, groupId) {
+      const group = document.getElementById(groupId);
+      group.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      element.classList.add('active');
+    }
+
+    // Submit Action
+    function submitProperty() {
+      alert("Property Listing Submitted Successfully!");
+      window.location.href = "dashboard.html";
+    }
+
+    // ══ PROFILE DROPDOWN ══
+    const trigger = document.getElementById('profile-trigger');
+    const dropdown = document.getElementById('profile-dropdown');
+    trigger.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('active'); });
+    window.addEventListener('click', () => dropdown.classList.remove('active'));
+
+  </script>
+</body>
+</html>
