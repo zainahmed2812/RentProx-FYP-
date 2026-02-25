@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RentProx — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-green: #28b446; --bg-light: #f8f9fa; --sidebar-width: 260px;
+      --text-dark: #333333; --text-muted: #666666; --border-color: #ededed;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.02); --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    * { box-sizing: border-box; transition: all 0.2s ease-in-out; }
+    body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg-light); color:var(--text-dark); display:flex; height:100vh; overflow:hidden; }
+
+    /* SIDEBAR */
+    .sidebar { width:var(--sidebar-width); background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:20px 0; z-index:100; }
+    .sidebar-logo { padding:0 24px 30px; font-weight:800; color:var(--primary-green); font-size:1.4rem; cursor:pointer; }
+    .nav-group { flex:1; }
+    .nav-link { display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--text-muted); font-weight:500; font-size:0.95rem; cursor:pointer; }
+    .nav-link:hover { color:var(--primary-green); background:#f0fdf4; }
+    .nav-link.active { color:var(--primary-green); background:#e8f5e9; border-right:4px solid var(--primary-green); font-weight:700; }
+    .sidebar-footer { padding:20px; border-top:1px solid var(--border-color); }
+    .btn-logout-side { width:100%; padding:12px; background:#fff; border:1px solid var(--border-color); border-radius:8px; font-weight:600; cursor:pointer; color:var(--text-muted); }
+    .btn-logout-side:hover { color:#ef4444; border-color:#ef4444; }
+
+    /* MAIN */
+    .main-wrapper { flex:1; display:flex; flex-direction:column; overflow-y:auto; }
+    .top-bar { height:70px; background:#fff; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; padding:0 40px; position:sticky; top:0; z-index:90; }
+
+    /* PROFILE DROPDOWN */
+    .profile-container { position:relative; }
+    .profile-trigger { display:flex; align-items:center; gap:12px; padding:6px 6px 6px 16px; border:1.5px solid var(--primary-green); border-radius:30px; cursor:pointer; background:#fff; }
+    .profile-trigger span { color:var(--primary-green); font-weight:600; font-size:0.9rem; }
+    .trigger-avatar-circle { width:32px; height:32px; border-radius:50%; background:#f0f0f0; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; }
+    .profile-dropdown { position:absolute; top:calc(100% + 10px); right:0; width:280px; background:#fff; border-radius:12px; box-shadow:var(--shadow-md); border:1px solid var(--border-color); display:none; flex-direction:column; z-index:1000; overflow:hidden; }
+    .profile-dropdown.active { display:flex; }
+    .dropdown-header { display:flex; align-items:center; gap:12px; padding:20px; border-bottom:1px solid #f5f5f5; }
+    .header-avatar { width:44px; height:44px; border-radius:10px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; }
+    .user-name { font-weight:700; font-size:0.95rem; color:#334155; }
+    .user-email { font-size:0.75rem; color:var(--text-muted); }
+    .dropdown-item { display:flex; align-items:center; gap:12px; padding:14px 20px; text-decoration:none; color:var(--text-muted); font-size:0.9rem; font-weight:500; }
+    .dropdown-item:hover { background:#f8fafc; color:var(--text-dark); }
+    .dropdown-item.logout { color:#ef4444; border-top:1px solid #f5f5f5; }
+
+    /* VIEW */
+    .view-content { display:none; padding:30px 40px; }
+    .view-content.active { display:block; }
+
+    /* DASHBOARD */
+    .quota-card { background:#fff; border-radius:12px; padding:24px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm); margin-bottom:24px; }
+    .quota-header { font-weight:700; font-size:1rem; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:10px; }
+    .stats-row { display:flex; gap:40px; }
+    .stat-item { flex:1; }
+    .stat-label { color:var(--text-muted); font-size:0.85rem; font-weight:500; display:block; margin-bottom:5px; }
+    .stat-value { font-size:1.6rem; font-weight:700; color:#000; }
+    .dashboard-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:24px; }
+    .panel { background:#fff; border-radius:12px; padding:24px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm); }
+    .panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    .panel-title { font-weight:700; font-size:1.05rem; }
+    .btn-green { background:var(--primary-green); color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:700; cursor:pointer; }
+    .search-input { width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px; font-family:inherit; outline:none; }
+    .item-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f9f9f9; }
+    .badge { padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; }
+    .badge-paid { background:#e8f5e9; color:var(--primary-green); }
+    .badge-pending { background:#fff5f5; color:#ef4444; }
+
+    /* MODAL */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:2000; }
+    .modal-overlay.active { display:flex; }
+    .modal { background:#fff; padding:30px; border-radius:12px; width:420px; }
+
+    /* SKELETON */
+    .skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:6px; height:18px; margin-bottom:12px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .empty-state { text-align:center; padding:30px 10px; color:var(--text-muted); font-size:0.9rem; }
+  </style>
+</head>
+<body>
+
+  <nav class="sidebar">
+    <div class="sidebar-logo">RentProx</div>
+    <div class="nav-group">
+      <a href="dashboard.html" class="nav-link active">Dashboard</a>
+      <a href="addproperty.html" class="nav-link">Add Property</a>
+      <a href="properties.html" class="nav-link">Property Management</a>
+      <a href="ledger.html" class="nav-link">Rent Ledger</a>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn-logout-side" id="logout-btn">Log Out</button>
+    </div>
+  </nav>
+
+  <div class="main-wrapper">
+    <header class="top-bar">
+      <div style="font-weight:700;color:var(--text-muted);">Dashboard</div>
+      <div class="profile-container">
+        <div class="profile-trigger" id="profile-trigger">
+          <span class="js-user-name">Loading...</span>
+          <div class="trigger-avatar-circle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+        </div>
+        <div class="profile-dropdown" id="profile-dropdown">
+          <div class="dropdown-header">
+            <div class="header-avatar">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div>
+              <div class="user-name js-user-name">—</div>
+              <div class="user-email js-user-email">—</div>
+            </div>
+          </div>
+          <a href="#" class="dropdown-item logout" id="logout-dropdown">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- DASHBOARD VIEW -->
+    <main id="view-dashboard" class="view-content active">
+      <!-- Stats Card -->
+      <div class="quota-card">
+        <div class="quota-header">Overview</div>
+        <div class="stats-row">
+          <div class="stat-item">
+            <span class="stat-label">My Properties</span>
+            <span class="stat-value" id="stat-props">—</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Active Rentals</span>
+            <span class="stat-value" id="stat-rentals">—</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Pending Payments</span>
+            <span class="stat-value" id="stat-pending" style="color:#ef4444">—</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Collected</span>
+            <span class="stat-value" id="stat-collected" style="color:var(--primary-green)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid -->
+      <div class="dashboard-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">My Properties</div>
+            <a href="addproperty.html"><button class="btn-green">+ Add</button></a>
+          </div>
+          <div id="property-summary-list">
+            <div class="skeleton"></div><div class="skeleton"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Recent Payments</div>
+          </div>
+          <div id="payment-list">
+            <div class="skeleton"></div><div class="skeleton"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Tenant Modal -->
+  <div class="modal-overlay" id="tenant-modal">
+    <div class="modal">
+      <h3 id="tm-name" style="margin-top:0"></h3>
+      <div id="tm-details"></div>
+      <button class="btn-green" style="width:100%;margin-top:20px" onclick="document.getElementById('tenant-modal').classList.remove('active')">Close</button>
+    </div>
+  </div>
+
+  <script src="../api.js"></script>
+  <script>
+  (async function init() {
+    // Auth guard
+    const user = await Auth.guard('../login_plm.html');
+    if (!user) return;
+
+    // Fill profile
+    Auth.fillProfile();
+
+    // Logout buttons
+    document.getElementById('logout-btn').onclick = () => Auth.logout('../login_plm.html');
+    document.getElementById('logout-dropdown').onclick = e => { e.preventDefault(); Auth.logout('../login_plm.html'); };
+
+    // Profile dropdown toggle
+    const trigger  = document.getElementById('profile-trigger');
+    const dropdown = document.getElementById('profile-dropdown');
+    trigger.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('active'); });
+    window.addEventListener('click', () => dropdown.classList.remove('active'));
+
+    // Load dashboard data
+    try {
+      const data = await apiFetch('/user/dashboard');
+
+      if (!data.success) {
+        showToast('Dashboard load nahi hua.', 'error');
+        showEmpty('property-summary-list', 'Data load nahi hua.');
+        showEmpty('payment-list', 'Data load nahi hua.');
+        return;
+      }
+
+      const { stats, properties, recentPayments } = data.data;
+
+      // Stats
+      document.getElementById('stat-props').textContent     = stats.totalProperties ?? 0;
+      document.getElementById('stat-rentals').textContent   = stats.totalRentals ?? 0;
+      document.getElementById('stat-pending').textContent   = stats.pendingPayments ?? 0;
+      document.getElementById('stat-collected').textContent = 'PKR ' + ((stats.totalCollected || 0)).toLocaleString();
+
+      // Properties panel
+      const propEl = document.getElementById('property-summary-list');
+      if (!properties || properties.length === 0) {
+        propEl.innerHTML = `<div class="empty-state">
+          Koi property nahi mili.<br>
+          <a href="addproperty.html" style="color:var(--primary-green);font-weight:600;">Pehli property add karein →</a>
+        </div>`;
+      } else {
+        propEl.innerHTML = properties.map(p => `
+          <div class="item-row">
+            <div>
+              <strong>${p.address}</strong><br>
+              <small style="color:var(--text-muted)">${p.city} · PKR ${p.rentAmount.toLocaleString()}/mo</small>
+            </div>
+            <a href="properties.html" style="color:var(--primary-green);font-weight:700;font-size:0.8rem;text-decoration:none;">MANAGE</a>
+          </div>
+        `).join('');
+      }
+
+      // Payments panel
+      const payEl = document.getElementById('payment-list');
+      if (!recentPayments || recentPayments.length === 0) {
+        payEl.innerHTML = `<div class="empty-state">Abhi koi payment record nahi.</div>`;
+      } else {
+        payEl.innerHTML = recentPayments.map(p => `
+          <div class="item-row">
+            <div>
+              <strong>${p.rental?.tenant?.name || 'Tenant'}</strong><br>
+              <small style="color:var(--text-muted)">${p.month}</small>
+            </div>
+            <span class="badge ${p.paid ? 'badge-paid' : 'badge-pending'}">${p.paid ? 'PAID' : 'PENDING'}</span>
+          </div>
+        `).join('');
+      }
+
+    } catch {
+      showToast('Network error. Backend chal raha hai?', 'error');
+      showEmpty('property-summary-list', 'Data load nahi hua.');
+      showEmpty('payment-list', 'Data load nahi hua.');
+    }
+  })();
+
+  function showEmpty(id, msg) {
+    document.getElementById(id).innerHTML = `<div class="empty-state">${msg}</div>`;
+  }
+  </script>
+</body>
+</html>
