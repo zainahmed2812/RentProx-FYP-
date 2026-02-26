@@ -34,7 +34,7 @@
       overflow: hidden;
     }
 
-    /* ══ SIDEBAR (Shared Component) ══ */
+    /* ══ SIDEBAR ══ */
     .sidebar {
       width: var(--sidebar-width);
       background: #fff;
@@ -42,7 +42,7 @@
       display: flex;
       flex-direction: column;
       padding: 20px 0;
-      z-index: 100;
+      z-index: 1001;
     }
 
     .sidebar-logo {
@@ -110,9 +110,9 @@
       align-items: center;
       justify-content: space-between;
       padding: 15px 30px;
-       position: sticky; 
-  top: 0; 
-  z-index: 90;
+      position: sticky;
+      top: 0;
+      z-index: 90;
     }
 
     .profile-container {
@@ -214,6 +214,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 30px;
+      gap: 15px;
     }
 
     .view-header h1 {
@@ -233,12 +234,13 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      white-space: nowrap;
     }
 
     /* ══ PROPERTY CARDS ══ */
     .property-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 24px;
     }
 
@@ -364,7 +366,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
+      z-index: 2000;
     }
 
     .modal-overlay.active {
@@ -376,6 +378,7 @@
       padding: 30px;
       border-radius: 12px;
       width: 500px;
+      max-width: 90%;
     }
 
     .form-input {
@@ -385,12 +388,31 @@
       border-radius: 8px;
       margin-bottom: 15px;
     }
+
+    /* 📱 RESPONSIVE PATCH 📱 */
+    .mobile-nav-toggle { display: none; font-size: 24px; cursor: pointer; background: none; border: none; color: var(--text-dark); }
+    .sidebar-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: 0.3s; box-shadow: 10px 0 20px rgba(0,0,0,0.1); }
+      .sidebar.open { left: 0; }
+      .sidebar-mask.active { display: block; }
+      .mobile-nav-toggle { display: block; }
+      .top-bar { padding: 0 20px; }
+      .profile-trigger span { display: none; }
+      .main-padding { padding: 20px; }
+      .view-header { flex-direction: column; align-items: flex-start; }
+      .btn-post-listing { width: 100%; justify-content: center; }
+      .property-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
 <body>
+  <div class="sidebar-mask" id="sidebar-mask" onclick="toggleSidebar()"></div>
 
-  <nav class="sidebar">
+  <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo" onclick="window.location.href='dashboard.html'">
       RentProx
     </div>
@@ -411,7 +433,10 @@
 
   <div class="content-area">
     <header class="top-bar">
-      <div style="font-weight: 700; color: var(--text-muted);">Property Management</div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="mobile-nav-toggle" onclick="toggleSidebar()">☰</button>
+        <div style="font-weight: 700; color: var(--text-muted);">Property Management</div>
+      </div>
       <div class="profile-container">
         <div class="profile-trigger" id="profile-trigger">
           <span>Syed Hunain Ahmad</span>
@@ -467,6 +492,12 @@
   </div>
 
   <script>
+    // Responsive Toggle
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-mask').classList.toggle('active');
+    }
+
     let properties = [
       { id: 1, name: 'DHA Block C Apartment', location: 'DHA Phase 5, Lahore', rent: 55000, total: 10, occupied: 8 },
       { id: 2, name: 'Bahria Town Villa', location: 'Bahria Phase 7, Rawalpindi', rent: 120000, total: 1, occupied: 1 },
@@ -479,7 +510,7 @@
         <div class="property-card">
           <div class="card-image-placeholder">
             <div class="rental-badge">Rental Unit</div>
-            <div style="color:#ccc; font-weight:bold">${p.name}</div>
+            <div style="color:#ccc; font-weight:bold; text-align:center; padding:10px;">${p.name}</div>
           </div>
           <div class="card-body">
             <div class="price-tag">PKR ${p.rent.toLocaleString()} <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">/ month</span></div>
@@ -518,9 +549,10 @@
     const dropdown = document.getElementById('profile-dropdown');
     trigger.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('active'); };
     window.onclick = () => dropdown.classList.remove('active');
+    
     document.addEventListener("DOMContentLoaded", function () {
-  renderProperties();
-});
+      renderProperties();
+    });
   </script>
 </body>
 
