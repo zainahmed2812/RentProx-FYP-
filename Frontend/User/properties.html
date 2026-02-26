@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Properties — RentProx</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-green: #28b446; --bg-light: #f8f9fa; --sidebar-width: 260px;
+      --text-dark: #333333; --text-muted: #666666; --border-color: #ededed;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.02); --shadow-md: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    * { box-sizing: border-box; transition: all 0.2s ease-in-out; }
+    body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg-light); color:var(--text-dark); display:flex; height:100vh; overflow:hidden; }
+
+    .sidebar { width:var(--sidebar-width); background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:20px 0; z-index:100; }
+    .sidebar-logo { padding:0 24px 30px; font-weight:800; color:var(--primary-green); font-size:1.4rem; cursor:pointer; }
+    .nav-group { flex:1; }
+    .nav-link { display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--text-muted); font-weight:500; font-size:0.95rem; }
+    .nav-link:hover { color:var(--primary-green); background:#f0fdf4; }
+    .nav-link.active { color:var(--primary-green); background:#e8f5e9; border-right:4px solid var(--primary-green); font-weight:700; }
+    .sidebar-footer { padding:20px; border-top:1px solid var(--border-color); }
+    .btn-logout-side { width:100%; padding:12px; background:#fff; border:1px solid var(--border-color); border-radius:8px; font-weight:600; cursor:pointer; color:var(--text-muted); }
+    .btn-logout-side:hover { color:#ef4444; border-color:#ef4444; }
+
+    .top-bar { height:70px; background:#fff; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; padding:15px 30px; position:sticky; top:0; z-index:90; }
+    .profile-container { position:relative; }
+    .profile-trigger { display:flex; align-items:center; gap:12px; padding:6px 6px 6px 16px; border:1.5px solid var(--primary-green); border-radius:30px; cursor:pointer; background:#fff; }
+    .profile-trigger span { color:var(--primary-green); font-weight:600; font-size:0.9rem; }
+    .trigger-avatar-circle { width:32px; height:32px; border-radius:50%; background:#f0f0f0; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; }
+    .profile-dropdown { position:absolute; top:calc(100% + 10px); right:0; width:280px; background:#fff; border-radius:12px; box-shadow:var(--shadow-md); border:1px solid var(--border-color); display:none; flex-direction:column; z-index:1000; overflow:hidden; }
+    .profile-dropdown.active { display:flex; }
+    .dropdown-header { display:flex; align-items:center; gap:12px; padding:20px; border-bottom:1px solid #f5f5f5; }
+    .user-name { font-weight:700; font-size:0.95rem; color:#334155; }
+    .user-email { font-size:0.75rem; color:var(--text-muted); }
+    .dropdown-item { display:flex; align-items:center; gap:12px; padding:14px 20px; text-decoration:none; color:var(--text-muted); font-size:0.9rem; font-weight:500; }
+    .dropdown-item:hover { background:#f8fafc; color:var(--text-dark); }
+    .dropdown-item.logout { color:#ef4444; border-top:1px solid #f5f5f5; }
+
+    .content-area { flex:1; display:flex; flex-direction:column; overflow-y:auto; }
+    .main-padding { padding:40px; }
+    .view-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
+    .view-header h1 { margin:0; font-size:1.5rem; font-weight:700; }
+    .btn-post-listing { background:var(--primary-green); color:#fff; border:none; padding:12px 24px; border-radius:8px; font-weight:700; cursor:pointer; }
+
+    /* PROPERTY CARDS */
+    .property-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(400px,1fr)); gap:24px; }
+    .property-card { background:#fff; border:1px solid var(--border-color); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; box-shadow:var(--shadow-sm); }
+    .card-image-placeholder { height:180px; background:#eef2f7; display:flex; align-items:center; justify-content:center; position:relative; }
+    .rental-badge { position:absolute; top:15px; left:15px; background:var(--primary-green); color:#fff; padding:4px 10px; border-radius:4px; font-size:0.7rem; font-weight:700; text-transform:uppercase; }
+    .card-body { padding:20px; flex:1; }
+    .price-tag { color:var(--primary-green); font-size:1.25rem; font-weight:800; margin-bottom:5px; }
+    .prop-title { font-weight:700; font-size:1.1rem; margin-bottom:8px; color:#1a1d23; }
+    .prop-location { color:var(--text-muted); font-size:0.85rem; margin-bottom:15px; display:block; }
+    .occupancy-stats { background:#fcfcfc; border:1px solid #f0f0f0; border-radius:8px; padding:12px; display:flex; justify-content:space-between; }
+    .stat-box { text-align:center; flex:1; }
+    .stat-box:not(:last-child) { border-right:1px solid #eee; }
+    .stat-label { font-size:0.7rem; color:var(--text-muted); display:block; text-transform:uppercase; font-weight:700; }
+    .stat-val { font-weight:700; font-size:1rem; color:var(--text-dark); }
+    .card-actions { padding:15px 20px; border-top:1px solid #f5f5f5; display:flex; gap:10px; }
+    .btn-action { flex:1; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:#fff; font-weight:600; cursor:pointer; color:var(--text-muted); }
+    .btn-action:hover { border-color:var(--primary-green); color:var(--primary-green); }
+    .btn-danger:hover { border-color:#ef4444 !important; color:#ef4444 !important; }
+
+    /* MODAL */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:1000; }
+    .modal-overlay.active { display:flex; }
+    .modal { background:#fff; padding:30px; border-radius:12px; width:500px; }
+    .form-input { width:100%; padding:12px; border:1px solid var(--border-color); border-radius:8px; margin-bottom:12px; font-family:inherit; outline:none; }
+    .form-input:focus { border-color:var(--primary-green); }
+    .form-label { font-size:0.82rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:5px; }
+
+    /* SKELETON */
+    .skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:8px; height:250px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); grid-column:1/-1; }
+  </style>
+</head>
+<body>
+
+  <nav class="sidebar">
+    <div class="sidebar-logo" onclick="window.location.href='dashboard.html'">RentProx</div>
+    <div class="nav-group">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="addproperty.html" class="nav-link">Add Property</a>
+      <a href="properties.html" class="nav-link active">Property Management</a>
+      <a href="ledger.html" class="nav-link">Rent Ledger</a>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn-logout-side" id="logout-btn">Log Out</button>
+    </div>
+  </nav>
+
+  <div class="content-area">
+    <header class="top-bar">
+      <div style="font-weight:700;color:var(--text-muted);">Property Management</div>
+      <div class="profile-container">
+        <div class="profile-trigger" id="profile-trigger">
+          <span class="js-user-name">Loading...</span>
+          <div class="trigger-avatar-circle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+        </div>
+        <div class="profile-dropdown" id="profile-dropdown">
+          <div class="dropdown-header">
+            <div>
+              <div class="user-name js-user-name">—</div>
+              <div class="user-email js-user-email">—</div>
+            </div>
+          </div>
+          <a href="#" class="dropdown-item logout" id="logout-dropdown">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-padding">
+      <div class="view-header">
+        <div>
+          <h1>Your Listed Properties</h1>
+          <p style="color:var(--text-muted);margin-top:5px;">Manage occupancy and rental rates for your portfolio.</p>
+        </div>
+        <button class="btn-post-listing" onclick="window.location.href='addproperty.html'">+ Add New Property</button>
+      </div>
+      <div class="property-grid" id="prop-grid">
+        <div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+      <h2 style="margin-top:0">Edit Property</h2>
+      <input type="hidden" id="edit-id">
+      <label class="form-label">City</label>
+      <input type="text" id="edit-city" class="form-input">
+      <label class="form-label">Address</label>
+      <input type="text" id="edit-address" class="form-input">
+      <label class="form-label">Monthly Rent (PKR)</label>
+      <input type="number" id="edit-rent" class="form-input">
+      <label class="form-label">Description</label>
+      <textarea id="edit-desc" class="form-input" style="height:80px"></textarea>
+      <div style="display:flex;gap:15px;margin-top:10px;">
+        <button class="btn-post-listing" style="flex:1" onclick="saveEdit()">Save Changes</button>
+        <button class="btn-action" style="flex:1" onclick="closeEditModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../api.js"></script>
+  <script>
+  let allProperties = [];
+
+  (async function init() {
+    const user = await Auth.guard('../login_plm.html');
+    if (!user) return;
+    Auth.fillProfile();
+
+    document.getElementById('logout-btn').onclick = () => Auth.logout('../login_plm.html');
+    document.getElementById('logout-dropdown').onclick = e => { e.preventDefault(); Auth.logout('../login_plm.html'); };
+
+    const trigger  = document.getElementById('profile-trigger');
+    const dropdown = document.getElementById('profile-dropdown');
+    trigger.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('active'); });
+    window.addEventListener('click', () => dropdown.classList.remove('active'));
+
+    await loadProperties();
+  })();
+
+  async function loadProperties() {
+    try {
+      const data = await apiFetch('/user/property');
+      if (!data.success) { renderEmpty(); return; }
+      allProperties = data.data || [];
+      renderProperties(allProperties);
+    } catch {
+      showToast('Properties load nahi huin. Network check karein.', 'error');
+      renderEmpty();
+    }
+  }
+
+  function renderProperties(list) {
+    const grid = document.getElementById('prop-grid');
+    if (!list || list.length === 0) { renderEmpty(); return; }
+
+    grid.innerHTML = list.map(p => {
+      const occupied = p.rentals ? p.rentals.length : 0;
+      const avail    = Math.max(0, 1 - occupied);
+      return `
+        <div class="property-card">
+          <div class="card-image-placeholder">
+            <div class="rental-badge">Rental Unit</div>
+            <div style="color:#aaa;font-weight:bold;font-size:0.9rem;">${p.address}</div>
+          </div>
+          <div class="card-body">
+            <div class="price-tag">PKR ${p.rentAmount.toLocaleString()} <span style="font-size:0.8rem;font-weight:400;color:var(--text-muted);">/ month</span></div>
+            <div class="prop-title">${p.address}</div>
+            <span class="prop-location">📍 ${p.city} · ${p.area} ${p.areaUnit}</span>
+            <div class="occupancy-stats">
+              <div class="stat-box"><span class="stat-label">Total</span><span class="stat-val">1</span></div>
+              <div class="stat-box"><span class="stat-label">Occupied</span><span class="stat-val" style="color:var(--primary-green)">${occupied}</span></div>
+              <div class="stat-box"><span class="stat-label">Avail.</span><span class="stat-val" style="color:#ef4444">${avail}</span></div>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-action" onclick="openEditModal('${p.id}')">Edit Details</button>
+            <button class="btn-action" onclick="window.location.href='ledger.html'">View Ledger</button>
+            <button class="btn-action btn-danger" onclick="deleteProperty('${p.id}')">Delete</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderEmpty() {
+    document.getElementById('prop-grid').innerHTML = `
+      <div class="empty-state">
+        <p style="font-size:1.1rem;font-weight:600;margin-bottom:10px;">Koi property nahi mili</p>
+        <p>Apni pehli property add karein.</p>
+        <button class="btn-post-listing" style="margin-top:16px" onclick="window.location.href='addproperty.html'">+ Add Property</button>
+      </div>`;
+  }
+
+  function openEditModal(id) {
+    const p = allProperties.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('edit-id').value      = p.id;
+    document.getElementById('edit-city').value    = p.city;
+    document.getElementById('edit-address').value = p.address;
+    document.getElementById('edit-rent').value    = p.rentAmount;
+    document.getElementById('edit-desc').value    = p.description || '';
+    document.getElementById('edit-modal').classList.add('active');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('active');
+  }
+
+  async function saveEdit() {
+    const id      = document.getElementById('edit-id').value;
+    const city    = document.getElementById('edit-city').value.trim();
+    const address = document.getElementById('edit-address').value.trim();
+    const rent    = document.getElementById('edit-rent').value;
+    const desc    = document.getElementById('edit-desc').value.trim();
+
+    if (!city || !address || !rent) {
+      showToast('City, Address aur Rent zaruri hain.', 'error');
+      return;
+    }
+
+    try {
+      const data = await apiFetch(`/user/property/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ city, address, rentAmount: rent, description: desc })
+      });
+      if (data.success) {
+        showToast('Property update ho gayi!');
+        closeEditModal();
+        await loadProperties();
+      } else {
+        showToast(data.message || 'Update fail hua.', 'error');
+      }
+    } catch {
+      showToast('Network error.', 'error');
+    }
+  }
+
+  async function deleteProperty(id) {
+    if (!confirm('Kya aap is property ko delete karna chahte hain? Yeh action wapas nahi ho sakta.')) return;
+    try {
+      const data = await apiFetch(`/user/property/${id}`, { method: 'DELETE' });
+      if (data.success) {
+        showToast('Property delete ho gayi!');
+        await loadProperties();
+      } else {
+        showToast(data.message || 'Delete fail hua.', 'error');
+      }
+    } catch {
+      showToast('Network error.', 'error');
+    }
+  }
+  </script>
+</body>
+</html>
