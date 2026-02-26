@@ -27,7 +27,7 @@
     /* ══ SIDEBAR ══ */
     .sidebar {
       width: var(--sidebar-width); background: #fff; border-right: 1px solid var(--border-color);
-      display: flex; flex-direction: column; padding: 20px 0; z-index: 100;
+      display: flex; flex-direction: column; padding: 20px 0; z-index: 1001;
     }
     .sidebar-logo { padding: 0 24px 30px; font-weight: 800; color: var(--primary-green); font-size: 1.4rem; cursor: pointer; }
     .nav-group { flex: 1; }
@@ -43,13 +43,13 @@
     .btn-logout-side:hover { color: #ef4444; border-color: #ef4444; }
 
     /* ══ MAIN CONTENT ══ */
-    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
     .top-bar {
       height: 70px; background: #fff; border-bottom: 1px solid var(--border-color);
       display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: sticky; top: 0; z-index: 90;
     }
 
-    /* PROFILE DROPDOWN (image_06151d.png) */
+    /* PROFILE DROPDOWN */
     .profile-container { position: relative; }
     .profile-trigger {
       display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 16px; 
@@ -94,7 +94,7 @@
     .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .panel-title { font-weight: 700; font-size: 1.05rem; }
 
-    /* ADD PROPERTY FORM (image_061dbe.png Style) */
+    /* ADD PROPERTY FORM */
     .form-container { max-width: 900px; margin: 0 auto; }
     .form-section { background: #fff; border-radius: 12px; padding: 30px; border: 1px solid var(--border-color); margin-bottom: 20px; }
     .section-head { font-weight: 700; font-size: 1rem; margin-bottom: 20px; color: #1a1d23; }
@@ -130,15 +130,45 @@
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 2000; }
     .modal-overlay.active { display: flex; }
     .modal { background: #fff; padding: 30px; border-radius: 12px; width: 420px; }
+
+    /* 📱 RESPONSIVE PATCH - NO FEATURES REMOVED 📱 */
+    .mobile-nav-toggle { display: none; font-size: 24px; cursor: pointer; background: none; border: none; color: var(--text-dark); }
+    
+    @media (max-width: 992px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .sidebar { 
+        position: fixed; left: -100%; top: 0; height: 100%; width: 260px; 
+        box-shadow: 5px 0 15px rgba(0,0,0,0.1); transition: 0.3s; 
+      }
+      .sidebar.open { left: 0; }
+      .top-bar { padding: 0 20px; }
+      .mobile-nav-toggle { display: block; }
+      .view-content { padding: 20px; }
+      .stats-row { flex-direction: column; gap: 15px; }
+      .stat-item { border-left: none !important; padding-left: 0 !important; }
+      .grid-fields { grid-template-columns: 1fr; }
+      .profile-trigger span { display: none; }
+      .modal { width: 90%; margin: 0 auto; }
+    }
+    
+    /* Overlay for mobile */
+    .sidebar-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .sidebar-mask.active { display: block; }
   </style>
 </head>
 <body>
 
-  <nav class="sidebar">
+  <div class="sidebar-mask" id="sidebar-mask" onclick="toggleSidebar()"></div>
+
+  <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo" onclick="showView('dashboard')">RentProx</div>
     <div class="nav-group">
-      <div class="nav-link active" id="link-dashboard" onclick="showView('dashboard')">Dashboard</div>
-      <a href="addproperty.html" class="nav-link">Add Property</a>
+      <div class="nav-link active" id="link-dashboard" onclick="showView('dashboard'); toggleSidebar()">Dashboard</div>
+      <div class="nav-link" id="link-add-property" onclick="showView('add-property'); toggleSidebar()">Add Property</div>
       <a href="properties.html" class="nav-link">Property Management</a>
       <a href="ledger.html" class="nav-link">Rent Ledger</a>
     </div>
@@ -149,7 +179,10 @@
 
   <div class="main-wrapper">
     <header class="top-bar">
-      <div style="font-weight: 700; color: var(--text-muted);" id="view-title">Dashboard</div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="mobile-nav-toggle" onclick="toggleSidebar()">☰</button>
+        <div style="font-weight: 700; color: var(--text-muted);" id="view-title">Dashboard</div>
+      </div>
       
       <div class="profile-container">
         <div class="profile-trigger" id="profile-trigger">
@@ -267,6 +300,14 @@
   </div>
 
   <script>
+    // ══ SIDEBAR TOGGLE LOGIC (NEW) ══
+    function toggleSidebar() {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-mask').classList.toggle('active');
+      }
+    }
+
     // ══ DATA STORE ══
     const Store = {
       tenants: [
@@ -285,24 +326,24 @@
       document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
       document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
       
-      document.getElementById('view-' + viewId).classList.add('active');
-      document.getElementById('link-' + (viewId === 'add-property' ? 'add' : viewId === 'dashboard' ? 'dashboard' : viewId)).classList.add('active');
+      const targetView = document.getElementById('view-' + viewId);
+      if (targetView) targetView.classList.add('active');
+
+      const targetLink = document.getElementById('link-' + viewId);
+      if (targetLink) targetLink.classList.add('active');
       
       const titles = { 'dashboard': 'Owner Dashboard', 'add-property': 'Add New Property', 'properties': 'Property Management', 'ledger': 'Rent Ledger' };
-      document.getElementById('view-title').textContent = titles[viewId];
+      document.getElementById('view-title').textContent = titles[viewId] || 'Dashboard';
     }
 
     // ══ RENDER LOGIC ══
     function refreshUI() {
-      // Stats
       document.getElementById('stat-props').textContent = Store.properties.length;
       document.getElementById('stat-tenants').textContent = Store.tenants.length;
       document.getElementById('stat-pending').textContent = Store.tenants.filter(t => t.status === 'pending').length;
 
-      // Tenant List
       renderTenants(Store.tenants);
 
-      // Property Summary List
       const propContainer = document.getElementById('property-summary-list');
       propContainer.innerHTML = Store.properties.map(p => `
         <div class="item-row">
@@ -337,7 +378,6 @@
       document.getElementById('tenant-modal').classList.add('active');
     }
 
-    // ══ FORM ACTIONS ══
     function selectPill(el, groupId) {
       document.querySelectorAll(`#${groupId} .pill`).forEach(p => p.classList.remove('active'));
       el.classList.add('active');
@@ -347,31 +387,20 @@
       const name = document.getElementById('new-prop-name').value;
       const addr = document.getElementById('new-prop-address').value;
       const price = document.getElementById('new-prop-price').value;
+      if (!name || !price) { alert("Please enter Property Name and Price"); return; }
 
-      if (!name || !price) {
-        alert("Please enter Property Name and Price");
-        return;
-      }
-
-      Store.properties.push({
-        id: Date.now(),
-        name: name,
-        address: addr || 'General Area',
-        price: parseInt(price)
-      });
-
+      Store.properties.push({ id: Date.now(), name: name, address: addr || 'General Area', price: parseInt(price) });
       alert("Property Added Successfully!");
       refreshUI();
       showView('dashboard');
     }
 
-    // ══ PROFILE DROPDOWN ══
+    // PROFILE DROPDOWN logic
     const trigger = document.getElementById('profile-trigger');
     const dropdown = document.getElementById('profile-dropdown');
     trigger.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('active'); });
     window.addEventListener('click', () => dropdown.classList.remove('active'));
 
-    // ══ INIT ══
     window.onload = refreshUI;
   </script>
 </body>
