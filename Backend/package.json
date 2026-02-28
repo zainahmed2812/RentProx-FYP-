@@ -1,21 +1,23 @@
 {
-  "name": "backend",
+  "name": "rentprox-backend",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "RentProx Property Management Backend",
+  "type": "module",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "dev":   "node --watch src/index.js",
+    "start": "node src/index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.17.1"
+    "@prisma/client": "^6.0.0",
+    "bcryptjs":       "^2.4.3",
+    "cookie-parser":  "^1.4.6",
+    "cors":           "^2.8.5",
+    "dotenv":         "^16.4.5",
+    "express":        "^4.19.2",
+    "jsonwebtoken":   "^9.0.2"
+  },
+  "devDependencies": {
+    "prisma": "^6.0.0"
   }
 }
