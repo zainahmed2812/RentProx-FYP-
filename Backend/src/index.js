@@ -1,59 +1,71 @@
 // src/index.js
-// ══════════════════════════════════════════════════════
-// RentProx Backend — Main Entry Point
-// ══════════════════════════════════════════════════════
-
 import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
+import express      from 'express';
+import cors         from 'cors';
 import cookieParser from 'cookie-parser';
 
 // Routes
-import authRoutes          from './routes/authRoutes.js';
-import userDashboard       from './routes/User/dashboard.js';
-import userProperty        from './routes/User/property.js';
-import adminDashboard      from './routes/Admin/dashboard.js';
-import adminProperty       from './routes/Admin/property.js';
+import authRoutes     from './routes/authRoutes.js';
+import userDashboard  from './routes/User/dashboard.js';
+import userProperty   from './routes/User/property.js';
+import adminDashboard from './routes/Admin/dashboard.js';
+import adminProperty  from './routes/Admin/property.js';
 
 // Middleware
-import { errorHandler }    from './middleware/errorMiddleware.js';
+import { errorHandler } from './middleware/errorMiddleware.js';
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
 
-// ── Core Middleware ───────────────────────────────────
+// ── CORS — development mein sab origins allow ──────────
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5500',
+  'http://127.0.0.1:5500',
+  'http://localhost:5501',
+  'http://127.0.0.1:5501',
+  'http://localhost:8080',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin:      process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,  // cookies allow karne ke liye zaruri
-  methods:     ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: function (origin, callback) {
+    // origin undefined hota hai jab directly Postman ya same-origin se call ho
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 app.use(express.json());
-app.use(cookieParser()); // cookie se token read karne ke liye
+app.use(cookieParser());
 
-// ── Auth (Signup / Login / Logout) ───────────────────
-app.use('/api/auth', authRoutes);
-
-// ── User Routes ───────────────────────────────────────
-app.use('/api/user/dashboard', userDashboard);
-app.use('/api/user/property',  userProperty);
-
-// ── Admin Routes ──────────────────────────────────────
+// ── Routes ─────────────────────────────────────────────
+app.use('/api/auth',            authRoutes);
+app.use('/api/user/dashboard',  userDashboard);
+app.use('/api/user/property',   userProperty);
 app.use('/api/admin/dashboard', adminDashboard);
 app.use('/api/admin/property',  adminProperty);
 
-// ── Health Check ──────────────────────────────────────
+// ── Health Check ───────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'RentProx API chal raha hai 🚀' });
 });
 
-// ── 404 ───────────────────────────────────────────────
+// ── 404 ────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.url} nahi mila` });
 });
 
-// ── Global Error Handler (LAST hona chahiye) ──────────
+// ── Global Error Handler (LAST) ────────────────────────
 app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`✅ RentProx backend: http://localhost:${PORT}`);
+  console.log(`📋 Allowed origins: ${allowedOrigins.join(', ')}`);
 });
