@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.data.user.isAdmin) {
           window.location.href = 'Admin/admin_dashboard.html';
         } else {
-          window.location.href = 'User/dashboard.html';
+          window.location.href = 'User/homepage.html';
         }
       } else {
         errMsg.textContent = data.message || 'Login failed.';

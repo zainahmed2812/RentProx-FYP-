@@ -14,7 +14,9 @@
     * { box-sizing: border-box; transition: all 0.2s ease-in-out; }
     body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg-light); color:var(--text-dark); display:flex; height:100vh; overflow:hidden; }
 
-    .sidebar { width:var(--sidebar-width); background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:20px 0; z-index:100; }
+    /* --- SIDEBAR & OVERLAY --- */
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; }
+    .sidebar { width:var(--sidebar-width); background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:20px 0; z-index:1001; }
     .sidebar-logo { padding:0 24px 30px; font-weight:800; color:var(--primary-green); font-size:1.4rem; cursor:pointer; }
     .nav-group { flex:1; }
     .nav-link { display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--text-muted); font-weight:500; font-size:0.95rem; }
@@ -24,7 +26,11 @@
     .btn-logout-side { width:100%; padding:12px; background:#fff; border:1px solid var(--border-color); border-radius:8px; font-weight:600; cursor:pointer; color:var(--text-muted); }
     .btn-logout-side:hover { color:#ef4444; border-color:#ef4444; }
 
+    /* --- TOP BAR --- */
+    .content-area { flex:1; display:flex; flex-direction:column; overflow-y:auto; position: relative; }
     .top-bar { height:70px; background:#fff; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; padding:15px 30px; position:sticky; top:0; z-index:90; }
+    .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); margin-right: 15px; }
+
     .profile-container { position:relative; }
     .profile-trigger { display:flex; align-items:center; gap:12px; padding:6px 6px 6px 16px; border:1.5px solid var(--primary-green); border-radius:30px; cursor:pointer; background:#fff; }
     .profile-trigger span { color:var(--primary-green); font-weight:600; font-size:0.9rem; }
@@ -32,22 +38,17 @@
     .profile-dropdown { position:absolute; top:calc(100% + 10px); right:0; width:280px; background:#fff; border-radius:12px; box-shadow:var(--shadow-md); border:1px solid var(--border-color); display:none; flex-direction:column; z-index:1000; overflow:hidden; }
     .profile-dropdown.active { display:flex; }
     .dropdown-header { display:flex; align-items:center; gap:12px; padding:20px; border-bottom:1px solid #f5f5f5; }
-    .user-name { font-weight:700; font-size:0.95rem; color:#334155; }
-    .user-email { font-size:0.75rem; color:var(--text-muted); }
-    .dropdown-item { display:flex; align-items:center; gap:12px; padding:14px 20px; text-decoration:none; color:var(--text-muted); font-size:0.9rem; font-weight:500; }
-    .dropdown-item:hover { background:#f8fafc; color:var(--text-dark); }
-    .dropdown-item.logout { color:#ef4444; border-top:1px solid #f5f5f5; }
 
-    .content-area { flex:1; display:flex; flex-direction:column; overflow-y:auto; }
+    /* --- CONTENT --- */
     .main-padding { padding:40px; }
-    .view-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
+    .view-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; gap: 20px; }
     .view-header h1 { margin:0; font-size:1.5rem; font-weight:700; }
-    .btn-post-listing { background:var(--primary-green); color:#fff; border:none; padding:12px 24px; border-radius:8px; font-weight:700; cursor:pointer; }
+    .btn-post-listing { background:var(--primary-green); color:#fff; border:none; padding:12px 24px; border-radius:8px; font-weight:700; cursor:pointer; white-space: nowrap; }
 
     /* PROPERTY CARDS */
-    .property-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(400px,1fr)); gap:24px; }
+    .property-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(350px,1fr)); gap:24px; }
     .property-card { background:#fff; border:1px solid var(--border-color); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; box-shadow:var(--shadow-sm); }
-    .card-image-placeholder { height:180px; background:#eef2f7; display:flex; align-items:center; justify-content:center; position:relative; }
+    .card-image-placeholder { height:160px; background:#eef2f7; display:flex; align-items:center; justify-content:center; position:relative; padding: 20px; text-align: center; }
     .rental-badge { position:absolute; top:15px; left:15px; background:var(--primary-green); color:#fff; padding:4px 10px; border-radius:4px; font-size:0.7rem; font-weight:700; text-transform:uppercase; }
     .card-body { padding:20px; flex:1; }
     .price-tag { color:var(--primary-green); font-size:1.25rem; font-weight:800; margin-bottom:5px; }
@@ -58,31 +59,49 @@
     .stat-box:not(:last-child) { border-right:1px solid #eee; }
     .stat-label { font-size:0.7rem; color:var(--text-muted); display:block; text-transform:uppercase; font-weight:700; }
     .stat-val { font-weight:700; font-size:1rem; color:var(--text-dark); }
-    .card-actions { padding:15px 20px; border-top:1px solid #f5f5f5; display:flex; gap:10px; }
-    .btn-action { flex:1; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:#fff; font-weight:600; cursor:pointer; color:var(--text-muted); }
+    .card-actions { padding:15px 20px; border-top:1px solid #f5f5f5; display:flex; gap:10px; flex-wrap: wrap; }
+    .btn-action { flex:1; min-width: 100px; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:#fff; font-weight:600; cursor:pointer; color:var(--text-muted); font-size: 0.85rem; }
     .btn-action:hover { border-color:var(--primary-green); color:var(--primary-green); }
     .btn-danger:hover { border-color:#ef4444 !important; color:#ef4444 !important; }
 
     /* MODAL */
-    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:1000; }
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:2000; padding: 20px; }
     .modal-overlay.active { display:flex; }
-    .modal { background:#fff; padding:30px; border-radius:12px; width:500px; }
+    .modal { background:#fff; padding:30px; border-radius:12px; width:100%; max-width:500px; max-height: 90vh; overflow-y: auto; }
     .form-input { width:100%; padding:12px; border:1px solid var(--border-color); border-radius:8px; margin-bottom:12px; font-family:inherit; outline:none; }
-    .form-input:focus { border-color:var(--primary-green); }
     .form-label { font-size:0.82rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:5px; }
 
     /* SKELETON */
-    .skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:8px; height:250px; }
+    .skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:8px; height:300px; }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); grid-column:1/-1; }
+
+    /* --- RESPONSIVE BREAKPOINTS --- */
+    @media (max-width: 992px) {
+      .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: 0.3s ease; }
+      .sidebar.active { left: 0; }
+      .sidebar-overlay.active { display: block; }
+      .menu-toggle { display: block; }
+      .main-padding { padding: 25px; }
+    }
+
+    @media (max-width: 600px) {
+      .view-header { flex-direction: column; align-items: flex-start; }
+      .btn-post-listing { width: 100%; }
+      .property-grid { grid-template-columns: 1fr; }
+      .profile-trigger span { display: none; }
+      .card-actions .btn-action { flex: 1 1 100%; } /* Stack buttons on very small screens */
+    }
   </style>
 </head>
 <body>
 
-  <nav class="sidebar">
-    <div class="sidebar-logo" onclick="window.location.href='dashboard.html'">RentProx</div>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo" onclick="window.location.href='homepage.html'">RentProx</div>
     <div class="nav-group">
-      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="homepage.html" class="nav-link">Home Page</a>
       <a href="addproperty.html" class="nav-link">Add Property</a>
       <a href="properties.html" class="nav-link active">Property Management</a>
       <a href="ledger.html" class="nav-link">Rent Ledger</a>
@@ -94,7 +113,11 @@
 
   <div class="content-area">
     <header class="top-bar">
-      <div style="font-weight:700;color:var(--text-muted);">Property Management</div>
+      <div style="display: flex; align-items: center;">
+        <button class="menu-toggle" id="menu-toggle">☰</button>
+        <div style="font-weight:700;color:var(--text-muted);">Property Management</div>
+      </div>
+      
       <div class="profile-container">
         <div class="profile-trigger" id="profile-trigger">
           <span class="js-user-name">Loading...</span>
@@ -130,7 +153,6 @@
     </main>
   </div>
 
-  <!-- Edit Modal -->
   <div class="modal-overlay" id="edit-modal">
     <div class="modal">
       <h2 style="margin-top:0">Edit Property</h2>
@@ -143,9 +165,9 @@
       <input type="number" id="edit-rent" class="form-input">
       <label class="form-label">Description</label>
       <textarea id="edit-desc" class="form-input" style="height:80px"></textarea>
-      <div style="display:flex;gap:15px;margin-top:10px;">
-        <button class="btn-post-listing" style="flex:1" onclick="saveEdit()">Save Changes</button>
-        <button class="btn-action" style="flex:1" onclick="closeEditModal()">Cancel</button>
+      <div style="display:flex;gap:15px;margin-top:10px; flex-wrap: wrap;">
+        <button class="btn-post-listing" style="flex:1; min-width: 150px;" onclick="saveEdit()">Save Changes</button>
+        <button class="btn-action" style="flex:1; min-width: 150px;" onclick="closeEditModal()">Cancel</button>
       </div>
     </div>
   </div>
@@ -153,6 +175,21 @@
   <script src="../api.js"></script>
   <script>
   let allProperties = [];
+
+  // Mobile Menu Logic
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const menuToggle = document.getElementById('menu-toggle');
+
+  menuToggle.onclick = () => {
+    sidebar.classList.add('active');
+    overlay.classList.add('active');
+  };
+
+  overlay.onclick = () => {
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+  };
 
   (async function init() {
     const user = await Auth.guard('../login_plm.html');
@@ -206,8 +243,8 @@
             </div>
           </div>
           <div class="card-actions">
-            <button class="btn-action" onclick="openEditModal('${p.id}')">Edit Details</button>
-            <button class="btn-action" onclick="window.location.href='ledger.html'">View Ledger</button>
+            <button class="btn-action" onclick="openEditModal('${p.id}')">Edit</button>
+            <button class="btn-action" onclick="window.location.href='ledger.html'">Ledger</button>
             <button class="btn-action btn-danger" onclick="deleteProperty('${p.id}')">Delete</button>
           </div>
         </div>`;
