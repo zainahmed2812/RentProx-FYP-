@@ -14,7 +14,9 @@
     * { box-sizing: border-box; transition: all 0.2s ease-in-out; }
     body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg-light); color:var(--text-dark); display:flex; height:100vh; overflow:hidden; }
 
-    .sidebar { width:var(--sidebar-width); background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:20px 0; z-index:100; }
+    /* --- SIDEBAR & OVERLAY --- */
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; }
+    .sidebar { width:var(--sidebar-width); background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:20px 0; z-index:1001; }
     .sidebar-logo { padding:0 24px 30px; font-weight:800; color:var(--primary-green); font-size:1.4rem; cursor:pointer; }
     .nav-group { flex:1; }
     .nav-link { display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--text-muted); font-weight:500; font-size:0.95rem; }
@@ -24,8 +26,10 @@
     .btn-logout-side { width:100%; padding:12px; background:#fff; border:1px solid var(--border-color); border-radius:8px; font-weight:600; cursor:pointer; color:var(--text-muted); }
     .btn-logout-side:hover { color:#ef4444; border-color:#ef4444; }
 
-    .main-wrapper { flex:1; display:flex; flex-direction:column; overflow-y:auto; }
-    .top-bar { height:70px; background:#fff; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; padding:0 40px; position:sticky; top:0; z-index:90; }
+    /* --- TOP BAR --- */
+    .main-wrapper { flex:1; display:flex; flex-direction:column; overflow-y:auto; position: relative; }
+    .top-bar { height:70px; background:#fff; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; padding:0 30px; position:sticky; top:0; z-index:90; }
+    .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); margin-right: 15px; }
 
     .profile-container { position:relative; }
     .profile-trigger { display:flex; align-items:center; gap:12px; padding:6px 6px 6px 16px; border:1.5px solid var(--primary-green); border-radius:30px; cursor:pointer; background:#fff; }
@@ -41,19 +45,22 @@
     .dropdown-item:hover { background:#f8fafc; color:var(--text-dark); }
     .dropdown-item.logout { color:#ef4444; border-top:1px solid #f5f5f5; }
 
-    .header-area { margin-bottom:20px; padding:25px 40px 0; }
+    /* --- CONTENT AREA --- */
+    .header-area { margin-bottom:10px; padding:25px 30px 0; }
     .header-area h1 { margin:0; font-size:1.6rem; color:#1a1d23; }
     .header-area p { margin:5px 0 0; color:var(--text-muted); font-size:0.95rem; }
 
-    .ledger-panel { background:#fff; border-radius:12px; padding:25px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm); margin:0 40px 40px; }
-    .panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
+    .ledger-panel { background:#fff; border-radius:12px; padding:25px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm); margin:20px 30px 40px; }
+    .panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; gap: 15px; flex-wrap: wrap; }
     .panel-title { font-weight:700; font-size:1.1rem; }
-    .search-box { background:#fcfcfc; border:1px solid var(--border-color); border-radius:8px; padding:10px 15px; display:flex; align-items:center; width:300px; }
+    .search-box { background:#fcfcfc; border:1px solid var(--border-color); border-radius:8px; padding:10px 15px; display:flex; align-items:center; width:100%; max-width:300px; }
     .search-box input { border:none; background:transparent; outline:none; width:100%; font-family:inherit; margin-left:8px; }
 
-    .ledger-table { width:100%; border-collapse:collapse; }
+    /* --- TABLE STYLING --- */
+    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .ledger-table { width:100%; border-collapse:collapse; min-width: 700px; }
     .ledger-table th { text-align:left; padding:15px; color:var(--text-muted); font-size:0.8rem; font-weight:700; border-bottom:1.5px solid var(--border-color); text-transform:uppercase; letter-spacing:0.5px; }
-    .ledger-table td { padding:20px 15px; border-bottom:1px solid #f9f9f9; vertical-align:middle; }
+    .ledger-table td { padding:15px; border-bottom:1px solid #f9f9f9; vertical-align:middle; }
     .ledger-table tr:hover { background:#fafafa; }
 
     .tenant-cell { display:flex; align-items:center; gap:12px; }
@@ -61,28 +68,42 @@
     .badge { padding:6px 12px; border-radius:6px; font-size:0.75rem; font-weight:700; text-transform:uppercase; }
     .badge-paid { background:#e8f5e9; color:var(--primary-green); }
     .badge-pending { background:#fff5f5; color:#ef4444; }
-    .btn-action { background:#fff; color:var(--text-muted); border:1px solid var(--border-color); padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem; }
+    .btn-action { background:#fff; color:var(--text-muted); border:1px solid var(--border-color); padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.75rem; white-space: nowrap; }
     .btn-action:hover { border-color:var(--primary-green); color:var(--primary-green); }
     .btn-mark-paid { border-color:var(--primary-green); color:var(--primary-green); }
 
-    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:2000; }
+    /* --- MODAL --- */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:2000; padding: 20px; }
     .modal-overlay.active { display:flex; }
-    .modal { background:#fff; padding:30px; border-radius:12px; width:420px; }
-    .detail-row { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f5f5f5; }
+    .modal { background:#fff; padding:30px; border-radius:12px; width:100%; max-width:420px; position: relative; }
+    .detail-row { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f5f5f5; gap: 10px; }
     .detail-label { color:var(--text-muted); font-size:0.85rem; }
-    .detail-val { font-weight:700; }
+    .detail-val { font-weight:700; text-align: right; }
 
+    /* --- SKELETON --- */
     .skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:6px; height:50px; margin-bottom:10px; }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     .empty-state { text-align:center; padding:40px; color:var(--text-muted); }
+
+    /* --- RESPONSIVE BREAKPOINTS --- */
+    @media (max-width: 992px) {
+      .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: 0.3s ease; }
+      .sidebar.active { left: 0; }
+      .sidebar-overlay.active { display: block; }
+      .menu-toggle { display: block; }
+      .top-bar { padding: 0 20px; }
+      .header-area, .ledger-panel { margin-left: 15px; margin-right: 15px; padding: 20px; }
+    }
   </style>
 </head>
 <body>
 
-  <nav class="sidebar">
-    <div class="sidebar-logo" onclick="window.location.href='dashboard.html'">RentProx</div>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo" onclick="window.location.href='homepage.html'">RentProx</div>
     <div class="nav-group">
-      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="homepage.html" class="nav-link">Homepage</a>
       <a href="addproperty.html" class="nav-link">Add Property</a>
       <a href="properties.html" class="nav-link">Property Management</a>
       <a href="ledger.html" class="nav-link active">Rent Ledger</a>
@@ -94,7 +115,11 @@
 
   <div class="main-wrapper">
     <header class="top-bar">
-      <div style="font-weight:700;color:var(--text-muted);">Rent Ledger</div>
+      <div style="display: flex; align-items: center;">
+        <button class="menu-toggle" id="menu-toggle">☰</button>
+        <div style="font-weight:700;color:var(--text-muted);">Rent Ledger</div>
+      </div>
+      
       <div class="profile-container">
         <div class="profile-trigger" id="profile-trigger">
           <span class="js-user-name">Loading...</span>
@@ -131,21 +156,22 @@
         <div class="panel-title">Payment History</div>
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="search-inp" placeholder="Search tenant name or property...">
+          <input type="text" id="search-inp" placeholder="Search tenant or city...">
         </div>
       </div>
-      <div id="ledger-wrap">
-        <div class="skeleton"></div>
-        <div class="skeleton"></div>
-        <div class="skeleton"></div>
+      <div class="table-responsive">
+        <div id="ledger-wrap">
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Detail Modal -->
   <div class="modal-overlay" id="detail-modal">
     <div class="modal">
-      <h3 id="md-title" style="margin-top:0">Payment Details</h3>
+      <h3 style="margin-top:0">Payment Details</h3>
       <div class="detail-row"><span class="detail-label">Tenant Name</span><span class="detail-val" id="md-name"></span></div>
       <div class="detail-row"><span class="detail-label">Property</span><span class="detail-val" id="md-prop"></span></div>
       <div class="detail-row"><span class="detail-label">Month</span><span class="detail-val" id="md-month"></span></div>
@@ -158,126 +184,123 @@
 
   <script src="../api.js"></script>
   <script>
-  let allPayments = [];
+    let allPayments = [];
 
-  (async function init() {
-    const user = await Auth.guard('../login_plm.html');
-    if (!user) return;
-    Auth.fillProfile();
+    // Navigation Controls
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const menuToggle = document.getElementById('menu-toggle');
 
-    document.getElementById('logout-btn').onclick = () => Auth.logout('../login_plm.html');
-    document.getElementById('logout-dropdown').onclick = e => { e.preventDefault(); Auth.logout('../login_plm.html'); };
+    menuToggle.onclick = () => { sidebar.classList.add('active'); overlay.classList.add('active'); };
+    overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
 
-    const trigger  = document.getElementById('profile-trigger');
-    const dropdown = document.getElementById('profile-dropdown');
-    trigger.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('active'); });
-    window.addEventListener('click', () => dropdown.classList.remove('active'));
+    (async function init() {
+      const user = await Auth.guard('../login_plm.html');
+      if (!user) return;
+      Auth.fillProfile();
 
-    document.getElementById('search-inp').addEventListener('input', e => searchLedger(e.target.value));
+      document.getElementById('logout-btn').onclick = () => Auth.logout('../login_plm.html');
+      document.getElementById('logout-dropdown').onclick = e => { e.preventDefault(); Auth.logout('../login_plm.html'); };
 
-    await loadPayments();
-  })();
+      const trigger = document.getElementById('profile-trigger');
+      const dropdown = document.getElementById('profile-dropdown');
+      trigger.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('active'); });
+      window.addEventListener('click', () => dropdown.classList.remove('active'));
 
-  async function loadPayments() {
-    try {
-      const data = await apiFetch('/payments');
-      if (!data.success) { renderEmpty('Data load nahi hua.'); return; }
-      allPayments = data.data || [];
-      renderLedger(allPayments);
-    } catch {
-      showToast('Payments load nahi hue.', 'error');
-      renderEmpty('Backend chal raha hai? Network check karein.');
-    }
-  }
+      document.getElementById('search-inp').addEventListener('input', e => searchLedger(e.target.value));
 
-  function renderLedger(list) {
-    const wrap = document.getElementById('ledger-wrap');
-    if (!list || list.length === 0) {
-      wrap.innerHTML = `<div class="empty-state">
-        <p style="font-weight:600;margin-bottom:6px;">Koi payment record nahi mila</p>
-        <p>Rentals add karein aur payments record karein.</p>
-      </div>`;
-      return;
-    }
+      await loadPayments();
+    })();
 
-    wrap.innerHTML = `
-      <table class="ledger-table">
-        <thead>
-          <tr>
-            <th>Tenant Name</th>
-            <th>Property</th>
-            <th>Month</th>
-            <th>Monthly Rent</th>
-            <th>Status</th>
-            <th style="text-align:right">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${list.map(p => `
-            <tr>
-              <td>
-                <div class="tenant-cell">
-                  <div class="tenant-avatar">${(p.rental?.tenant?.name || 'T').charAt(0).toUpperCase()}</div>
-                  <span style="font-weight:700">${p.rental?.tenant?.name || '—'}</span>
-                </div>
-              </td>
-              <td><span style="color:var(--text-muted);font-weight:600">${p.rental?.property?.city || '—'}</span></td>
-              <td>${p.month}</td>
-              <td><span style="font-weight:700">PKR ${p.amount.toLocaleString()}</span></td>
-              <td><span class="badge badge-${p.paid ? 'paid' : 'pending'}">${p.paid ? 'paid' : 'pending'}</span></td>
-              <td style="text-align:right;display:flex;gap:8px;justify-content:flex-end;padding:20px 15px;">
-                <button class="btn-action" onclick="viewDetails('${p.id}')">View History</button>
-                ${!p.paid ? `<button class="btn-action btn-mark-paid" onclick="markPaid('${p.id}')">Mark Paid</button>` : ''}
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>`;
-  }
-
-  function renderEmpty(msg) {
-    document.getElementById('ledger-wrap').innerHTML = `<div class="empty-state"><p>${msg}</p></div>`;
-  }
-
-  function searchLedger(val) {
-    const v = val.toLowerCase();
-    const filtered = allPayments.filter(p =>
-      (p.rental?.tenant?.name || '').toLowerCase().includes(v) ||
-      (p.rental?.property?.city || '').toLowerCase().includes(v) ||
-      (p.month || '').includes(v)
-    );
-    renderLedger(filtered);
-  }
-
-  function viewDetails(id) {
-    const p = allPayments.find(x => x.id === id);
-    if (!p) return;
-    document.getElementById('md-name').textContent   = p.rental?.tenant?.name || '—';
-    document.getElementById('md-prop').textContent   = `${p.rental?.property?.city || '—'}, ${p.rental?.property?.address || ''}`;
-    document.getElementById('md-month').textContent  = p.month;
-    document.getElementById('md-rent').textContent   = 'PKR ' + p.amount.toLocaleString();
-    document.getElementById('md-status').innerHTML   = `<span class="badge badge-${p.paid ? 'paid' : 'pending'}">${p.paid ? 'PAID' : 'PENDING'}</span>`;
-    document.getElementById('md-paidat').textContent = p.paidAt ? new Date(p.paidAt).toLocaleDateString('en-PK') : '—';
-    document.getElementById('detail-modal').classList.add('active');
-  }
-
-  function closeModal() {
-    document.getElementById('detail-modal').classList.remove('active');
-  }
-
-  async function markPaid(id) {
-    try {
-      const data = await apiFetch(`/payments/${id}/mark-paid`, { method: 'PUT' });
-      if (data.success) {
-        showToast('Payment paid mark ho gayi!');
-        await loadPayments();
-      } else {
-        showToast(data.message || 'Error.', 'error');
+    async function loadPayments() {
+      try {
+        const data = await apiFetch('/payments');
+        if (!data.success) { renderEmpty('Data load nahi hua.'); return; }
+        allPayments = data.data || [];
+        renderLedger(allPayments);
+      } catch {
+        renderEmpty('Backend connectivity issues. Check your network.');
       }
-    } catch {
-      showToast('Network error.', 'error');
     }
-  }
+
+    function renderLedger(list) {
+      const wrap = document.getElementById('ledger-wrap');
+      if (!list || list.length === 0) {
+        wrap.innerHTML = `<div class="empty-state"><p>No payment records found.</p></div>`;
+        return;
+      }
+
+      wrap.innerHTML = `
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Tenant Name</th>
+              <th>Property</th>
+              <th>Month</th>
+              <th>Monthly Rent</th>
+              <th>Status</th>
+              <th style="text-align:right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(p => `
+              <tr>
+                <td>
+                  <div class="tenant-cell">
+                    <div class="tenant-avatar">${(p.rental?.tenant?.name || 'T').charAt(0).toUpperCase()}</div>
+                    <span style="font-weight:700">${p.rental?.tenant?.name || '—'}</span>
+                  </div>
+                </td>
+                <td><span style="color:var(--text-muted);font-weight:600">${p.rental?.property?.city || '—'}</span></td>
+                <td>${p.month}</td>
+                <td><span style="font-weight:700">PKR ${p.amount.toLocaleString()}</span></td>
+                <td><span class="badge badge-${p.paid ? 'paid' : 'pending'}">${p.paid ? 'paid' : 'pending'}</span></td>
+                <td style="text-align:right">
+                  <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button class="btn-action" onclick="viewDetails('${p.id}')">History</button>
+                    ${!p.paid ? `<button class="btn-action btn-mark-paid" onclick="markPaid('${p.id}')">Mark Paid</button>` : ''}
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    function searchLedger(val) {
+      const v = val.toLowerCase();
+      const filtered = allPayments.filter(p =>
+        (p.rental?.tenant?.name || '').toLowerCase().includes(v) ||
+        (p.rental?.property?.city || '').toLowerCase().includes(v)
+      );
+      renderLedger(filtered);
+    }
+
+    function viewDetails(id) {
+      const p = allPayments.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('md-name').textContent = p.rental?.tenant?.name || '—';
+      document.getElementById('md-prop').textContent = `${p.rental?.property?.city || '—'}, ${p.rental?.property?.address || ''}`;
+      document.getElementById('md-month').textContent = p.month;
+      document.getElementById('md-rent').textContent = 'PKR ' + p.amount.toLocaleString();
+      document.getElementById('md-status').innerHTML = `<span class="badge badge-${p.paid ? 'paid' : 'pending'}">${p.paid ? 'PAID' : 'PENDING'}</span>`;
+      document.getElementById('md-paidat').textContent = p.paidAt ? new Date(p.paidAt).toLocaleDateString('en-PK') : '—';
+      document.getElementById('detail-modal').classList.add('active');
+    }
+
+    function closeModal() { document.getElementById('detail-modal').classList.remove('active'); }
+
+    async function markPaid(id) {
+      try {
+        const data = await apiFetch(`/payments/${id}/mark-paid`, { method: 'PUT' });
+        if (data.success) {
+          showToast('Payment updated successfully!');
+          await loadPayments();
+        }
+      } catch {
+        showToast('Update failed.', 'error');
+      }
+    }
   </script>
 </body>
 </html>

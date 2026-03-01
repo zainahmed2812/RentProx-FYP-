@@ -14,8 +14,10 @@
     * { box-sizing: border-box; transition: all 0.2s ease-in-out; }
     body { margin:0; font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg-light); color:var(--text-dark); display:flex; height:100vh; overflow:hidden; }
 
-    /* SIDEBAR */
-    .sidebar { width:var(--sidebar-width); background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:20px 0; z-index:100; }
+    /* --- SIDEBAR & OVERLAY --- */
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; }
+
+    .sidebar { width:var(--sidebar-width); background:#fff; border-right:1px solid var(--border-color); display:flex; flex-direction:column; padding:20px 0; z-index:1001; }
     .sidebar-logo { padding:0 24px 30px; font-weight:800; color:var(--primary-green); font-size:1.4rem; cursor:pointer; }
     .nav-group { flex:1; }
     .nav-link { display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--text-muted); font-weight:500; font-size:0.95rem; cursor:pointer; }
@@ -25,11 +27,13 @@
     .btn-logout-side { width:100%; padding:12px; background:#fff; border:1px solid var(--border-color); border-radius:8px; font-weight:600; cursor:pointer; color:var(--text-muted); }
     .btn-logout-side:hover { color:#ef4444; border-color:#ef4444; }
 
-    /* MAIN */
-    .main-wrapper { flex:1; display:flex; flex-direction:column; overflow-y:auto; }
-    .top-bar { height:70px; background:#fff; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; padding:0 40px; position:sticky; top:0; z-index:90; }
+    /* --- MAIN --- */
+    .main-wrapper { flex:1; display:flex; flex-direction:column; overflow-y:auto; position: relative; }
+    .top-bar { height:70px; background:#fff; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; padding:0 30px; position:sticky; top:0; z-index:90; }
 
-    /* PROFILE DROPDOWN */
+    .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); margin-right: 15px; }
+
+    /* --- PROFILE DROPDOWN --- */
     .profile-container { position:relative; }
     .profile-trigger { display:flex; align-items:center; gap:12px; padding:6px 6px 6px 16px; border:1.5px solid var(--primary-green); border-radius:30px; cursor:pointer; background:#fff; }
     .profile-trigger span { color:var(--primary-green); font-weight:600; font-size:0.9rem; }
@@ -44,45 +48,63 @@
     .dropdown-item:hover { background:#f8fafc; color:var(--text-dark); }
     .dropdown-item.logout { color:#ef4444; border-top:1px solid #f5f5f5; }
 
-    /* VIEW */
-    .view-content { display:none; padding:30px 40px; }
+    /* --- DASHBOARD ELEMENTS --- */
+    .view-content { display:none; padding:30px; }
     .view-content.active { display:block; }
 
-    /* DASHBOARD */
     .quota-card { background:#fff; border-radius:12px; padding:24px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm); margin-bottom:24px; }
     .quota-header { font-weight:700; font-size:1rem; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:10px; }
-    .stats-row { display:flex; gap:40px; }
-    .stat-item { flex:1; }
+    
+    .stats-row { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:20px; }
+    .stat-item { padding: 10px 0; }
     .stat-label { color:var(--text-muted); font-size:0.85rem; font-weight:500; display:block; margin-bottom:5px; }
-    .stat-value { font-size:1.6rem; font-weight:700; color:#000; }
+    .stat-value { font-size:1.4rem; font-weight:700; color:#000; }
+    
     .dashboard-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:24px; }
     .panel { background:#fff; border-radius:12px; padding:24px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm); }
     .panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
     .panel-title { font-weight:700; font-size:1.05rem; }
     .btn-green { background:var(--primary-green); color:#fff; border:none; padding:10px 20px; border-radius:6px; font-weight:700; cursor:pointer; }
-    .search-input { width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px; font-family:inherit; outline:none; }
-    .item-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f9f9f9; }
+    .item-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f9f9f9; gap: 10px; }
     .badge { padding:4px 8px; border-radius:4px; font-size:0.7rem; font-weight:700; }
     .badge-paid { background:#e8f5e9; color:var(--primary-green); }
     .badge-pending { background:#fff5f5; color:#ef4444; }
 
-    /* MODAL */
-    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; z-index:2000; }
-    .modal-overlay.active { display:flex; }
-    .modal { background:#fff; padding:30px; border-radius:12px; width:420px; }
-
-    /* SKELETON */
+    /* SKELETON / EMPTY */
     .skeleton { background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:6px; height:18px; margin-bottom:12px; }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     .empty-state { text-align:center; padding:30px 10px; color:var(--text-muted); font-size:0.9rem; }
+
+    /* --- RESPONSIVE QUERIES --- */
+    @media (max-width: 1024px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: 0.3s ease; }
+      .sidebar.active { left: 0; }
+      .sidebar-overlay.active { display: block; }
+      .menu-toggle { display: block; }
+      .top-bar { padding: 0 20px; }
+      .view-content { padding: 20px; }
+      .profile-trigger span { display: none; }
+      .stat-value { font-size: 1.2rem; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .stat-item { border-bottom: 1px solid var(--border-color); }
+    }
   </style>
 </head>
 <body>
 
-  <nav class="sidebar">
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo">RentProx</div>
     <div class="nav-group">
-      <a href="dashboard.html" class="nav-link active">Dashboard</a>
+      <a href="homepage.html" class="nav-link active">Home Page</a>
       <a href="addproperty.html" class="nav-link">Add Property</a>
       <a href="properties.html" class="nav-link">Property Management</a>
       <a href="ledger.html" class="nav-link">Rent Ledger</a>
@@ -94,7 +116,11 @@
 
   <div class="main-wrapper">
     <header class="top-bar">
-      <div style="font-weight:700;color:var(--text-muted);">Dashboard</div>
+      <div style="display: flex; align-items: center;">
+        <button class="menu-toggle" id="menu-toggle">☰</button>
+        <div style="font-weight:700;color:var(--text-muted);">Dashboard</div>
+      </div>
+      
       <div class="profile-container">
         <div class="profile-trigger" id="profile-trigger">
           <span class="js-user-name">Loading...</span>
@@ -121,9 +147,7 @@
       </div>
     </header>
 
-    <!-- DASHBOARD VIEW -->
     <main id="view-dashboard" class="view-content active">
-      <!-- Stats Card -->
       <div class="quota-card">
         <div class="quota-header">Overview</div>
         <div class="stats-row">
@@ -146,7 +170,6 @@
         </div>
       </div>
 
-      <!-- Grid -->
       <div class="dashboard-grid">
         <div class="panel">
           <div class="panel-header">
@@ -170,36 +193,37 @@
     </main>
   </div>
 
-  <!-- Tenant Modal -->
-  <div class="modal-overlay" id="tenant-modal">
-    <div class="modal">
-      <h3 id="tm-name" style="margin-top:0"></h3>
-      <div id="tm-details"></div>
-      <button class="btn-green" style="width:100%;margin-top:20px" onclick="document.getElementById('tenant-modal').classList.remove('active')">Close</button>
-    </div>
-  </div>
-
   <script src="../api.js"></script>
   <script>
+  // Mobile Menu Controls
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const menuToggle = document.getElementById('menu-toggle');
+
+  menuToggle.onclick = () => {
+    sidebar.classList.add('active');
+    overlay.classList.add('active');
+  };
+
+  overlay.onclick = () => {
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+  };
+
   (async function init() {
-    // Auth guard
     const user = await Auth.guard('../login_plm.html');
     if (!user) return;
 
-    // Fill profile
     Auth.fillProfile();
 
-    // Logout buttons
     document.getElementById('logout-btn').onclick = () => Auth.logout('../login_plm.html');
     document.getElementById('logout-dropdown').onclick = e => { e.preventDefault(); Auth.logout('../login_plm.html'); };
 
-    // Profile dropdown toggle
     const trigger  = document.getElementById('profile-trigger');
     const dropdown = document.getElementById('profile-dropdown');
     trigger.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('active'); });
     window.addEventListener('click', () => dropdown.classList.remove('active'));
 
-    // Load dashboard data
     try {
       const data = await apiFetch('/user/dashboard');
 
@@ -212,13 +236,11 @@
 
       const { stats, properties, recentPayments } = data.data;
 
-      // Stats
       document.getElementById('stat-props').textContent     = stats.totalProperties ?? 0;
       document.getElementById('stat-rentals').textContent   = stats.totalRentals ?? 0;
       document.getElementById('stat-pending').textContent   = stats.pendingPayments ?? 0;
       document.getElementById('stat-collected').textContent = 'PKR ' + ((stats.totalCollected || 0)).toLocaleString();
 
-      // Properties panel
       const propEl = document.getElementById('property-summary-list');
       if (!properties || properties.length === 0) {
         propEl.innerHTML = `<div class="empty-state">
@@ -237,7 +259,6 @@
         `).join('');
       }
 
-      // Payments panel
       const payEl = document.getElementById('payment-list');
       if (!recentPayments || recentPayments.length === 0) {
         payEl.innerHTML = `<div class="empty-state">Abhi koi payment record nahi.</div>`;
@@ -261,7 +282,8 @@
   })();
 
   function showEmpty(id, msg) {
-    document.getElementById(id).innerHTML = `<div class="empty-state">${msg}</div>`;
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = `<div class="empty-state">${msg}</div>`;
   }
   </script>
 </body>

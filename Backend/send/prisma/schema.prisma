@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String
+  address   String
+  cnic      String   @unique
+  isAdmin   Boolean  @default(false)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  properties     Property[]
+  ownedRentals   Rental[]   @relation("OwnerRentals")
+  tenantRentals  Rental[]   @relation("TenantRentals")
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  address     String
+  city        String
+  area        Float
+  areaUnit    AreaUnit @default(MARLA)
+  rentAmount  Float
+  description String   @default("")
+  createdAt   DateTime @default(now())
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+
+  rentals Rental[]
+}
+
+model Rental {
+  id         String   @id @default(cuid())
+  startDate  DateTime @default(now())
+  rentAmount Float
+  createdAt  DateTime @default(now())
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+
+  owner   User   @relation("OwnerRentals", fields: [ownerId], references: [id])
+  ownerId String
+
+  tenant   User   @relation("TenantRentals", fields: [tenantId], references: [id])
+  tenantId String
+
+  payments Payment[]
+}
+
+model Payment {
+  id        String    @id @default(cuid())
+  amount    Float
+  month     String
+  paid      Boolean   @default(false)
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  rental   Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  rentalId String
+}
+
+enum AreaUnit {
+  SQFT
+  SQM
+  MARLA
+  KANAL
+}
