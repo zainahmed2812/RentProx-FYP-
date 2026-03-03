@@ -10,6 +10,10 @@ import userDashboard  from './routes/User/dashboard.js';
 import userProperty   from './routes/User/property.js';
 import adminDashboard from './routes/Admin/dashboard.js';
 import adminProperty  from './routes/Admin/property.js';
+import publicListings  from './routes/public/listings.js';
+import tenantRequests  from './routes/User/tenantRequests.js';
+import ownerRequests   from './routes/User/ownerRequests.js';
+import agreementRoutes from './routes/User/agreement.js';
 
 // Middleware
 import { errorHandler } from './middleware/errorMiddleware.js';
@@ -51,6 +55,10 @@ app.use('/api/user/dashboard',  userDashboard);
 app.use('/api/user/property',   userProperty);
 app.use('/api/admin/dashboard', adminDashboard);
 app.use('/api/admin/property',  adminProperty);
+app.use('/api/listings',       publicListings);  // public — koi bhi dekh sakta
+app.use('/api/user/requests',  tenantRequests);  // tenant — request bhejo/dekho
+app.use('/api/owner/requests', ownerRequests);   // owner  — requests manage karo
+app.use('/api/user/agreement', agreementRoutes); // dono   — agreement dekho/sign
 
 // ── Health Check ───────────────────────────────────────
 app.get('/api/health', (req, res) => {

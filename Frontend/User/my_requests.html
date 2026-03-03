@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Requests — RentProx</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --green:#28b446; --green-dark:#1e8c36;
+      --bg:#f8f9fa; --white:#fff;
+      --text:#1a1d23; --muted:#666;
+      --border:#ededed; --shadow:0 4px 20px rgba(0,0,0,0.07);
+      --sidebar:260px;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); display:flex; height:100vh; overflow:hidden; }
+
+    /* SIDEBAR */
+    .sidebar{ width:var(--sidebar); background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; }
+    .sb-logo{ padding:0 24px 28px; font-weight:800; color:var(--green); font-size:1.4rem; cursor:pointer; }
+    .nav-link{ display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--muted); font-weight:500; font-size:0.93rem; }
+    .nav-link:hover{ color:var(--green); background:#f0fdf4; }
+    .nav-link.active{ color:var(--green); background:#e8f5e9; border-right:4px solid var(--green); font-weight:700; }
+    .sb-footer{ padding:20px; border-top:1px solid var(--border); margin-top:auto; }
+    .btn-logout{ width:100%; padding:11px; background:var(--white); border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; color:var(--muted); font-family:inherit; }
+    .btn-logout:hover{ color:#ef4444; border-color:#ef4444; }
+
+    /* MAIN */
+    .main-wrap{ flex:1; display:flex; flex-direction:column; overflow-y:auto; }
+    .topbar{
+      height:68px; background:var(--white); border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between; padding:0 36px;
+      position:sticky; top:0; z-index:90;
+    }
+    .topbar-title{ font-weight:700; color:var(--muted); font-size:0.95rem; }
+
+    /* PROFILE DROPDOWN */
+    .prof-wrap{ position:relative; }
+    .prof-pill{ display:flex; align-items:center; gap:10px; padding:6px 6px 6px 16px; border:1.5px solid var(--green); border-radius:30px; cursor:pointer; }
+    .prof-pill span{ color:var(--green); font-weight:600; font-size:0.88rem; }
+    .prof-av{ width:30px; height:30px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; }
+    .prof-drop{ position:absolute; top:calc(100% + 8px); right:0; width:260px; background:var(--white); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.12); border:1px solid var(--border); display:none; flex-direction:column; z-index:999; overflow:hidden; }
+    .prof-drop.on{ display:flex; }
+    .drop-hd{ padding:18px 20px; border-bottom:1px solid #f5f5f5; }
+    .drop-name{ font-weight:700; font-size:0.93rem; }
+    .drop-email{ font-size:0.73rem; color:var(--muted); }
+    .drop-item{ padding:13px 20px; text-decoration:none; color:var(--muted); font-size:0.88rem; font-weight:500; }
+    .drop-item:hover{ background:#f8fafc; color:var(--text); }
+    .drop-item.red{ color:#ef4444; border-top:1px solid #f5f5f5; cursor:pointer; }
+
+    /* CONTENT */
+    .content{ padding:36px; }
+    .page-head{ margin-bottom:28px; }
+    .page-head h1{ font-size:1.5rem; font-weight:700; }
+    .page-head p{ color:var(--muted); margin-top:4px; font-size:0.9rem; }
+
+    /* TABS */
+    .tabs{ display:flex; gap:4px; margin-bottom:24px; background:#f1f5f9; border-radius:10px; padding:4px; width:fit-content; }
+    .tab{
+      padding:9px 20px; border-radius:7px; font-weight:600; font-size:0.85rem;
+      cursor:pointer; border:none; background:transparent; color:var(--muted); font-family:inherit;
+    }
+    .tab.active{ background:var(--white); color:var(--text); box-shadow:0 2px 6px rgba(0,0,0,0.08); }
+
+    /* REQUEST CARDS */
+    .req-list{ display:flex; flex-direction:column; gap:16px; }
+    .req-card{
+      background:var(--white); border:1px solid var(--border); border-radius:12px;
+      padding:22px; display:flex; align-items:flex-start; gap:20px; box-shadow:var(--shadow);
+    }
+    .req-icon{
+      width:46px; height:46px; border-radius:10px; background:#f1f5f9;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .req-info{ flex:1; }
+    .req-addr{ font-weight:700; font-size:1rem; margin-bottom:3px; }
+    .req-meta{ color:var(--muted); font-size:0.82rem; margin-bottom:10px; }
+    .req-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+    .badge{ padding:5px 12px; border-radius:6px; font-size:0.72rem; font-weight:700; text-transform:uppercase; }
+    .badge-pending  { background:#fff7ed; color:#c2410c; }
+    .badge-accepted { background:#e8f5e9; color:var(--green); }
+    .badge-declined { background:#fff5f5; color:#ef4444; }
+
+    .btn-sm{
+      padding:7px 14px; border-radius:7px; font-size:0.8rem; font-weight:600;
+      cursor:pointer; border:1px solid var(--border); background:var(--white);
+      color:var(--muted); font-family:inherit;
+    }
+    .btn-sm:hover{ border-color:var(--green); color:var(--green); }
+    .btn-sm.green{ background:var(--green); color:#fff; border:none; }
+    .btn-sm.green:hover{ background:var(--green-dark); }
+    .btn-sm.red:hover{ border-color:#ef4444; color:#ef4444; }
+
+    /* SKELETON */
+    .sk{ background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:12px; height:90px; margin-bottom:14px; }
+    @keyframes sh{ 0%{background-position:200% 0}100%{background-position:-200% 0} }
+    .empty-state{ text-align:center; padding:50px; color:var(--muted); }
+    .empty-state h3{ margin-bottom:8px; color:var(--text); }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-logo" onclick="location.href='../index.html'">RentProx</div>
+  <a href="homepage.html"   class="nav-link">🏠 Homepage</a>
+  <a href="../index.html"    class="nav-link">🔍 Browse Properties</a>
+  <a href="my_requests.html" class="nav-link active">📋 My Requests</a>
+  <a href="addproperty.html" class="nav-link">➕ Add Property</a>
+  <a href="properties.html"  class="nav-link">🏢 My Properties</a>
+  <a href="ledger.html"      class="nav-link">💰Rent Ledger</a>
+  <div class="sb-footer">
+    <button class="btn-logout" id="logout-btn">Log Out</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap">
+  <header class="topbar">
+    <span class="topbar-title">My Requests</span>
+    <div class="prof-wrap">
+      <div class="prof-pill" id="prof-pill">
+        <span class="js-user-name">Loading…</span>
+        <div class="prof-av">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="prof-drop" id="prof-drop">
+        <div class="drop-hd">
+          <div class="drop-name js-user-name">—</div>
+          <div class="drop-email js-user-email">—</div>
+        </div>
+        <div class="drop-item red" id="logout-drop">Logout</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-head">
+      <h1>My Rental Requests</h1>
+      <p>Properties jinke liye aap ne request bheji hai — status aur agreement track karein.</p>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('all',this)">All</button>
+      <button class="tab" onclick="switchTab('PENDING',this)">Pending</button>
+      <button class="tab" onclick="switchTab('ACCEPTED',this)">Accepted</button>
+      <button class="tab" onclick="switchTab('DECLINED',this)">Declined</button>
+    </div>
+
+    <!-- LIST -->
+    <div class="req-list" id="req-list">
+      <div class="sk"></div><div class="sk"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../api.js"></script>
+<script>
+let allRequests = [];
+let curTab      = 'all';
+
+(async function init(){
+  const user = await Auth.guard('../login_plm.html');
+  if(!user) return;
+  Auth.fillProfile();
+
+  document.getElementById('logout-btn').onclick  = ()=>Auth.logout('../login_plm.html');
+  document.getElementById('logout-drop').onclick = ()=>Auth.logout('../login_plm.html');
+
+  const pill = document.getElementById('prof-pill');
+  const drop = document.getElementById('prof-drop');
+  pill.addEventListener('click', e=>{ e.stopPropagation(); drop.classList.toggle('on'); });
+  window.addEventListener('click', ()=>drop.classList.remove('on'));
+
+  await loadRequests();
+})();
+
+async function loadRequests(){
+  try{
+    const d = await apiFetch('/user/requests');
+    if(!d.success){ renderEmpty('Requests load nahi huin.'); return; }
+    allRequests = d.data || [];
+    renderList(allRequests);
+  } catch {
+    showToast('Network error.','error');
+    renderEmpty('Backend se connect nahi ho saka.');
+  }
+}
+
+function switchTab(tab, el){
+  curTab = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const filtered = tab==='all' ? allRequests : allRequests.filter(r=>r.status===tab);
+  renderList(filtered);
+}
+
+function renderList(list){
+  const cont = document.getElementById('req-list');
+  if(!list.length){
+    cont.innerHTML = `<div class="empty-state">
+      <h3>Koi request nahi mili</h3>
+      <p>Properties browse karein aur request bhejein.</p>
+      <a href="../index.html" style="color:var(--green);font-weight:700;text-decoration:none;display:inline-block;margin-top:12px">Browse Properties →</a>
+    </div>`;
+    return;
+  }
+
+  cont.innerHTML = list.map(r => {
+    const p          = r.property;
+    const isAccepted = r.status === 'ACCEPTED';
+    const isPending  = r.status === 'PENDING';
+    const hasAgreement = r.agreement;
+
+    return `
+    <div class="req-card">
+      <div class="req-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <div class="req-info">
+        <div class="req-addr">${p.address}</div>
+        <div class="req-meta">📍 ${p.city} &nbsp;·&nbsp; PKR ${p.rentAmount.toLocaleString()}/mo &nbsp;·&nbsp; Owner: ${p.owner?.name||'—'} (${p.owner?.phone||''})</div>
+        <div class="req-row">
+          <span class="badge badge-${r.status.toLowerCase()}">${r.status}</span>
+          ${r.message ? `<span style="font-size:0.78rem;color:var(--muted)">Msg: "${r.message}"</span>` : ''}
+          <span style="font-size:0.78rem;color:var(--muted)">${new Date(r.createdAt).toLocaleDateString('en-PK')}</span>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          ${isPending ? `<button class="btn-sm red" onclick="cancelRequest('${r.id}')">Cancel Request</button>` : ''}
+          ${isAccepted && hasAgreement
+            ? `<button class="btn-sm green" onclick="viewAgreement('${r.id}')">View Agreement</button>`
+            : ''}
+          ${isAccepted && !hasAgreement
+            ? `<span style="font-size:0.8rem;color:var(--muted)">Agreement bann raha hai…</span>`
+            : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function cancelRequest(id){
+  if(!confirm('Request cancel karna chahte hain?')) return;
+  try{
+    const d = await apiFetch(`/user/requests/${id}`,{ method:'DELETE' });
+    if(d.success){ showToast('Request cancel ho gayi.'); await loadRequests(); }
+    else showToast(d.message||'Cancel nahi hua.','error');
+  } catch { showToast('Network error.','error'); }
+}
+
+function viewAgreement(listingId){
+  window.location.href = `agreement.html?listing=${listingId}`;
+}
+
+function renderEmpty(msg){
+  document.getElementById('req-list').innerHTML = `<div class="empty-state"><h3>${msg}</h3></div>`;
+}
+</script>
+</body>
+</html>
