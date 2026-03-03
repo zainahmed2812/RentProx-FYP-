@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rental Agreement — RentProx</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --green:#28b446; --green-dark:#1e8c36;
+      --bg:#f8f9fa; --white:#fff;
+      --text:#1a1d23; --muted:#666;
+      --border:#ededed; --shadow:0 4px 20px rgba(0,0,0,0.07);
+      --sidebar:260px;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); display:flex; height:100vh; overflow:hidden; }
+
+    .sidebar{ width:var(--sidebar); background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; }
+    .sb-logo{ padding:0 24px 28px; font-weight:800; color:var(--green); font-size:1.4rem; cursor:pointer; }
+    .nav-link{ display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--muted); font-weight:500; font-size:0.93rem; }
+    .nav-link:hover{ color:var(--green); background:#f0fdf4; }
+    .nav-link.active{ color:var(--green); background:#e8f5e9; border-right:4px solid var(--green); font-weight:700; }
+    .sb-footer{ padding:20px; border-top:1px solid var(--border); margin-top:auto; }
+    .btn-logout{ width:100%; padding:11px; background:var(--white); border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; color:var(--muted); font-family:inherit; }
+    .btn-logout:hover{ color:#ef4444; border-color:#ef4444; }
+
+    .main-wrap{ flex:1; display:flex; flex-direction:column; overflow-y:auto; }
+    .topbar{ height:68px; background:var(--white); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 36px; position:sticky; top:0; z-index:90; }
+
+    .prof-wrap{ position:relative; }
+    .prof-pill{ display:flex; align-items:center; gap:10px; padding:6px 6px 6px 16px; border:1.5px solid var(--green); border-radius:30px; cursor:pointer; }
+    .prof-pill span{ color:var(--green); font-weight:600; font-size:0.88rem; }
+    .prof-av{ width:30px; height:30px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; }
+    .prof-drop{ position:absolute; top:calc(100% + 8px); right:0; width:260px; background:var(--white); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.12); border:1px solid var(--border); display:none; flex-direction:column; z-index:999; overflow:hidden; }
+    .prof-drop.on{ display:flex; }
+    .drop-hd{ padding:18px 20px; border-bottom:1px solid #f5f5f5; }
+    .drop-name{ font-weight:700; }
+    .drop-email{ font-size:0.73rem; color:var(--muted); }
+    .drop-item{ padding:13px 20px; color:var(--muted); font-size:0.88rem; font-weight:500; }
+    .drop-item.red{ color:#ef4444; border-top:1px solid #f5f5f5; cursor:pointer; }
+
+    /* AGREEMENT DOC */
+    .content{ padding:36px; max-width:900px; }
+    .agr-header{ background:var(--white); border:1px solid var(--border); border-radius:14px; padding:28px 32px; margin-bottom:22px; box-shadow:var(--shadow); }
+    .agr-title{ font-size:1.5rem; font-weight:800; margin-bottom:6px; }
+    .agr-sub{ color:var(--muted); font-size:0.9rem; margin-bottom:18px; }
+
+    .status-bar{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+    .agr-badge{ padding:7px 16px; border-radius:8px; font-size:0.8rem; font-weight:700; text-transform:uppercase; }
+    .agr-badge.draft    { background:#fff7ed; color:#c2410c; }
+    .agr-badge.active   { background:#e8f5e9; color:var(--green); }
+    .agr-badge.expired  { background:#f5f5f5; color:#999; }
+    .agr-badge.cancelled{ background:#fff5f5; color:#ef4444; }
+
+    .sign-status{ display:flex; gap:12px; }
+    .sign-pill{ display:flex; align-items:center; gap:7px; padding:6px 14px; border-radius:8px; font-size:0.8rem; font-weight:600; background:#f1f5f9; color:#64748b; }
+    .sign-pill.signed{ background:#e8f5e9; color:var(--green); }
+
+    /* SECTIONS */
+    .section{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:24px 28px; margin-bottom:18px; box-shadow:var(--shadow); }
+    .section-title{ font-weight:700; font-size:0.95rem; margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+    .section-title span{ background:var(--green); color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:800; }
+
+    .terms-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .term-item{ display:flex; flex-direction:column; gap:4px; }
+    .term-label{ font-size:0.75rem; color:var(--muted); font-weight:600; text-transform:uppercase; }
+    .term-val{ font-weight:700; font-size:0.95rem; }
+    .term-val.highlight{ color:var(--green); font-size:1.1rem; }
+
+    .bool-row{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f9f9f9; font-size:0.88rem; }
+    .bool-row:last-child{ border:none; }
+    .chip{ padding:3px 10px; border-radius:5px; font-size:0.72rem; font-weight:700; }
+    .chip.yes{ background:#e8f5e9; color:var(--green); }
+    .chip.no { background:#f5f5f5; color:#94a3b8; }
+
+    /* EDIT FORM (owner only) */
+    .edit-form{ display:none; }
+    .edit-form.on{ display:block; }
+    .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+    .form-group{ display:flex; flex-direction:column; gap:6px; }
+    .form-label{ font-size:0.78rem; font-weight:600; color:var(--muted); }
+    .form-input{ padding:10px 13px; border:1px solid var(--border); border-radius:8px; font-family:inherit; outline:none; font-size:0.87rem; }
+    .form-input:focus{ border-color:var(--green); }
+    .form-check{ display:flex; align-items:center; gap:8px; font-size:0.87rem; cursor:pointer; }
+
+    /* ACTION BAR */
+    .action-bar{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:22px 28px; display:flex; align-items:center; justify-content:space-between; box-shadow:var(--shadow); }
+    .action-left{ font-size:0.88rem; color:var(--muted); }
+    .action-left strong{ color:var(--text); display:block; margin-bottom:3px; }
+    .action-btns{ display:flex; gap:10px; }
+    .btn-edit{ padding:11px 22px; border:1.5px solid var(--green); color:var(--green); background:var(--white); border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .btn-sign{ padding:11px 28px; background:var(--green); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .btn-sign:hover{ background:var(--green-dark); }
+    .btn-sign:disabled{ background:#94a3b8; cursor:not-allowed; }
+
+    .sk{ background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:12px; }
+    @keyframes sh{ 0%{background-position:200% 0}100%{background-position:-200% 0} }
+    .err{ background:#fff5f5; border:1px solid #fecaca; border-radius:10px; padding:20px; text-align:center; color:#ef4444; }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sb-logo">RentProx</div>
+  <a href="homepage.html"         class="nav-link">🏠 Homepage</a>
+  <a href="../index.html"          class="nav-link">🔍 Browse Properties</a>
+  <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
+  <a href="incoming_requests.html" class="nav-link">📩 Incoming Requests</a>
+  <a href="properties.html"        class="nav-link">🏢 My Properties</a>
+  <div class="sb-footer">
+    <button class="btn-logout" id="logout-btn">Log Out</button>
+  </div>
+</nav>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <span style="font-weight:700;color:var(--muted)">Rental Agreement</span>
+    <div class="prof-wrap">
+      <div class="prof-pill" id="prof-pill">
+        <span class="js-user-name">Loading…</span>
+        <div class="prof-av">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="prof-drop" id="prof-drop">
+        <div class="drop-hd">
+          <div class="drop-name js-user-name">—</div>
+          <div class="drop-email js-user-email">—</div>
+        </div>
+        <div class="drop-item red" id="logout-drop">Logout</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="content" id="agr-content">
+    <div class="sk" style="height:120px;margin-bottom:18px"></div>
+    <div class="sk" style="height:200px;margin-bottom:18px"></div>
+    <div class="sk" style="height:160px"></div>
+  </div>
+</div>
+
+<script src="../api.js"></script>
+<script>
+let agr     = null;
+let prop    = null;
+let role    = null; // 'owner' | 'tenant'
+let editMode= false;
+
+(async function init(){
+  const user = await Auth.guard('../login_plm.html');
+  if(!user) return;
+  Auth.fillProfile();
+
+  document.getElementById('logout-btn').onclick  = ()=>Auth.logout('../login_plm.html');
+  document.getElementById('logout-drop').onclick = ()=>Auth.logout('../login_plm.html');
+  const pill=document.getElementById('prof-pill'), drop=document.getElementById('prof-drop');
+  pill.addEventListener('click',e=>{ e.stopPropagation(); drop.classList.toggle('on'); });
+  window.addEventListener('click',()=>drop.classList.remove('on'));
+
+  // Get listing id from URL
+  const params    = new URLSearchParams(window.location.search);
+  const listingId = params.get('listing');
+  if(!listingId){ showError('Listing ID missing hai. Wapas jao.'); return; }
+
+  await loadAgreement(listingId);
+})();
+
+async function loadAgreement(listingId){
+  try{
+    const d = await apiFetch(`/user/agreement/${listingId}`);
+    if(!d.success){ showError(d.message); return; }
+
+    agr  = d.data.agreement;
+    prop = d.data.property;
+    role = d.data.userRole;
+
+    renderAgreement();
+  } catch{ showError('Agreement load nahi hua. Backend chal raha hai?'); }
+}
+
+function renderAgreement(){
+  const alreadySigned = role==='owner' ? agr.ownerSigned : agr.tenantSigned;
+  const isActive      = agr.status === 'ACTIVE';
+
+  document.getElementById('agr-content').innerHTML = `
+
+    <!-- HEADER -->
+    <div class="agr-header">
+      <div class="agr-title">Rental Agreement</div>
+      <div class="agr-sub">${prop.address}, ${prop.city}</div>
+      <div class="status-bar">
+        <span class="agr-badge ${agr.status.toLowerCase()}">${agr.status}</span>
+        <div class="sign-status">
+          <div class="sign-pill ${agr.ownerSigned?'signed':''}">
+            ${agr.ownerSigned?'✅':'⏳'} Owner ${agr.ownerSigned?'Signed':'Pending'}
+          </div>
+          <div class="sign-pill ${agr.tenantSigned?'signed':''}">
+            ${agr.tenantSigned?'✅':'⏳'} Tenant ${agr.tenantSigned?'Signed':'Pending'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINANCIAL TERMS -->
+    <div class="section">
+      <div class="section-title"><span>1</span> Financial Terms</div>
+      <div class="terms-grid" id="financial-view">
+        <div class="term-item"><div class="term-label">Monthly Rent</div>       <div class="term-val highlight">PKR ${agr.monthlyRent.toLocaleString()}</div></div>
+        <div class="term-item"><div class="term-label">Security Deposit</div>   <div class="term-val">PKR ${agr.securityDeposit.toLocaleString()}</div></div>
+        <div class="term-item"><div class="term-label">Advance Months</div>     <div class="term-val">${agr.advanceMonths} month(s)</div></div>
+        <div class="term-item"><div class="term-label">Total Advance</div>      <div class="term-val">PKR ${(agr.monthlyRent * agr.advanceMonths).toLocaleString()}</div></div>
+      </div>
+      ${role==='owner' && !isActive ? `
+      <!-- EDIT FORM (owner only) -->
+      <div class="edit-form ${editMode?'on':''}" id="edit-form">
+        <div class="form-grid" style="margin-top:20px">
+          <div class="form-group"><label class="form-label">Monthly Rent (PKR)</label><input class="form-input" id="e-rent"     type="number" value="${agr.monthlyRent}"></div>
+          <div class="form-group"><label class="form-label">Security Deposit</label>  <input class="form-input" id="e-sec"      type="number" value="${agr.securityDeposit}"></div>
+          <div class="form-group"><label class="form-label">Advance Months</label>    <input class="form-input" id="e-adv"      type="number" value="${agr.advanceMonths}" min="1" max="6"></div>
+          <div class="form-group"><label class="form-label">Duration (months)</label> <input class="form-input" id="e-dur"      type="number" value="${agr.durationMonths}"></div>
+          <div class="form-group"><label class="form-label">Start Date</label>        <input class="form-input" id="e-start"    type="date"   value="${agr.startDate.slice(0,10)}"></div>
+          <div class="form-group"><label class="form-label">End Date</label>          <input class="form-input" id="e-end"      type="date"   value="${agr.endDate.slice(0,10)}"></div>
+          <div class="form-group"><label class="form-label">Notice Period (days)</label><input class="form-input" id="e-notice" type="number" value="${agr.noticePeriodDays}"></div>
+        </div>
+        <div style="display:flex;gap:20px;margin-bottom:10px;flex-wrap:wrap;">
+          <label class="form-check"><input type="checkbox" id="e-util"  ${agr.utilitiesIncluded ?'checked':''}> Utilities Included</label>
+          <label class="form-check"><input type="checkbox" id="e-maint" ${agr.maintenanceByOwner?'checked':''}> Maintenance by Owner</label>
+          <label class="form-check"><input type="checkbox" id="e-pets"  ${agr.petsAllowed       ?'checked':''}> Pets Allowed</label>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Additional Terms</label>
+          <textarea class="form-input" id="e-terms" style="min-height:70px">${agr.additionalTerms||''}</textarea>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:10px">
+          <button onclick="saveEdit()" style="padding:10px 22px;background:var(--green);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit">Save Changes</button>
+          <button onclick="toggleEdit()" style="padding:10px 18px;border:1px solid var(--border);border-radius:8px;font-weight:600;cursor:pointer;background:#fff;font-family:inherit">Cancel</button>
+        </div>
+      </div>` : ''}
+    </div>
+
+    <!-- DURATION -->
+    <div class="section">
+      <div class="section-title"><span>2</span> Duration & Notice</div>
+      <div class="terms-grid">
+        <div class="term-item"><div class="term-label">Contract Duration</div><div class="term-val">${agr.durationMonths} months</div></div>
+        <div class="term-item"><div class="term-label">Start Date</div>       <div class="term-val">${new Date(agr.startDate).toLocaleDateString('en-PK')}</div></div>
+        <div class="term-item"><div class="term-label">End Date</div>         <div class="term-val">${new Date(agr.endDate).toLocaleDateString('en-PK')}</div></div>
+        <div class="term-item"><div class="term-label">Notice Period</div>    <div class="term-val">${agr.noticePeriodDays} days</div></div>
+      </div>
+    </div>
+
+    <!-- CONDITIONS -->
+    <div class="section">
+      <div class="section-title"><span>3</span> Conditions</div>
+      <div class="bool-row"><span>Utilities (Bijli/Paani) Included</span><span class="chip ${agr.utilitiesIncluded?'yes':'no'}">${agr.utilitiesIncluded?'Yes':'No'}</span></div>
+      <div class="bool-row"><span>Maintenance by Owner</span>            <span class="chip ${agr.maintenanceByOwner?'yes':'no'}">${agr.maintenanceByOwner?'Yes':'No'}</span></div>
+      <div class="bool-row"><span>Pets Allowed</span>                    <span class="chip ${agr.petsAllowed?'yes':'no'}">${agr.petsAllowed?'Yes':'No'}</span></div>
+      ${agr.additionalTerms ? `<div style="padding:12px 0;color:var(--muted);font-size:0.85rem"><strong style="color:var(--text)">Additional Terms:</strong> ${agr.additionalTerms}</div>` : ''}
+    </div>
+
+    <!-- ACTION BAR -->
+    ${!isActive ? `
+    <div class="action-bar">
+      <div class="action-left">
+        <strong>${alreadySigned ? 'Aap ne sign kar diya ✅' : 'Signature Required'}</strong>
+        ${alreadySigned ? 'Doosre party ke sign ka intezaar hai.' : 'Agreement ko sign karne se pehle tamam terms parh lein.'}
+      </div>
+      <div class="action-btns">
+        ${role==='owner' && !isActive ? `<button class="btn-edit" onclick="toggleEdit()">✏️ Edit Terms</button>` : ''}
+        ${!alreadySigned ? `<button class="btn-sign" onclick="signAgreement()">✍️ Sign Agreement</button>` : ''}
+      </div>
+    </div>` : `
+    <div class="action-bar" style="background:#e8f5e9;border-color:var(--green)">
+      <div><strong style="color:var(--green)">✅ Agreement Active</strong><br><span style="font-size:0.85rem;color:var(--muted)">Dono parties ne sign kar liya. Contract ${new Date(agr.startDate).toLocaleDateString('en-PK')} se ${new Date(agr.endDate).toLocaleDateString('en-PK')} tak hai.</span></div>
+    </div>`}
+  `;
+}
+
+function toggleEdit(){
+  editMode = !editMode;
+  const form = document.getElementById('edit-form');
+  if(form) form.classList.toggle('on', editMode);
+}
+
+async function saveEdit(){
+  try{
+    const d = await apiFetch(`/user/agreement/${agr.id}`,{
+      method: 'PUT',
+      body: JSON.stringify({
+        monthlyRent:       document.getElementById('e-rent').value,
+        securityDeposit:   document.getElementById('e-sec').value,
+        advanceMonths:     document.getElementById('e-adv').value,
+        durationMonths:    document.getElementById('e-dur').value,
+        startDate:         document.getElementById('e-start').value,
+        endDate:           document.getElementById('e-end').value,
+        noticePeriodDays:  document.getElementById('e-notice').value,
+        utilitiesIncluded: document.getElementById('e-util').checked,
+        maintenanceByOwner:document.getElementById('e-maint').checked,
+        petsAllowed:       document.getElementById('e-pets').checked,
+        additionalTerms:   document.getElementById('e-terms').value,
+      })
+    });
+    if(d.success){ agr=d.data; editMode=false; showToast('Agreement update ho gaya!'); renderAgreement(); }
+    else showToast(d.message||'Update fail.','error');
+  } catch{ showToast('Network error.','error'); }
+}
+
+async function signAgreement(){
+  if(!confirm('Kya aap is agreement ki tamam terms se mutafiq hain aur sign karna chahte hain?')) return;
+  try{
+    const d = await apiFetch(`/user/agreement/${agr.id}/sign`,{ method:'PUT' });
+    if(d.success){ agr=d.data; showToast(d.message); renderAgreement(); }
+    else showToast(d.message||'Sign fail.','error');
+  } catch{ showToast('Network error.','error'); }
+}
+
+function showError(msg){
+  document.getElementById('agr-content').innerHTML=`<div class="err"><h3>Error</h3><p>${msg}</p><a href="my_requests.html" style="color:var(--green);font-weight:700">← Wapas Jao</a></div>`;
+}
+</script>
+</body>
+</html>

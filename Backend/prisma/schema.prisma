@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────────────────
+//  EXISTING MODELS  (koi change nahi, sirf relations add)
+// ─────────────────────────────────────────────────────
+
 model User {
   id        String   @id @default(cuid())
   name      String
@@ -19,9 +23,12 @@ model User {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 
-  properties     Property[]
-  ownedRentals   Rental[]   @relation("OwnerRentals")
-  tenantRentals  Rental[]   @relation("TenantRentals")
+  properties    Property[]
+  ownedRentals  Rental[]  @relation("OwnerRentals")
+  tenantRentals Rental[]  @relation("TenantRentals")
+
+  // NEW: tenant ne jo requests bheji hain
+  sentListings  Listing[] @relation("TenantListings")
 }
 
 model Property {
@@ -32,12 +39,14 @@ model Property {
   areaUnit    AreaUnit @default(MARLA)
   rentAmount  Float
   description String   @default("")
+  isAvailable Boolean  @default(true)   // NEW: accept hone pe false ho jata hai
   createdAt   DateTime @default(now())
 
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  rentals Rental[]
+  rentals  Rental[]
+  listings Listing[]  // NEW
 }
 
 model Rental {
@@ -49,8 +58,8 @@ model Rental {
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   propertyId String
 
-  owner   User   @relation("OwnerRentals", fields: [ownerId], references: [id])
-  ownerId String
+  owner    User   @relation("OwnerRentals",  fields: [ownerId],  references: [id])
+  ownerId  String
 
   tenant   User   @relation("TenantRentals", fields: [tenantId], references: [id])
   tenantId String
@@ -70,9 +79,92 @@ model Payment {
   rentalId String
 }
 
+// ─────────────────────────────────────────────────────
+//  NEW: LISTING  (Rent Request)
+//  Tenant ek property ke liye request bhejta hai.
+//  Owner accept / decline karta hai.
+// ─────────────────────────────────────────────────────
+
+model Listing {
+  id        String        @id @default(cuid())
+  status    ListingStatus @default(PENDING)
+  message   String        @default("")   // tenant ka optional message
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+
+  tenant   User   @relation("TenantListings", fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String
+
+  // Ek tenant ek property pe sirf ek active request rakh sakta hai
+  @@unique([propertyId, tenantId])
+
+  agreement Agreement?   // accept hone ke baad agreement banta hai
+}
+
+// ─────────────────────────────────────────────────────
+//  NEW: AGREEMENT
+//  Listing accept hone ke baad owner draft banata hai,
+//  dono sign karte hain — tab ACTIVE hota hai.
+// ─────────────────────────────────────────────────────
+
+model Agreement {
+  id    String          @id @default(cuid())
+  status AgreementStatus @default(DRAFT)
+
+  // Rent & financial terms
+  monthlyRent     Float
+  securityDeposit Float          // 1-2 mahine ka advance security
+  advanceMonths   Int    @default(1)
+
+  // Duration
+  startDate      DateTime
+  endDate        DateTime
+  durationMonths Int              // kitne mahine ka contract
+
+  // General terms
+  noticePeriodDays   Int     @default(30)
+  utilitiesIncluded  Boolean @default(false)  // bijli/paani bill included?
+  maintenanceByOwner Boolean @default(true)   // maintenance owner ki zimmedari?
+  petsAllowed        Boolean @default(false)
+  additionalTerms    String  @default("")     // extra clauses
+
+  // Digital signatures
+  tenantSigned   Boolean   @default(false)
+  ownerSigned    Boolean   @default(false)
+  tenantSignedAt DateTime?
+  ownerSignedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ek listing ka sirf ek agreement
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId String  @unique
+}
+
+// ─────────────────────────────────────────────────────
+//  ENUMS
+// ─────────────────────────────────────────────────────
+
 enum AreaUnit {
   SQFT
   SQM
   MARLA
   KANAL
+}
+
+enum ListingStatus {
+  PENDING   // request bheji gayi, owner ka intezaar
+  ACCEPTED  // owner ne accept kar liya
+  DECLINED  // owner ne decline kar diya
+}
+
+enum AgreementStatus {
+  DRAFT     // ban gaya, dono ne sign nahi kiya
+  ACTIVE    // dono ne sign kar liya
+  EXPIRED   // contract khatam
+  CANCELLED // beech mein cancel
 }

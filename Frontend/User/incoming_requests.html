@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Incoming Requests — RentProx</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --green:#28b446; --green-dark:#1e8c36;
+      --bg:#f8f9fa; --white:#fff;
+      --text:#1a1d23; --muted:#666;
+      --border:#ededed; --shadow:0 4px 20px rgba(0,0,0,0.07);
+      --sidebar:260px;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); display:flex; height:100vh; overflow:hidden; }
+
+    .sidebar{ width:var(--sidebar); background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; }
+    .sb-logo{ padding:0 24px 28px; font-weight:800; color:var(--green); font-size:1.4rem; cursor:pointer; }
+    .nav-link{ display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--muted); font-weight:500; font-size:0.93rem; }
+    .nav-link:hover{ color:var(--green); background:#f0fdf4; }
+    .nav-link.active{ color:var(--green); background:#e8f5e9; border-right:4px solid var(--green); font-weight:700; }
+    .sb-footer{ padding:20px; border-top:1px solid var(--border); margin-top:auto; }
+    .btn-logout{ width:100%; padding:11px; background:var(--white); border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; color:var(--muted); font-family:inherit; }
+    .btn-logout:hover{ color:#ef4444; border-color:#ef4444; }
+
+    .main-wrap{ flex:1; display:flex; flex-direction:column; overflow-y:auto; }
+    .topbar{ height:68px; background:var(--white); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 36px; position:sticky; top:0; z-index:90; }
+    .topbar-title{ font-weight:700; color:var(--muted); }
+
+    .prof-wrap{ position:relative; }
+    .prof-pill{ display:flex; align-items:center; gap:10px; padding:6px 6px 6px 16px; border:1.5px solid var(--green); border-radius:30px; cursor:pointer; }
+    .prof-pill span{ color:var(--green); font-weight:600; font-size:0.88rem; }
+    .prof-av{ width:30px; height:30px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; }
+    .prof-drop{ position:absolute; top:calc(100% + 8px); right:0; width:260px; background:var(--white); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.12); border:1px solid var(--border); display:none; flex-direction:column; z-index:999; overflow:hidden; }
+    .prof-drop.on{ display:flex; }
+    .drop-hd{ padding:18px 20px; border-bottom:1px solid #f5f5f5; }
+    .drop-name{ font-weight:700; }
+    .drop-email{ font-size:0.73rem; color:var(--muted); }
+    .drop-item{ padding:13px 20px; color:var(--muted); font-size:0.88rem; font-weight:500; }
+    .drop-item.red{ color:#ef4444; border-top:1px solid #f5f5f5; cursor:pointer; }
+
+    .content{ padding:36px; }
+    .page-head{ margin-bottom:28px; }
+    .page-head h1{ font-size:1.5rem; font-weight:700; }
+    .page-head p{ color:var(--muted); margin-top:4px; }
+
+    /* SUMMARY CARDS */
+    .summary-row{ display:flex; gap:16px; margin-bottom:28px; }
+    .sum-card{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:20px 24px; flex:1; box-shadow:var(--shadow); }
+    .sum-label{ font-size:0.8rem; color:var(--muted); font-weight:600; margin-bottom:6px; text-transform:uppercase; }
+    .sum-val{ font-size:1.7rem; font-weight:800; }
+    .sum-card.pending .sum-val { color:#c2410c; }
+    .sum-card.accepted .sum-val{ color:var(--green); }
+    .sum-card.declined .sum-val{ color:#ef4444; }
+
+    /* TABS */
+    .tabs{ display:flex; gap:4px; margin-bottom:22px; background:#f1f5f9; border-radius:10px; padding:4px; width:fit-content; }
+    .tab{ padding:9px 20px; border-radius:7px; font-weight:600; font-size:0.85rem; cursor:pointer; border:none; background:transparent; color:var(--muted); font-family:inherit; }
+    .tab.active{ background:var(--white); color:var(--text); box-shadow:0 2px 6px rgba(0,0,0,0.08); }
+
+    /* REQUEST TABLE */
+    .req-table{ width:100%; border-collapse:collapse; background:var(--white); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--border); }
+    .req-table th{ padding:14px 18px; font-size:0.75rem; color:var(--muted); font-weight:700; text-transform:uppercase; border-bottom:2px solid var(--border); text-align:left; }
+    .req-table td{ padding:16px 18px; border-bottom:1px solid #f9f9f9; font-size:0.88rem; vertical-align:middle; }
+    .req-table tr:last-child td{ border-bottom:none; }
+    .req-table tr:hover td{ background:#fafafa; }
+
+    .tenant-cell{ display:flex; align-items:center; gap:10px; }
+    .t-av{ width:36px; height:36px; border-radius:50%; background:#e8f5e9; color:var(--green); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; flex-shrink:0; }
+
+    .badge{ padding:5px 12px; border-radius:6px; font-size:0.72rem; font-weight:700; text-transform:uppercase; }
+    .badge-pending { background:#fff7ed; color:#c2410c; }
+    .badge-accepted{ background:#e8f5e9; color:var(--green); }
+    .badge-declined{ background:#fff5f5; color:#ef4444; }
+
+    .action-btns{ display:flex; gap:8px; }
+    .btn-accept{ padding:7px 14px; background:var(--green); color:#fff; border:none; border-radius:7px; font-weight:600; cursor:pointer; font-size:0.8rem; font-family:inherit; }
+    .btn-accept:hover{ background:var(--green-dark); }
+    .btn-decline{ padding:7px 14px; background:var(--white); color:#ef4444; border:1px solid #ef4444; border-radius:7px; font-weight:600; cursor:pointer; font-size:0.8rem; font-family:inherit; }
+    .btn-decline:hover{ background:#fff5f5; }
+
+    .sk{ background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:8px; height:50px; margin-bottom:8px; }
+    @keyframes sh{ 0%{background-position:200% 0}100%{background-position:-200% 0} }
+    .empty{ text-align:center; padding:50px; color:var(--muted); }
+  </style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sb-logo" onclick="location.href='homepage.html'">RentProx</div>
+  <a href="homepage.html"         class="nav-link">🏠 Homepage</a>
+  <a href="../index.html"          class="nav-link">🔍 Browse Properties</a>
+  <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
+  <a href="addproperty.html"       class="nav-link">➕ Add Property</a>
+  <a href="properties.html"        class="nav-link">🏢 My Properties</a>
+  <a href="incoming_requests.html" class="nav-link active">📩 Incoming Requests</a>
+  <a href="ledger.html"            class="nav-link">💰Rent Ledger</a>
+  <div class="sb-footer">
+    <button class="btn-logout" id="logout-btn">Log Out</button>
+  </div>
+</nav>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <span class="topbar-title">Incoming Requests</span>
+    <div class="prof-wrap">
+      <div class="prof-pill" id="prof-pill">
+        <span class="js-user-name">Loading…</span>
+        <div class="prof-av">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="prof-drop" id="prof-drop">
+        <div class="drop-hd">
+          <div class="drop-name js-user-name">—</div>
+          <div class="drop-email js-user-email">—</div>
+        </div>
+        <div class="drop-item red" id="logout-drop">Logout</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-head">
+      <h1>Incoming Rental Requests</h1>
+      <p>Tenants ki requests — accept ya decline karein.</p>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="summary-row">
+      <div class="sum-card pending" ><div class="sum-label">Pending</div> <div class="sum-val" id="cnt-pending">—</div></div>
+      <div class="sum-card accepted"><div class="sum-label">Accepted</div><div class="sum-val" id="cnt-accepted">—</div></div>
+      <div class="sum-card declined"><div class="sum-label">Declined</div><div class="sum-val" id="cnt-declined">—</div></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('all',this)">All</button>
+      <button class="tab"        onclick="switchTab('pending',this)">Pending</button>
+      <button class="tab"        onclick="switchTab('accepted',this)">Accepted</button>
+      <button class="tab"        onclick="switchTab('declined',this)">Declined</button>
+    </div>
+
+    <div id="table-wrap">
+      <div class="sk"></div><div class="sk"></div><div class="sk"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../api.js"></script>
+<script>
+let allData = {};
+let curTab  = 'all';
+
+(async function init(){
+  const user = await Auth.guard('../login_plm.html');
+  if(!user) return;
+  Auth.fillProfile();
+
+  document.getElementById('logout-btn').onclick  = ()=>Auth.logout('../login_plm.html');
+  document.getElementById('logout-drop').onclick = ()=>Auth.logout('../login_plm.html');
+
+  const pill = document.getElementById('prof-pill');
+  const drop = document.getElementById('prof-drop');
+  pill.addEventListener('click', e=>{ e.stopPropagation(); drop.classList.toggle('on'); });
+  window.addEventListener('click', ()=>drop.classList.remove('on'));
+
+  await loadRequests();
+})();
+
+async function loadRequests(){
+  try{
+    const d = await apiFetch('/owner/requests');
+    if(!d.success){ renderEmpty('Data load nahi hua.'); return; }
+    allData = d.data;
+
+    document.getElementById('cnt-pending').textContent  = allData.pending.length;
+    document.getElementById('cnt-accepted').textContent = allData.accepted.length;
+    document.getElementById('cnt-declined').textContent = allData.declined.length;
+
+    renderTable(allData.all);
+  } catch{
+    showToast('Network error.','error');
+    renderEmpty('Backend se connect nahi ho saka.');
+  }
+}
+
+function switchTab(tab, el){
+  curTab = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const list = tab==='all' ? allData.all : allData[tab] || [];
+  renderTable(list);
+}
+
+function renderTable(list){
+  const wrap = document.getElementById('table-wrap');
+  if(!list?.length){
+    wrap.innerHTML = `<div class="empty"><p>Koi request nahi mili.</p></div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+  <table class="req-table">
+    <thead>
+      <tr>
+        <th>Tenant</th>
+        <th>Property</th>
+        <th>Message</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${list.map(r=>`
+        <tr>
+          <td>
+            <div class="tenant-cell">
+              <div class="t-av">${r.tenant.name.charAt(0).toUpperCase()}</div>
+              <div>
+                <div style="font-weight:700">${r.tenant.name}</div>
+                <div style="font-size:0.75rem;color:var(--muted)">${r.tenant.phone}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="font-weight:600">${r.property.address}</div>
+            <div style="font-size:0.76rem;color:var(--muted)">${r.property.city} · PKR ${r.property.rentAmount.toLocaleString()}</div>
+          </td>
+          <td style="color:var(--muted);font-size:0.82rem;max-width:180px">${r.message||'—'}</td>
+          <td style="color:var(--muted);font-size:0.8rem">${new Date(r.createdAt).toLocaleDateString('en-PK')}</td>
+          <td><span class="badge badge-${r.status.toLowerCase()}">${r.status}</span></td>
+          <td>
+            <div class="action-btns">
+              ${r.status==='PENDING' ? `
+                <button class="btn-accept"  onclick="respond('${r.id}','accept')">Accept</button>
+                <button class="btn-decline" onclick="respond('${r.id}','decline')">Decline</button>
+              ` : r.status==='ACCEPTED' ? `
+                <button class="btn-accept" style="background:#64748b" onclick="location.href='agreement.html?listing=${r.id}'">Agreement</button>
+              ` : '<span style="color:var(--muted);font-size:0.8rem">No action</span>'}
+            </div>
+          </td>
+        </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function respond(id, action){
+  const label = action==='accept' ? 'accept' : 'decline';
+  if(!confirm(`Kya aap yeh request ${label} karna chahte hain?`)) return;
+  try{
+    const d = await apiFetch(`/owner/requests/${id}/${label}`,{ method:'PUT' });
+    if(d.success){
+      showToast(d.message);
+      await loadRequests();
+      // Re-render current tab
+      const btn = document.querySelector(`.tab.active`);
+      if(btn) switchTab(curTab, btn);
+    } else {
+      showToast(d.message||'Error.','error');
+    }
+  } catch{ showToast('Network error.','error'); }
+}
+
+function renderEmpty(msg){
+  document.getElementById('table-wrap').innerHTML=`<div class="empty"><p>${msg}</p></div>`;
+}
+</script>
+</body>
+</html>

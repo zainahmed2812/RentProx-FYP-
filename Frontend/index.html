@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RentProx — Find Your Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green:#28b446; --green-dark:#1e8c36;
+      --bg:#f8f9fa; --white:#fff;
+      --text:#1a1d23; --muted:#666;
+      --border:#ededed; --shadow:0 4px 20px rgba(0,0,0,0.08);
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); }
+
+    /* NAV */
+    nav{
+      background:var(--white); border-bottom:1px solid var(--border);
+      padding:0 40px; height:64px; display:flex; align-items:center;
+      justify-content:space-between; position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 8px rgba(0,0,0,0.04);
+    }
+    .logo{ font-weight:800; font-size:1.4rem; color:var(--green); }
+    .nav-right{ display:flex; align-items:center; gap:10px; position:relative; }
+    .btn-nav{ padding:9px 20px; border-radius:8px; font-weight:600; font-size:0.88rem; cursor:pointer; text-decoration:none; font-family:inherit; }
+    .btn-outline{ border:1.5px solid var(--green); color:var(--green); background:transparent; }
+    .btn-filled{ background:var(--green); color:#fff; border:none; }
+    .btn-outline:hover{ background:#f0fdf4; }
+    .btn-filled:hover{ background:var(--green-dark); }
+    .nav-pill{
+      display:flex; align-items:center; gap:8px; padding:7px 16px;
+      border:1.5px solid var(--green); border-radius:30px; cursor:pointer;
+      color:var(--green); font-weight:600; font-size:0.88rem;
+    }
+
+    /* HERO */
+    .hero{
+      background:linear-gradient(135deg,#1a1d23,#2d3748);
+      padding:65px 40px; text-align:center; color:#fff;
+    }
+    .hero h1{ font-size:2.5rem; font-weight:800; margin-bottom:12px; line-height:1.2; }
+    .hero h1 span{ color:var(--green); }
+    .hero p{ color:#94a3b8; margin-bottom:32px; font-size:1rem; }
+
+    .search-wrap{
+      background:#fff; border-radius:12px; padding:8px;
+      display:flex; gap:8px; max-width:780px; margin:0 auto;
+      box-shadow:0 8px 30px rgba(0,0,0,0.25);
+    }
+    .search-wrap input,
+    .search-wrap select{
+      flex:1; padding:11px 14px; border:1px solid var(--border);
+      border-radius:8px; outline:none; font-family:inherit; font-size:0.88rem;
+    }
+    .search-wrap input:focus,
+    .search-wrap select:focus{ border-color:var(--green); }
+    .btn-search{
+      padding:11px 26px; background:var(--green); color:#fff; border:none;
+      border-radius:8px; font-weight:700; cursor:pointer; white-space:nowrap;
+      font-family:inherit;
+    }
+    .btn-search:hover{ background:var(--green-dark); }
+
+    /* STATS BAR */
+    .stats-bar{
+      background:var(--white); border-bottom:1px solid var(--border);
+      padding:14px 40px; display:flex; gap:20px; font-size:0.85rem; color:var(--muted);
+    }
+    .stats-bar strong{ color:var(--text); }
+
+    /* GRID */
+    .container{ max-width:1280px; margin:0 auto; padding:36px 40px; }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+      gap:22px;
+    }
+
+    /* CARD */
+    .prop-card{
+      background:var(--white); border-radius:14px; overflow:hidden;
+      border:1px solid var(--border); box-shadow:var(--shadow);
+      transition:transform 0.2s,box-shadow 0.2s;
+    }
+    .prop-card:hover{ transform:translateY(-4px); box-shadow:0 14px 38px rgba(0,0,0,0.12); }
+    .card-img{
+      height:175px; background:linear-gradient(135deg,#e2e8f0,#cbd5e1);
+      display:flex; align-items:center; justify-content:center; position:relative;
+    }
+    .card-img svg{ opacity:0.25; }
+    .card-badge{
+      position:absolute; top:12px; left:12px;
+      background:var(--green); color:#fff;
+      padding:4px 10px; border-radius:6px; font-size:0.7rem; font-weight:700; text-transform:uppercase;
+    }
+    .card-badge.na{ background:#ef4444; }
+    .card-body{ padding:18px 20px; }
+    .card-price{ color:var(--green); font-size:1.25rem; font-weight:800; margin-bottom:4px; }
+    .card-price small{ font-size:0.78rem; font-weight:400; color:var(--muted); }
+    .card-addr{ font-weight:700; font-size:0.95rem; margin-bottom:5px; }
+    .card-city{ color:var(--muted); font-size:0.82rem; margin-bottom:12px; }
+    .card-tags{ display:flex; gap:7px; flex-wrap:wrap; }
+    .tag{
+      padding:3px 9px; background:#f1f5f9; border-radius:5px;
+      font-size:0.73rem; font-weight:600; color:#475569;
+    }
+    .card-foot{
+      padding:13px 20px; border-top:1px solid #f5f5f5;
+      display:flex; gap:9px;
+    }
+    .btn-view{
+      flex:1; padding:9px; border:1px solid var(--border); border-radius:7px;
+      background:var(--white); font-weight:600; cursor:pointer; color:var(--muted);
+      font-size:0.83rem; font-family:inherit;
+    }
+    .btn-view:hover{ border-color:var(--green); color:var(--green); }
+    .btn-req{
+      flex:1; padding:9px; border:none; border-radius:7px;
+      background:var(--green); color:#fff; font-weight:700;
+      cursor:pointer; font-size:0.83rem; font-family:inherit;
+    }
+    .btn-req:hover{ background:var(--green-dark); }
+    .btn-req:disabled{ background:#94a3b8; cursor:not-allowed; }
+
+    /* SKELETON */
+    .sk{
+      background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);
+      background-size:200% 100%; animation:sh 1.4s infinite; border-radius:12px; height:300px;
+    }
+    @keyframes sh{ 0%{background-position:200% 0}100%{background-position:-200% 0} }
+
+    /* EMPTY */
+    .empty{ text-align:center; padding:70px 20px; color:var(--muted); grid-column:1/-1; }
+    .empty h3{ font-size:1.1rem; margin-bottom:8px; color:var(--text); }
+
+    /* PAGINATION */
+    .pagination{ display:flex; justify-content:center; gap:8px; margin-top:36px; }
+    .pg{
+      width:38px; height:38px; border-radius:8px; border:1px solid var(--border);
+      background:var(--white); cursor:pointer; font-weight:600; font-family:inherit;
+    }
+    .pg.active{ background:var(--green); color:#fff; border-color:var(--green); }
+    .pg:hover:not(.active){ border-color:var(--green); color:var(--green); }
+
+    /* MODAL */
+    .overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      display:none; align-items:center; justify-content:center; z-index:999;
+    }
+    .overlay.on{ display:flex; }
+    .modal{
+      background:#fff; border-radius:16px; width:500px; max-height:92vh;
+      overflow-y:auto; padding:30px; box-shadow:0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal h2{ margin-bottom:18px; font-size:1.2rem; }
+    .drow{
+      display:flex; justify-content:space-between;
+      padding:11px 0; border-bottom:1px solid #f5f5f5; font-size:0.87rem;
+    }
+    .dlbl{ color:var(--muted); }
+    .dval{ font-weight:700; text-align:right; max-width:60%; }
+    textarea.msg{
+      width:100%; padding:11px; border:1px solid var(--border);
+      border-radius:8px; font-family:inherit; resize:vertical;
+      min-height:80px; margin:14px 0 4px; outline:none; font-size:0.87rem;
+    }
+    textarea.msg:focus{ border-color:var(--green); }
+    .modal-btns{ display:flex; gap:10px; margin-top:16px; }
+    .btn-cancel{
+      flex:1; padding:11px; border:1px solid var(--border); border-radius:8px;
+      background:#fff; cursor:pointer; font-weight:600; font-family:inherit;
+    }
+    .btn-ok{
+      flex:1; padding:11px; border:none; border-radius:8px;
+      background:var(--green); color:#fff; font-weight:700; cursor:pointer; font-family:inherit;
+    }
+    .btn-ok:hover{ background:var(--green-dark); }
+    .btn-ok:disabled{ opacity:0.6; cursor:not-allowed; }
+    .login-note{
+      background:#fff7ed; border:1px solid #fed7aa; border-radius:8px;
+      padding:12px; text-align:center; font-size:0.85rem; color:#92400e; margin-bottom:14px;
+    }
+    .login-note a{ color:var(--green); font-weight:700; text-decoration:none; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">RentProx</div>
+  <div class="nav-right">
+    <div id="guest-nav">
+      <a href="login_plm.html"  class="btn-nav btn-outline">Login</a>
+      <a href="signup_plm.html" class="btn-nav btn-filled" style="margin-left:8px">Sign Up</a>
+    </div>
+    <div id="user-nav" style="display:none; align-items:center; gap:10px;">
+      <a href="User/my_requests.html"       class="btn-nav btn-outline">📋 My Requests</a>
+      <a href="User/incoming_requests.html" class="btn-nav btn-outline">📩 Incoming</a>
+      <a href="User/homepage.html"          class="btn-nav btn-outline">Dashboard</a>
+      <div class="nav-pill" id="nav-pill-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span id="nav-name">User</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:2px"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <!-- User dropdown -->
+      <div id="user-drop" style="
+        display:none; position:absolute; top:calc(100% + 8px); right:0;
+        background:#fff; border:1px solid #ededed; border-radius:12px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.12); min-width:200px; overflow:hidden; z-index:999;
+      ">
+        <div style="padding:14px 18px; border-bottom:1px solid #f5f5f5;">
+          <div style="font-weight:700;font-size:0.9rem;" id="drop-name">—</div>
+          <div style="font-size:0.75rem;color:#666;" id="drop-email">—</div>
+        </div>
+        <a href="User/homepage.html"          style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">🏠 Dashboard</a>
+        <a href="User/my_requests.html"       style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">📋 My Requests</a>
+        <a href="User/incoming_requests.html" style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">📩 Incoming Requests</a>
+        <a href="User/addproperty.html"       style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">➕ Add Property</a>
+        <div id="drop-logout" style="display:block;padding:12px 18px;color:#ef4444;font-size:0.87rem;font-weight:600;cursor:pointer;border-top:1px solid #f5f5f5;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background=''">Logout</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Find Your <span>Perfect Home</span></h1>
+  <p>Thousands of verified rental properties across Pakistan</p>
+  <div class="search-wrap">
+    <input  type="text"   id="f-city"    placeholder="🏙️  City (e.g. Lahore, Karachi)">
+    <select id="f-unit">
+      <option value="">All Sizes</option>
+      <option value="MARLA">Marla</option>
+      <option value="KANAL">Kanal</option>
+      <option value="SQFT">Sq. Feet</option>
+    </select>
+    <input  type="number" id="f-maxrent" placeholder="Max Rent (PKR)">
+    <button class="btn-search" onclick="doSearch()">Search</button>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <span><strong id="total-count">…</strong> properties available</span>
+  <span>|</span>
+  <span>Verified listings across Pakistan</span>
+</div>
+
+<!-- GRID -->
+<div class="container">
+  <div class="grid" id="grid">
+    <div class="sk"></div><div class="sk"></div><div class="sk"></div>
+    <div class="sk"></div><div class="sk"></div><div class="sk"></div>
+  </div>
+  <div class="pagination" id="pgbar"></div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal-wrap">
+  <div class="modal">
+    <h2 id="m-title">Property Details</h2>
+    <div id="m-body"></div>
+    <div id="m-req"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Close</button>
+      <button class="btn-ok" id="m-send-btn" onclick="sendRequest()">Send Request</button>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script>
+let selPropId = null;
+let curPage   = 1;
+let filters   = {};
+
+/* ── INIT ──────────────────────────────────────────── */
+(function(){
+  const user = Auth.getUser();
+  if(user && Auth.getToken()){
+    document.getElementById('guest-nav').style.display = 'none';
+    const un = document.getElementById('user-nav');
+    un.style.display = 'flex';
+    document.getElementById('nav-name').textContent  = user.name;
+    document.getElementById('drop-name').textContent  = user.name;
+    document.getElementById('drop-email').textContent = user.email;
+  }
+
+  // Dropdown toggle
+  const pill = document.getElementById('nav-pill-wrap');
+  const drop = document.getElementById('user-drop');
+  if(pill && drop){
+    pill.addEventListener('click', e => {
+      e.stopPropagation();
+      drop.style.display = drop.style.display === 'block' ? 'none' : 'block';
+    });
+    window.addEventListener('click', () => { if(drop) drop.style.display = 'none'; });
+  }
+
+  // Logout
+  const logoutBtn = document.getElementById('drop-logout');
+  if(logoutBtn) logoutBtn.onclick = () => Auth.logout('login_plm.html');
+
+  load(1);
+})();
+
+/* ── LOAD PROPERTIES ───────────────────────────────── */
+async function load(page){
+  curPage = page;
+  const g = document.getElementById('grid');
+  g.innerHTML = Array(6).fill('<div class="sk"></div>').join('');
+
+  try{
+    const p = new URLSearchParams({ page, limit:9,
+      ...(filters.city    && { city:    filters.city }),
+      ...(filters.unit    && { areaUnit:filters.unit }),
+      ...(filters.max     && { maxRent: filters.max  }),
+    });
+    const d = await fetch(`http://localhost:5000/api/listings?${p}`).then(r=>r.json());
+    if(!d.success){ g.innerHTML=empty('Koi property nahi mili.'); return; }
+
+    document.getElementById('total-count').textContent = d.data.pagination.total;
+    renderCards(d.data.properties);
+    renderPg(d.data.pagination);
+  } catch {
+    document.getElementById('grid').innerHTML = empty('Backend se connect nahi ho saka.');
+  }
+}
+
+/* ── RENDER CARDS ──────────────────────────────────── */
+function renderCards(list){
+  if(!list.length){ document.getElementById('grid').innerHTML=empty('Koi property nahi mili.'); return; }
+  document.getElementById('grid').innerHTML = list.map(p=>`
+    <div class="prop-card">
+      <div class="card-img">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span class="card-badge ${p.isAvailable?'':'na'}">${p.isAvailable?'Available':'Rented'}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-price">PKR ${p.rentAmount.toLocaleString()} <small>/ month</small></div>
+        <div class="card-addr">${p.address}</div>
+        <div class="card-city">📍 ${p.city}</div>
+        <div class="card-tags">
+          <span class="tag">${p.area} ${p.areaUnit}</span>
+          <span class="tag">Owner: ${p.owner.name}</span>
+        </div>
+      </div>
+      <div class="card-foot">
+        <button class="btn-view" onclick="openModal('${p.id}')">View Details</button>
+        <button class="btn-req" onclick="openModal('${p.id}')" ${!p.isAvailable?'disabled':''}>
+          ${p.isAvailable?'Send Request':'Not Available'}
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+/* ── MODAL ─────────────────────────────────────────── */
+async function openModal(id){
+  selPropId = id;
+  document.getElementById('modal-wrap').classList.add('on');
+  document.getElementById('m-body').innerHTML = '<div class="sk" style="height:180px;border-radius:8px"></div>';
+  document.getElementById('m-req').innerHTML  = '';
+  document.getElementById('m-send-btn').style.display = 'block';
+
+  const d = await fetch(`http://localhost:5000/api/listings/${id}`).then(r=>r.json()).catch(()=>null);
+  if(!d?.success){ document.getElementById('m-body').innerHTML='<p style="color:#ef4444">Load nahi hua.</p>'; return; }
+  const p = d.data;
+
+  document.getElementById('m-title').textContent = p.address;
+  document.getElementById('m-body').innerHTML = `
+    <div class="drow"><span class="dlbl">City</span>        <span class="dval">${p.city}</span></div>
+    <div class="drow"><span class="dlbl">Area</span>        <span class="dval">${p.area} ${p.areaUnit}</span></div>
+    <div class="drow"><span class="dlbl">Monthly Rent</span><span class="dval" style="color:var(--green);font-size:1.05rem">PKR ${p.rentAmount.toLocaleString()}</span></div>
+    <div class="drow"><span class="dlbl">Owner</span>       <span class="dval">${p.owner.name}</span></div>
+    <div class="drow"><span class="dlbl">Contact</span>     <span class="dval">${p.owner.phone}</span></div>
+    <div class="drow"><span class="dlbl">Status</span>      <span class="dval" style="color:${p.isAvailable?'var(--green)':'#ef4444'}">${p.isAvailable?'✅ Available':'❌ Rented'}</span></div>
+    ${p.description?`<div style="padding:10px 0;color:var(--muted);font-size:0.85rem;border-bottom:1px solid #f5f5f5">${p.description}</div>`:''}
+  `;
+
+  const user     = Auth.getUser();
+  const sendBtn  = document.getElementById('m-send-btn');
+
+  if(!p.isAvailable){
+    sendBtn.style.display = 'none';
+  } else if(!user){
+    sendBtn.style.display = 'none';
+    document.getElementById('m-req').innerHTML = `<div class="login-note">Request bhejne ke liye <a href="login_plm.html">login karein</a>.</div>`;
+  } else if(p.owner.id === user.id){
+    sendBtn.style.display = 'none';
+    document.getElementById('m-req').innerHTML = `<p style="color:var(--muted);font-size:0.85rem;padding:10px 0">Yeh aap ki apni property hai.</p>`;
+  } else {
+    document.getElementById('m-req').innerHTML = `
+      <p style="font-size:0.82rem;color:var(--muted);margin-top:14px">Owner ko optional message (ikhtiayari):</p>
+      <textarea class="msg" id="req-msg" placeholder="e.g. Main family ke saath 6 mahine ke liye rent karna chahta hun..."></textarea>`;
+  }
+}
+
+async function sendRequest(){
+  const user = Auth.getUser();
+  if(!user){ window.location.href='login_plm.html'; return; }
+
+  const msg = document.getElementById('req-msg')?.value || '';
+  const btn = document.getElementById('m-send-btn');
+  btn.disabled=true; btn.textContent='Sending...';
+
+  try{
+    const d = await apiFetch('/user/requests',{
+      method:'POST',
+      body: JSON.stringify({ propertyId:selPropId, message:msg })
+    });
+    if(d.success){
+      showToast('Request bheji gayi! Owner ke jawab ka intezaar karein.');
+      closeModal();
+      load(curPage);
+    } else {
+      showToast(d.message||'Request nahi bheji ja saki.','error');
+    }
+  } catch { showToast('Network error.','error'); }
+  finally { btn.disabled=false; btn.textContent='Send Request'; }
+}
+
+function closeModal(){
+  document.getElementById('modal-wrap').classList.remove('on');
+  selPropId=null;
+}
+document.getElementById('modal-wrap').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal-wrap')) closeModal();
+});
+
+/* ── SEARCH ────────────────────────────────────────── */
+function doSearch(){
+  filters={
+    city: document.getElementById('f-city').value.trim(),
+    unit: document.getElementById('f-unit').value,
+    max:  document.getElementById('f-maxrent').value,
+  };
+  load(1);
+}
+document.getElementById('f-city').addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(); });
+
+/* ── PAGINATION ────────────────────────────────────── */
+function renderPg(pg){
+  const c = document.getElementById('pgbar');
+  if(pg.totalPages<=1){ c.innerHTML=''; return; }
+  c.innerHTML = Array.from({length:pg.totalPages},(_,i)=>i+1)
+    .map(i=>`<button class="pg ${i===pg.page?'active':''}" onclick="load(${i})">${i}</button>`)
+    .join('');
+}
+function empty(msg){ return `<div class="empty"><h3>${msg}</h3><p>Filters change kar ke dobara try karein.</p></div>`; }
+</script>
+</body>
+</html>
