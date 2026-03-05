@@ -22,6 +22,9 @@ router.get('/', async (req, res) => {
 
     const where = {
       isAvailable: true,
+      listings: {
+        none: { isActive: true, status: 'ACCEPTED' }  // accepted listing wali properties hide karo
+      },
       ...(city     && { city:     { contains: city,    mode: 'insensitive' } }),
       ...(areaUnit && { areaUnit }),
       ...((minRent || maxRent) && {

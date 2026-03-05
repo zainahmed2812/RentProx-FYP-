@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Rental — RentProx</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --green:#28b446; --green-dark:#1e8c36;
+      --bg:#f8f9fa; --white:#fff;
+      --text:#1a1d23; --muted:#666;
+      --border:#ededed; --shadow:0 4px 20px rgba(0,0,0,0.07);
+      --sidebar:260px;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); display:flex; height:100vh; overflow:hidden; }
+
+    /* SIDEBAR */
+    .sidebar{ width:var(--sidebar); background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; flex-shrink:0; }
+    .sb-logo{ padding:0 24px 28px; font-weight:800; color:var(--green); font-size:1.4rem; cursor:pointer; }
+    .nav-link{ display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--muted); font-weight:500; font-size:0.93rem; }
+    .nav-link:hover{ color:var(--green); background:#f0fdf4; }
+    .nav-link.active{ color:var(--green); background:#e8f5e9; border-right:4px solid var(--green); font-weight:700; }
+    .sb-footer{ padding:20px; border-top:1px solid var(--border); margin-top:auto; }
+    .btn-logout{ width:100%; padding:11px; background:var(--white); border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; color:var(--muted); font-family:inherit; }
+    .btn-logout:hover{ color:#ef4444; border-color:#ef4444; }
+
+    /* MAIN */
+    .main-wrap{ flex:1; display:flex; flex-direction:column; overflow-y:auto; }
+    .topbar{ height:68px; background:var(--white); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 36px; position:sticky; top:0; z-index:90; }
+
+    .prof-wrap{ position:relative; }
+    .prof-pill{ display:flex; align-items:center; gap:10px; padding:6px 6px 6px 16px; border:1.5px solid var(--green); border-radius:30px; cursor:pointer; }
+    .prof-pill span{ color:var(--green); font-weight:600; font-size:0.88rem; }
+    .prof-av{ width:30px; height:30px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; }
+    .prof-drop{ position:absolute; top:calc(100% + 8px); right:0; width:240px; background:var(--white); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.12); border:1px solid var(--border); display:none; flex-direction:column; z-index:999; overflow:hidden; }
+    .prof-drop.on{ display:flex; }
+    .drop-hd{ padding:16px 18px; border-bottom:1px solid #f5f5f5; }
+    .drop-name{ font-weight:700; font-size:0.9rem; }
+    .drop-email{ font-size:0.73rem; color:var(--muted); }
+    .drop-item{ padding:12px 18px; color:var(--muted); font-size:0.87rem; font-weight:500; }
+    .drop-item.red{ color:#ef4444; border-top:1px solid #f5f5f5; cursor:pointer; }
+
+    /* CONTENT */
+    .content{ padding:32px; }
+    .page-head{ margin-bottom:28px; }
+    .page-head h1{ font-size:1.5rem; font-weight:800; }
+    .page-head p{ color:var(--muted); margin-top:4px; font-size:0.9rem; }
+
+    /* PROPERTY CARD */
+    .prop-hero{
+      background: linear-gradient(135deg, #1a1d23, #2d3748);
+      border-radius:16px; padding:28px 32px; color:#fff; margin-bottom:22px;
+      display:flex; justify-content:space-between; align-items:flex-start; gap:20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    .prop-hero h2{ font-size:1.3rem; font-weight:800; margin-bottom:6px; }
+    .prop-hero .city{ color:#94a3b8; font-size:0.9rem; margin-bottom:16px; }
+    .prop-meta{ display:flex; gap:16px; flex-wrap:wrap; }
+    .meta-item{ background:rgba(255,255,255,0.1); border-radius:8px; padding:10px 16px; text-align:center; }
+    .meta-item .val{ font-size:1.1rem; font-weight:800; color:#fff; }
+    .meta-item .lbl{ font-size:0.72rem; color:#94a3b8; margin-top:2px; }
+    .prop-hero-right{ text-align:right; flex-shrink:0; }
+    .active-badge{ background:var(--green); color:#fff; padding:7px 16px; border-radius:8px; font-size:0.78rem; font-weight:700; display:inline-block; margin-bottom:10px; }
+    .contract-dates{ font-size:0.8rem; color:#94a3b8; }
+
+    /* OWNER CARD */
+    .owner-card{
+      background:var(--white); border:1px solid var(--border); border-radius:12px;
+      padding:20px 24px; margin-bottom:22px; display:flex; align-items:center; gap:16px; box-shadow:var(--shadow);
+    }
+    .owner-av{ width:48px; height:48px; border-radius:50%; background:#e8f5e9; color:var(--green); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; flex-shrink:0; }
+    .owner-info h3{ font-weight:700; margin-bottom:4px; }
+    .owner-info p{ font-size:0.83rem; color:var(--muted); }
+    .owner-contact{ margin-left:auto; display:flex; gap:8px; }
+    .contact-btn{ padding:9px 16px; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer; text-decoration:none; }
+    .contact-btn.call{ background:var(--green); color:#fff; border:none; }
+    .contact-btn.email{ border:1.5px solid var(--border); color:var(--muted); background:#fff; }
+    .contact-btn:hover{ opacity:0.85; }
+
+    /* TWO COLUMN */
+    .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-bottom:22px; }
+    @media(max-width:768px){ .two-col{ grid-template-columns:1fr; } }
+
+    /* SECTION CARD */
+    .sec-card{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:22px 24px; box-shadow:var(--shadow); }
+    .sec-card-title{ font-weight:700; font-size:0.95rem; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .info-row{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid #f9f9f9; font-size:0.87rem; }
+    .info-row:last-child{ border:none; }
+    .ir-lbl{ color:var(--muted); }
+    .ir-val{ font-weight:700; }
+    .chip{ padding:3px 9px; border-radius:5px; font-size:0.7rem; font-weight:700; }
+    .chip.y{ background:#e8f5e9; color:var(--green); }
+    .chip.n{ background:#f5f5f5; color:#94a3b8; }
+
+    /* COMPLAINT FORM */
+    .complaint-section{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:22px 24px; margin-bottom:22px; box-shadow:var(--shadow); }
+    .complaint-section h2{ font-weight:700; font-size:0.95rem; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+    .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+    .form-group{ display:flex; flex-direction:column; gap:6px; }
+    .form-label{ font-size:0.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; }
+    .form-input{ padding:10px 13px; border:1px solid var(--border); border-radius:8px; font-family:inherit; outline:none; font-size:0.87rem; }
+    .form-input:focus{ border-color:var(--green); }
+    .form-input.full{ grid-column:1/-1; }
+    .btn-submit{ padding:11px 28px; background:var(--green); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .btn-submit:hover{ background:var(--green-dark); }
+    .btn-submit:disabled{ background:#94a3b8; cursor:not-allowed; }
+
+    /* COMPLAINT LIST */
+    .complaint-list{ display:flex; flex-direction:column; gap:12px; margin-top:16px; }
+    .c-item{ border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
+    .c-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+    .c-title{ font-weight:700; font-size:0.9rem; }
+    .c-date{ font-size:0.75rem; color:var(--muted); }
+    .c-desc{ font-size:0.83rem; color:var(--muted); margin-bottom:10px; }
+    .c-foot{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .badge-status{ padding:4px 10px; border-radius:5px; font-size:0.7rem; font-weight:700; text-transform:uppercase; }
+    .s-open       { background:#fff7ed; color:#c2410c; }
+    .s-in_progress{ background:#eff6ff; color:#1d4ed8; }
+    .s-resolved   { background:#e8f5e9; color:var(--green); }
+    .s-closed     { background:#f5f5f5; color:#94a3b8; }
+    .badge-type{ padding:4px 10px; border-radius:5px; font-size:0.7rem; font-weight:700; background:#f1f5f9; color:#64748b; }
+    .admin-note{ margin-top:8px; padding:10px 12px; background:#f8fafc; border-radius:7px; font-size:0.82rem; color:var(--muted); border-left:3px solid var(--green); }
+
+    /* TABS */
+    .tabs{ display:flex; gap:4px; background:#f1f5f9; border-radius:9px; padding:4px; width:fit-content; margin-bottom:16px; }
+    .tab{ padding:8px 18px; border-radius:7px; font-weight:600; font-size:0.83rem; cursor:pointer; border:none; background:transparent; color:var(--muted); font-family:inherit; }
+    .tab.active{ background:var(--white); color:var(--text); box-shadow:0 2px 6px rgba(0,0,0,0.07); }
+
+    /* SKELETON & EMPTY */
+    .sk{ background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:12px; }
+    @keyframes sh{ 0%{background-position:200% 0}100%{background-position:-200% 0} }
+    .empty-box{ text-align:center; padding:40px 20px; color:var(--muted); }
+    .empty-box h3{ margin-bottom:8px; color:var(--text); font-size:1rem; }
+    .no-rental{ text-align:center; padding:70px 30px; }
+    .no-rental h2{ margin-bottom:10px; font-size:1.2rem; }
+    .no-rental p{ color:var(--muted); margin-bottom:20px; }
+    .btn-browse{ padding:12px 28px; background:var(--green); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-logo" onclick="location.href='../index.html'">RentProx</div>
+  <a href="homepage.html"          class="nav-link">🏠 Dashboard</a>
+  <a href="../index.html"          class="nav-link">🔍 Browse Properties</a>
+  <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
+  <a href="my_rental.html"         class="nav-link active">🏡 My Rental</a>
+  <a href="incoming_requests.html" class="nav-link">📩 Incoming Requests</a>
+  <a href="addproperty.html"       class="nav-link">➕ Add Property</a>
+  <a href="properties.html"        class="nav-link">🏢 My Properties</a>
+  <a href="ledger.html"            class="nav-link">💰 Rent Ledger</a>
+  <div class="sb-footer">
+    <button class="btn-logout" id="logout-btn">Log Out</button>
+  </div>
+</nav>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <span style="font-weight:700;color:var(--muted)">My Rental</span>
+    <div class="prof-wrap">
+      <div class="prof-pill" id="prof-pill">
+        <span class="js-user-name">…</span>
+        <div class="prof-av">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="prof-drop" id="prof-drop">
+        <div class="drop-hd">
+          <div class="drop-name js-user-name">—</div>
+          <div class="drop-email js-user-email">—</div>
+        </div>
+        <div class="drop-item red" id="logout-drop">Logout</div>
+      </div>
+    </div>
+  </header>
+
+  <div id="main-content" style="padding:32px">
+    <div class="sk" style="height:180px;margin-bottom:20px"></div>
+    <div class="sk" style="height:80px;margin-bottom:20px"></div>
+    <div class="sk" style="height:200px"></div>
+  </div>
+</div>
+
+<script src="../api.js"></script>
+<script>
+let rentalData    = null;
+let allComplaints = [];
+let curTab        = 'all';
+
+(async function init(){
+  const user = await Auth.guard('../login_plm.html');
+  if(!user) return;
+  Auth.fillProfile();
+
+  document.getElementById('logout-btn').onclick  = ()=>Auth.logout('../login_plm.html');
+  document.getElementById('logout-drop').onclick = ()=>Auth.logout('../login_plm.html');
+  const pill=document.getElementById('prof-pill'), drop=document.getElementById('prof-drop');
+  pill.addEventListener('click',e=>{e.stopPropagation();drop.classList.toggle('on');});
+  window.addEventListener('click',()=>drop.classList.remove('on'));
+
+  await loadRental();
+})();
+
+async function loadRental(){
+  try{
+    const d = await apiFetch('/user/my-rental');
+    if(!d.success){ renderError(d.message); return; }
+
+    if(!d.data){
+      renderNoRental(); return;
+    }
+
+    rentalData    = d.data;
+    allComplaints = d.data.complaints || [];
+    renderAll();
+  } catch{ renderError('Backend se connect nahi ho saka.'); }
+}
+
+function renderAll(){
+  const { property, agreement, owner } = rentalData;
+  const endDate   = new Date(agreement.endDate);
+  const startDate = new Date(agreement.startDate);
+  const today     = new Date();
+  const daysLeft  = Math.max(0, Math.ceil((endDate - today) / (1000*60*60*24)));
+  const monthsLeft= Math.ceil(daysLeft/30);
+
+  document.getElementById('main-content').innerHTML = `
+
+    <div class="page-head">
+      <h1>🏡 My Rental</h1>
+      <p>Aap ki rented property ki tamam details, agreement, aur maintenance requests.</p>
+    </div>
+
+    <!-- PROPERTY HERO -->
+    <div class="prop-hero">
+      <div>
+        <h2>${property.address}</h2>
+        <div class="city">📍 ${property.city}</div>
+        <div class="prop-meta">
+          <div class="meta-item"><div class="val">PKR ${agreement.monthlyRent.toLocaleString()}</div><div class="lbl">Monthly Rent</div></div>
+          <div class="meta-item"><div class="val">${property.area} ${property.areaUnit}</div><div class="lbl">Area</div></div>
+          <div class="meta-item"><div class="val">${monthsLeft}</div><div class="lbl">Months Left</div></div>
+          <div class="meta-item"><div class="val">${daysLeft}</div><div class="lbl">Days Left</div></div>
+        </div>
+      </div>
+      <div class="prop-hero-right">
+        <div class="active-badge">✅ ACTIVE</div>
+        <div class="contract-dates">
+          From: ${startDate.toLocaleDateString('en-PK')}<br>
+          To: ${endDate.toLocaleDateString('en-PK')}
+        </div>
+      </div>
+    </div>
+
+    <!-- OWNER INFO -->
+    <div class="owner-card">
+      <div class="owner-av">${owner.name.charAt(0).toUpperCase()}</div>
+      <div class="owner-info">
+        <h3>${owner.name}</h3>
+        <p>Property Owner &nbsp;·&nbsp; ${owner.email}</p>
+      </div>
+      <div class="owner-contact">
+        <a href="tel:${owner.phone}" class="contact-btn call">📞 Call</a>
+        <a href="mailto:${owner.email}" class="contact-btn email">✉️ Email</a>
+      </div>
+    </div>
+
+    <!-- AGREEMENT INFO + TERMS -->
+    <div class="two-col">
+      <div class="sec-card">
+        <div class="sec-card-title">📄 Agreement Details</div>
+        <div class="info-row"><span class="ir-lbl">Status</span>          <span class="ir-val" style="color:var(--green)">ACTIVE</span></div>
+        <div class="info-row"><span class="ir-lbl">Security Deposit</span><span class="ir-val">PKR ${agreement.securityDeposit.toLocaleString()}</span></div>
+        <div class="info-row"><span class="ir-lbl">Advance Paid</span>    <span class="ir-val">${agreement.advanceMonths} month(s)</span></div>
+        <div class="info-row"><span class="ir-lbl">Notice Period</span>   <span class="ir-val">${agreement.noticePeriodDays} days</span></div>
+        <div class="info-row"><span class="ir-lbl">Duration</span>        <span class="ir-val">${agreement.durationMonths} months</span></div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-card-title">⚙️ Conditions</div>
+        <div class="info-row"><span class="ir-lbl">Utilities Included</span>  <span class="chip ${agreement.utilitiesIncluded ?'y':'n'}">${agreement.utilitiesIncluded ?'Yes':'No'}</span></div>
+        <div class="info-row"><span class="ir-lbl">Maintenance by Owner</span><span class="chip ${agreement.maintenanceByOwner?'y':'n'}">${agreement.maintenanceByOwner?'Yes':'No'}</span></div>
+        <div class="info-row"><span class="ir-lbl">Pets Allowed</span>        <span class="chip ${agreement.petsAllowed       ?'y':'n'}">${agreement.petsAllowed       ?'Yes':'No'}</span></div>
+        ${agreement.additionalTerms?`<div class="info-row"><span class="ir-lbl">Additional Terms</span><span class="ir-val" style="max-width:60%;font-size:0.8rem">${agreement.additionalTerms}</span></div>`:''}
+      </div>
+    </div>
+
+    <!-- COMPLAINT / MAINTENANCE FORM -->
+    <div class="complaint-section">
+      <h2>🔧 Maintenance Request / Complaint</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Request Type</label>
+          <select class="form-input" id="c-type">
+            <option value="MAINTENANCE">🔧 Maintenance Request</option>
+            <option value="COMPLAINT">⚠️ Complaint</option>
+            <option value="OTHER">📝 Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input class="form-input" id="c-title" placeholder="e.g. AC kharab hai, Leakage hai...">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Description</label>
+          <textarea class="form-input" id="c-desc" placeholder="Problem ki puri details likhein..." style="min-height:80px;resize:vertical"></textarea>
+        </div>
+      </div>
+      <button class="btn-submit" id="submit-btn" onclick="submitComplaint()">Submit Request</button>
+    </div>
+
+    <!-- COMPLAINT HISTORY -->
+    <div class="complaint-section">
+      <h2>📋 Request History</h2>
+      <div class="tabs" id="c-tabs">
+        <button class="tab active" onclick="filterComplaints('all',this)">All (${allComplaints.length})</button>
+        <button class="tab" onclick="filterComplaints('OPEN',this)">Open</button>
+        <button class="tab" onclick="filterComplaints('IN_PROGRESS',this)">In Progress</button>
+        <button class="tab" onclick="filterComplaints('RESOLVED',this)">Resolved</button>
+      </div>
+      <div id="complaint-list"></div>
+    </div>
+  `;
+
+  renderComplaints(allComplaints);
+}
+
+function filterComplaints(status, el){
+  document.querySelectorAll('#c-tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const list = status==='all' ? allComplaints : allComplaints.filter(c=>c.status===status);
+  renderComplaints(list);
+}
+
+function renderComplaints(list){
+  const cont = document.getElementById('complaint-list');
+  if(!list.length){
+    cont.innerHTML=`<div class="empty-box"><h3>Koi request nahi</h3><p>Maintenance ya complaint submit karein.</p></div>`;
+    return;
+  }
+  const typeIcons = { MAINTENANCE:'🔧', COMPLAINT:'⚠️', OTHER:'📝' };
+  cont.innerHTML = `<div class="complaint-list">${list.map(c=>`
+    <div class="c-item">
+      <div class="c-head">
+        <div class="c-title">${typeIcons[c.type]||'📝'} ${c.title}</div>
+        <div class="c-date">${new Date(c.createdAt).toLocaleDateString('en-PK')}</div>
+      </div>
+      <div class="c-desc">${c.description}</div>
+      <div class="c-foot">
+        <span class="badge-status s-${c.status.toLowerCase()}">${c.status.replace('_',' ')}</span>
+        <span class="badge-type">${c.type}</span>
+      </div>
+      ${c.adminNote?`<div class="admin-note">🟢 Admin Note: ${c.adminNote}</div>`:''}
+    </div>`).join('')}
+  </div>`;
+}
+
+async function submitComplaint(){
+  const type  = document.getElementById('c-type').value;
+  const title = document.getElementById('c-title').value.trim();
+  const desc  = document.getElementById('c-desc').value.trim();
+
+  if(!title){ showToast('Title zaruri hai.','error'); return; }
+  if(!desc)  { showToast('Description zaruri hai.','error'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled=true; btn.textContent='Submitting...';
+
+  try{
+    const d = await apiFetch('/user/complaints',{
+      method:'POST',
+      body: JSON.stringify({
+        propertyId: rentalData.property.id,
+        type, title, description: desc
+      })
+    });
+    if(d.success){
+      showToast(d.message);
+      document.getElementById('c-title').value='';
+      document.getElementById('c-desc').value='';
+      allComplaints.unshift({ ...d.data, property:{ address:rentalData.property.address, city:rentalData.property.city } });
+      renderComplaints(allComplaints);
+    } else {
+      showToast(d.message||'Submit nahi hua.','error');
+    }
+  } catch{ showToast('Network error.','error'); }
+  finally{ btn.disabled=false; btn.textContent='Submit Request'; }
+}
+
+function renderNoRental(){
+  document.getElementById('main-content').innerHTML=`
+    <div class="no-rental">
+      <div style="font-size:3rem;margin-bottom:16px">🏠</div>
+      <h2>Abhi Koi Active Rental Nahi</h2>
+      <p>Koi property rent karne ke liye request bhejein aur agreement complete karein.</p>
+      <button class="btn-browse" onclick="location.href='../index.html'">Browse Properties</button>
+    </div>`;
+}
+
+function renderError(msg){
+  document.getElementById('main-content').innerHTML=`
+    <div style="padding:40px;text-align:center;color:#ef4444">
+      <h3>${msg}</h3>
+    </div>`;
+}
+</script>
+</body>
+</html>

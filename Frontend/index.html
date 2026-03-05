@@ -333,15 +333,17 @@ async function load(page){
 
 /* ── RENDER CARDS ──────────────────────────────────── */
 function renderCards(list){
-  if(!list.length){ document.getElementById('grid').innerHTML=empty('Koi property nahi mili.'); return; }
-  document.getElementById('grid').innerHTML = list.map(p=>`
+  // Extra safety: sirf available properties dikhao
+  const available = list.filter(p => p.isAvailable);
+  if(!available.length){ document.getElementById('grid').innerHTML=empty('Koi property nahi mili.'); return; }
+  document.getElementById('grid').innerHTML = available.map(p=>`
     <div class="prop-card">
       <div class="card-img">
         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
-        <span class="card-badge ${p.isAvailable?'':'na'}">${p.isAvailable?'Available':'Rented'}</span>
+        <span class="card-badge ${p.isAvailable?'':'na'}">${p.isAvailable?'Available':'Rented Out'}</span>
       </div>
       <div class="card-body">
         <div class="card-price">PKR ${p.rentAmount.toLocaleString()} <small>/ month</small></div>
