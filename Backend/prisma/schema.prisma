@@ -7,10 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─────────────────────────────────────────────────────
-//  EXISTING MODELS  (koi change nahi, sirf relations add)
-// ─────────────────────────────────────────────────────
-
 model User {
   id        String   @id @default(cuid())
   name      String
@@ -24,11 +20,10 @@ model User {
   createdAt DateTime @default(now())
 
   properties    Property[]
-  ownedRentals  Rental[]  @relation("OwnerRentals")
-  tenantRentals Rental[]  @relation("TenantRentals")
-
-  // NEW: tenant ne jo requests bheji hain
-  sentListings  Listing[] @relation("TenantListings")
+  ownedRentals  Rental[]   @relation("OwnerRentals")
+  tenantRentals Rental[]   @relation("TenantRentals")
+  sentListings  Listing[]  @relation("TenantListings")
+  complaints    Complaint[] @relation("TenantComplaints")
 }
 
 model Property {
@@ -39,14 +34,33 @@ model Property {
   areaUnit    AreaUnit @default(MARLA)
   rentAmount  Float
   description String   @default("")
-  isAvailable Boolean  @default(true)   // NEW: accept hone pe false ho jata hai
+  isAvailable Boolean  @default(true)
   createdAt   DateTime @default(now())
 
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  rentals  Rental[]
-  listings Listing[]  // NEW
+  rentals    Rental[]
+  listings   Listing[]
+  complaints Complaint[]
+  images     PropertyImage[]   // NEW — property ki images
+}
+
+// ─────────────────────────────────────────────────────
+// NEW: PROPERTY IMAGE
+// Server pe upload ki gayi images ka path store hoga.
+// ek property ki multiple images ho sakti hain.
+// ─────────────────────────────────────────────────────
+model PropertyImage {
+  id        String   @id @default(cuid())
+  url       String   // e.g. /uploads/properties/abc123-front.jpg
+  filename  String   // original filename for reference
+  isPrimary Boolean  @default(false)  // pehli/main image
+  order     Int      @default(0)      // display order
+  createdAt DateTime @default(now())
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
 }
 
 model Rental {
@@ -79,18 +93,13 @@ model Payment {
   rentalId String
 }
 
-// ─────────────────────────────────────────────────────
-//  NEW: LISTING  (Rent Request)
-//  Tenant ek property ke liye request bhejta hai.
-//  Owner accept / decline karta hai.
-// ─────────────────────────────────────────────────────
-
 model Listing {
-  id        String        @id @default(cuid())
-  status    ListingStatus @default(PENDING)
-  message   String        @default("")   // tenant ka optional message
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id       String        @id @default(cuid())
+  status   ListingStatus @default(PENDING)
+  isActive Boolean       @default(true)
+  message  String        @default("")
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   propertyId String
@@ -98,40 +107,29 @@ model Listing {
   tenant   User   @relation("TenantListings", fields: [tenantId], references: [id], onDelete: Cascade)
   tenantId String
 
-  // Ek tenant ek property pe sirf ek active request rakh sakta hai
   @@unique([propertyId, tenantId])
 
-  agreement Agreement?   // accept hone ke baad agreement banta hai
+  agreement Agreement?
 }
 
-// ─────────────────────────────────────────────────────
-//  NEW: AGREEMENT
-//  Listing accept hone ke baad owner draft banata hai,
-//  dono sign karte hain — tab ACTIVE hota hai.
-// ─────────────────────────────────────────────────────
-
 model Agreement {
-  id    String          @id @default(cuid())
+  id     String          @id @default(cuid())
   status AgreementStatus @default(DRAFT)
 
-  // Rent & financial terms
   monthlyRent     Float
-  securityDeposit Float          // 1-2 mahine ka advance security
+  securityDeposit Float
   advanceMonths   Int    @default(1)
 
-  // Duration
   startDate      DateTime
   endDate        DateTime
-  durationMonths Int              // kitne mahine ka contract
+  durationMonths Int
 
-  // General terms
   noticePeriodDays   Int     @default(30)
-  utilitiesIncluded  Boolean @default(false)  // bijli/paani bill included?
-  maintenanceByOwner Boolean @default(true)   // maintenance owner ki zimmedari?
+  utilitiesIncluded  Boolean @default(false)
+  maintenanceByOwner Boolean @default(true)
   petsAllowed        Boolean @default(false)
-  additionalTerms    String  @default("")     // extra clauses
+  additionalTerms    String  @default("")
 
-  // Digital signatures
   tenantSigned   Boolean   @default(false)
   ownerSigned    Boolean   @default(false)
   tenantSignedAt DateTime?
@@ -140,13 +138,44 @@ model Agreement {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Ek listing ka sirf ek agreement
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   listingId String  @unique
+
+  securityPayment SecurityDepositPayment?
+}
+
+model SecurityDepositPayment {
+  id             String               @id @default(cuid())
+  transactionId  String
+  amount         Float
+  status         DepositPaymentStatus @default(PENDING_VERIFICATION)
+  rejectedReason String               @default("")
+  submittedAt    DateTime             @default(now())
+  verifiedAt     DateTime?
+
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreementId String    @unique
+}
+
+model Complaint {
+  id          String          @id @default(cuid())
+  type        ComplaintType   @default(MAINTENANCE)
+  title       String
+  description String
+  status      ComplaintStatus @default(OPEN)
+  adminNote   String          @default("")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  tenant   User   @relation("TenantComplaints", fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
 }
 
 // ─────────────────────────────────────────────────────
-//  ENUMS
+// ENUMS
 // ─────────────────────────────────────────────────────
 
 enum AreaUnit {
@@ -157,14 +186,33 @@ enum AreaUnit {
 }
 
 enum ListingStatus {
-  PENDING   // request bheji gayi, owner ka intezaar
-  ACCEPTED  // owner ne accept kar liya
-  DECLINED  // owner ne decline kar diya
+  PENDING
+  ACCEPTED
+  DECLINED
 }
 
 enum AgreementStatus {
-  DRAFT     // ban gaya, dono ne sign nahi kiya
-  ACTIVE    // dono ne sign kar liya
-  EXPIRED   // contract khatam
-  CANCELLED // beech mein cancel
+  DRAFT
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum DepositPaymentStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+}
+
+enum ComplaintType {
+  MAINTENANCE
+  COMPLAINT
+  OTHER
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }

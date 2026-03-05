@@ -4,10 +4,6 @@
 // GET /api/owner/requests            → mere properties pe aayi sab requests
 // PUT /api/owner/requests/:id/accept → accept karo
 // PUT /api/owner/requests/:id/decline→ decline karo
-//
-// index.js mein add karo:
-//   import ownerRequests from './routes/User/ownerRequests.js';
-//   app.use('/api/owner/requests', ownerRequests);
 // ══════════════════════════════════════════════════════
 
 import express   from 'express';
@@ -60,45 +56,47 @@ router.put('/:id/accept', async (req, res) => {
     if (listing.property.ownerId !== req.user.id)    return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
     if (listing.status !== 'PENDING')                return res.status(400).json({ success: false, message: 'Sirf PENDING request accept ho sakti hai.' });
 
-    // Transaction: listing accept + property unavailable mark + baaki requests decline + agreement draft
     const result = await db.$transaction(async (tx) => {
 
+      // 1. Yeh listing ACCEPT karo + isActive true rakhon (accepted wali dikhni chahiye owner ko)
       const updatedListing = await tx.listing.update({
         where: { id: listing.id },
-        data:  { status: 'ACCEPTED' }
+        data:  { status: 'ACCEPTED', isActive: true }
       });
 
-      // Property unavailable kar do
+      // 2. Property ko isAvailable: false kar do
       await tx.property.update({
         where: { id: listing.propertyId },
         data:  { isAvailable: false }
       });
 
-      // Is property ki baaki sab pending requests decline
+      // 3. Is property ki baaki sab pending requests:
+      //    - status DECLINED
+      //    - isActive: false  ← yahi main fix hai — frontend se ghayab ho jayengi
       await tx.listing.updateMany({
         where: {
           propertyId: listing.propertyId,
           id:         { not: listing.id },
           status:     'PENDING'
         },
-        data: { status: 'DECLINED' }
+        data: { status: 'DECLINED', isActive: false }
       });
 
-      // Agreement draft banana
+      // 4. Agreement draft banana
       const startDate = new Date();
       const endDate   = new Date(startDate);
       endDate.setMonth(endDate.getMonth() + 12);
 
       const agreement = await tx.agreement.create({
         data: {
-          listingId:         listing.id,
-          monthlyRent:       listing.property.rentAmount,
-          securityDeposit:   listing.property.rentAmount * 2,
-          advanceMonths:     1,
+          listingId:          listing.id,
+          monthlyRent:        listing.property.rentAmount,
+          securityDeposit:    listing.property.rentAmount * 2,
+          advanceMonths:      1,
           startDate,
           endDate,
-          durationMonths:    12,
-          noticePeriodDays:  30,
+          durationMonths:     12,
+          noticePeriodDays:   30,
           utilitiesIncluded:  false,
           maintenanceByOwner: true,
           petsAllowed:        false,
@@ -129,9 +127,10 @@ router.put('/:id/decline', async (req, res) => {
     if (listing.property.ownerId !== req.user.id) return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
     if (listing.status !== 'PENDING')             return res.status(400).json({ success: false, message: 'Sirf PENDING request decline ho sakti hai.' });
 
+    // Decline + isActive false — frontend listing se hata do
     await db.listing.update({
       where: { id: listing.id },
-      data:  { status: 'DECLINED' }
+      data:  { status: 'DECLINED', isActive: false }
     });
 
     return res.json({ success: true, message: 'Request decline ho gayi.' });

@@ -3,6 +3,11 @@ import 'dotenv/config';
 import express      from 'express';
 import cors         from 'cors';
 import cookieParser from 'cookie-parser';
+import path               from 'path';
+import { fileURLToPath }  from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
+
 
 // Routes
 import authRoutes     from './routes/authRoutes.js';
@@ -14,6 +19,8 @@ import publicListings  from './routes/public/listings.js';
 import tenantRequests  from './routes/User/tenantRequests.js';
 import ownerRequests   from './routes/User/ownerRequests.js';
 import agreementRoutes from './routes/User/agreement.js';
+import myRentalRoutes  from './routes/User/myRentedProperty.js';
+import adminComplaints from './routes/Admin/complaints.js';
 
 // Middleware
 import { errorHandler } from './middleware/errorMiddleware.js';
@@ -48,6 +55,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ── Routes ─────────────────────────────────────────────
 app.use('/api/auth',            authRoutes);
@@ -59,6 +67,8 @@ app.use('/api/listings',       publicListings);  // public — koi bhi dekh sakt
 app.use('/api/user/requests',  tenantRequests);  // tenant — request bhejo/dekho
 app.use('/api/owner/requests', ownerRequests);   // owner  — requests manage karo
 app.use('/api/user/agreement', agreementRoutes); // dono   — agreement dekho/sign
+app.use('/api/user',              myRentalRoutes);   // GET /api/user/my-rental + complaints
+app.use('/api/admin/complaints',  adminComplaints);  // Admin complaint management
 
 // ── Health Check ───────────────────────────────────────
 app.get('/api/health', (req, res) => {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rental Agreement — RentProx</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root{
       --green:#28b446; --green-dark:#1e8c36;
@@ -16,7 +16,8 @@
     *{ box-sizing:border-box; margin:0; padding:0; }
     body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); display:flex; height:100vh; overflow:hidden; }
 
-    .sidebar{ width:var(--sidebar); background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; }
+    /* SIDEBAR */
+    .sidebar{ width:var(--sidebar); background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; flex-shrink:0; }
     .sb-logo{ padding:0 24px 28px; font-weight:800; color:var(--green); font-size:1.4rem; cursor:pointer; }
     .nav-link{ display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--muted); font-weight:500; font-size:0.93rem; }
     .nav-link:hover{ color:var(--green); background:#f0fdf4; }
@@ -25,6 +26,7 @@
     .btn-logout{ width:100%; padding:11px; background:var(--white); border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; color:var(--muted); font-family:inherit; }
     .btn-logout:hover{ color:#ef4444; border-color:#ef4444; }
 
+    /* MAIN */
     .main-wrap{ flex:1; display:flex; flex-direction:column; overflow-y:auto; }
     .topbar{ height:68px; background:var(--white); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 36px; position:sticky; top:0; z-index:90; }
 
@@ -32,82 +34,140 @@
     .prof-pill{ display:flex; align-items:center; gap:10px; padding:6px 6px 6px 16px; border:1.5px solid var(--green); border-radius:30px; cursor:pointer; }
     .prof-pill span{ color:var(--green); font-weight:600; font-size:0.88rem; }
     .prof-av{ width:30px; height:30px; border-radius:50%; background:#f0f0f0; display:flex; align-items:center; justify-content:center; }
-    .prof-drop{ position:absolute; top:calc(100% + 8px); right:0; width:260px; background:var(--white); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.12); border:1px solid var(--border); display:none; flex-direction:column; z-index:999; overflow:hidden; }
+    .prof-drop{ position:absolute; top:calc(100% + 8px); right:0; width:240px; background:var(--white); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.12); border:1px solid var(--border); display:none; flex-direction:column; z-index:999; overflow:hidden; }
     .prof-drop.on{ display:flex; }
-    .drop-hd{ padding:18px 20px; border-bottom:1px solid #f5f5f5; }
-    .drop-name{ font-weight:700; }
+    .drop-hd{ padding:16px 18px; border-bottom:1px solid #f5f5f5; }
+    .drop-name{ font-weight:700; font-size:0.9rem; }
     .drop-email{ font-size:0.73rem; color:var(--muted); }
-    .drop-item{ padding:13px 20px; color:var(--muted); font-size:0.88rem; font-weight:500; }
+    .drop-item{ padding:12px 18px; color:var(--muted); font-size:0.87rem; font-weight:500; }
     .drop-item.red{ color:#ef4444; border-top:1px solid #f5f5f5; cursor:pointer; }
 
-    /* AGREEMENT DOC */
-    .content{ padding:36px; max-width:900px; }
-    .agr-header{ background:var(--white); border:1px solid var(--border); border-radius:14px; padding:28px 32px; margin-bottom:22px; box-shadow:var(--shadow); }
-    .agr-title{ font-size:1.5rem; font-weight:800; margin-bottom:6px; }
-    .agr-sub{ color:var(--muted); font-size:0.9rem; margin-bottom:18px; }
+    /* CONTENT */
+    .content{ padding:32px; max-width:860px; }
 
-    .status-bar{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-    .agr-badge{ padding:7px 16px; border-radius:8px; font-size:0.8rem; font-weight:700; text-transform:uppercase; }
-    .agr-badge.draft    { background:#fff7ed; color:#c2410c; }
-    .agr-badge.active   { background:#e8f5e9; color:var(--green); }
-    .agr-badge.expired  { background:#f5f5f5; color:#999; }
-    .agr-badge.cancelled{ background:#fff5f5; color:#ef4444; }
+    /* AGREEMENT HEADER */
+    .agr-header{
+      background:var(--white); border:1px solid var(--border);
+      border-radius:14px; padding:26px 30px; margin-bottom:20px; box-shadow:var(--shadow);
+    }
+    .agr-title{ font-size:1.4rem; font-weight:800; margin-bottom:6px; }
+    .agr-sub{ color:var(--muted); font-size:0.88rem; margin-bottom:18px; }
+    .status-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+    .agr-badge{ padding:6px 14px; border-radius:7px; font-size:0.75rem; font-weight:700; text-transform:uppercase; }
+    .b-draft    { background:#fff7ed; color:#c2410c; }
+    .b-active   { background:#e8f5e9; color:var(--green); }
+    .b-expired  { background:#f5f5f5; color:#94a3b8; }
+    .b-cancelled{ background:#fff5f5; color:#ef4444; }
+    .sign-pill{ display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:7px; background:#f1f5f9; color:#64748b; font-size:0.78rem; font-weight:600; }
+    .sign-pill.done{ background:#e8f5e9; color:var(--green); }
 
-    .sign-status{ display:flex; gap:12px; }
-    .sign-pill{ display:flex; align-items:center; gap:7px; padding:6px 14px; border-radius:8px; font-size:0.8rem; font-weight:600; background:#f1f5f9; color:#64748b; }
-    .sign-pill.signed{ background:#e8f5e9; color:var(--green); }
-
-    /* SECTIONS */
-    .section{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:24px 28px; margin-bottom:18px; box-shadow:var(--shadow); }
-    .section-title{ font-weight:700; font-size:0.95rem; margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
-    .section-title span{ background:var(--green); color:#fff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:800; }
-
-    .terms-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-    .term-item{ display:flex; flex-direction:column; gap:4px; }
-    .term-label{ font-size:0.75rem; color:var(--muted); font-weight:600; text-transform:uppercase; }
-    .term-val{ font-weight:700; font-size:0.95rem; }
-    .term-val.highlight{ color:var(--green); font-size:1.1rem; }
-
-    .bool-row{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f9f9f9; font-size:0.88rem; }
+    /* SECTION */
+    .section{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:22px 26px; margin-bottom:18px; box-shadow:var(--shadow); }
+    .sec-title{ font-weight:700; font-size:0.92rem; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+    .sec-num{ width:22px; height:22px; border-radius:50%; background:var(--green); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800; flex-shrink:0; }
+    .terms-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .ti{ display:flex; flex-direction:column; gap:3px; }
+    .tl{ font-size:0.72rem; color:var(--muted); font-weight:600; text-transform:uppercase; }
+    .tv{ font-weight:700; font-size:0.92rem; }
+    .tv.hi{ color:var(--green); font-size:1.05rem; }
+    .bool-row{ display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #f9f9f9; font-size:0.87rem; }
     .bool-row:last-child{ border:none; }
-    .chip{ padding:3px 10px; border-radius:5px; font-size:0.72rem; font-weight:700; }
-    .chip.yes{ background:#e8f5e9; color:var(--green); }
-    .chip.no { background:#f5f5f5; color:#94a3b8; }
+    .chip{ padding:3px 9px; border-radius:5px; font-size:0.7rem; font-weight:700; }
+    .chip.y{ background:#e8f5e9; color:var(--green); }
+    .chip.n{ background:#f5f5f5; color:#94a3b8; }
 
-    /* EDIT FORM (owner only) */
-    .edit-form{ display:none; }
-    .edit-form.on{ display:block; }
-    .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
-    .form-group{ display:flex; flex-direction:column; gap:6px; }
-    .form-label{ font-size:0.78rem; font-weight:600; color:var(--muted); }
-    .form-input{ padding:10px 13px; border:1px solid var(--border); border-radius:8px; font-family:inherit; outline:none; font-size:0.87rem; }
-    .form-input:focus{ border-color:var(--green); }
-    .form-check{ display:flex; align-items:center; gap:8px; font-size:0.87rem; cursor:pointer; }
+    /* EDIT FORM */
+    .edit-section{ display:none; margin-top:16px; padding-top:16px; border-top:1px dashed var(--border); }
+    .edit-section.on{ display:block; }
+    .fg{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+    .fgi{ display:flex; flex-direction:column; gap:5px; }
+    .fgl{ font-size:0.76rem; font-weight:600; color:var(--muted); }
+    .fginput{ padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; outline:none; font-size:0.86rem; }
+    .fginput:focus{ border-color:var(--green); }
+    .fcheck{ display:flex; align-items:center; gap:8px; font-size:0.86rem; cursor:pointer; }
+    .fchecks{ display:flex; gap:20px; flex-wrap:wrap; margin-bottom:12px; }
 
     /* ACTION BAR */
-    .action-bar{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:22px 28px; display:flex; align-items:center; justify-content:space-between; box-shadow:var(--shadow); }
-    .action-left{ font-size:0.88rem; color:var(--muted); }
-    .action-left strong{ color:var(--text); display:block; margin-bottom:3px; }
-    .action-btns{ display:flex; gap:10px; }
-    .btn-edit{ padding:11px 22px; border:1.5px solid var(--green); color:var(--green); background:var(--white); border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
-    .btn-sign{ padding:11px 28px; background:var(--green); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .action-bar{
+      background:var(--white); border:1px solid var(--border);
+      border-radius:12px; padding:20px 26px; display:flex;
+      align-items:flex-start; justify-content:space-between; gap:20px; box-shadow:var(--shadow);
+      margin-bottom:18px;
+    }
+    .action-bar.green-bg{ background:#f0fdf4; border-color:#86efac; }
+    .action-left strong{ display:block; margin-bottom:4px; }
+    .action-left p{ font-size:0.85rem; color:var(--muted); }
+    .abtns{ display:flex; gap:10px; flex-wrap:wrap; flex-shrink:0; }
+    .btn-edit{ padding:10px 20px; border:1.5px solid var(--green); color:var(--green); background:var(--white); border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.85rem; }
+    .btn-sign{ padding:10px 22px; background:var(--green); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.85rem; }
     .btn-sign:hover{ background:var(--green-dark); }
     .btn-sign:disabled{ background:#94a3b8; cursor:not-allowed; }
+    .btn-danger{ padding:10px 20px; background:#ef4444; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.85rem; }
 
+    /* PAYMENT SECTION */
+    .pay-box{
+      background:var(--white); border:2px solid var(--green);
+      border-radius:14px; padding:26px; margin-bottom:18px; box-shadow:var(--shadow);
+    }
+    .pay-box h3{ font-size:1.05rem; margin-bottom:6px; color:var(--green); }
+    .pay-box p{ font-size:0.85rem; color:var(--muted); margin-bottom:18px; }
+    .pay-amount-box{
+      background:#f0fdf4; border-radius:10px; padding:16px 20px;
+      display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;
+    }
+    .pay-amount-box .lbl{ font-size:0.8rem; color:var(--muted); }
+    .pay-amount-box .val{ font-size:1.25rem; font-weight:800; color:var(--green); }
+    .pay-input-row{ display:flex; gap:10px; }
+    .pay-input{ flex:1; padding:12px 14px; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.9rem; outline:none; }
+    .pay-input:focus{ border-color:var(--green); }
+    .btn-pay{ padding:12px 24px; background:var(--green); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; white-space:nowrap; }
+    .btn-pay:hover{ background:var(--green-dark); }
+    .btn-pay:disabled{ background:#94a3b8; cursor:not-allowed; }
+
+    /* PAYMENT STATUS BADGE */
+    .pay-status{ padding:14px 20px; border-radius:10px; display:flex; align-items:center; gap:12px; }
+    .pay-status.pending{ background:#fff7ed; border:1px solid #fed7aa; }
+    .pay-status.verified{ background:#e8f5e9; border:1px solid #86efac; }
+    .pay-status.rejected{ background:#fff5f5; border:1px solid #fecaca; }
+    .pay-status-icon{ font-size:1.5rem; }
+    .pay-status-text strong{ display:block; font-size:0.92rem; }
+    .pay-status-text span{ font-size:0.82rem; color:var(--muted); }
+
+    /* OWNER VERIFY BOX */
+    .verify-box{ background:#fff7ed; border:1.5px solid #fed7aa; border-radius:12px; padding:22px 26px; margin-bottom:18px; }
+    .verify-box h3{ font-size:1rem; margin-bottom:6px; color:#92400e; }
+    .verify-info{ background:#fff; border-radius:8px; padding:14px 16px; margin-bottom:16px; }
+    .vi-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f5f5f5; font-size:0.87rem; }
+    .vi-row:last-child{ border:none; }
+    .vi-lbl{ color:var(--muted); }
+    .vi-val{ font-weight:700; }
+    .verify-btns{ display:flex; gap:10px; }
+    .btn-verify{ flex:1; padding:11px; background:var(--green); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .btn-verify:hover{ background:var(--green-dark); }
+    .reject-input{ width:100%; padding:10px; border:1px solid var(--border); border-radius:8px; font-family:inherit; margin-bottom:10px; outline:none; font-size:0.86rem; display:none; }
+    .reject-input.on{ display:block; }
+    .btn-reject{ flex:1; padding:11px; background:var(--white); color:#ef4444; border:1.5px solid #ef4444; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .btn-reject:hover{ background:#fff5f5; }
+
+    /* SKELETON */
     .sk{ background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:12px; }
     @keyframes sh{ 0%{background-position:200% 0}100%{background-position:-200% 0} }
-    .err{ background:#fff5f5; border:1px solid #fecaca; border-radius:10px; padding:20px; text-align:center; color:#ef4444; }
+    .err-box{ background:#fff5f5; border:1px solid #fecaca; border-radius:10px; padding:24px; text-align:center; color:#ef4444; }
   </style>
 </head>
 <body>
 
+<!-- SIDEBAR -->
 <nav class="sidebar">
-  <div class="sb-logo">RentProx</div>
-  <a href="homepage.html"         class="nav-link">🏠 Homepage</a>
-  <a href="../index.html"          class="nav-link">🔍 Browse Properties</a>
-  <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
-  <a href="incoming_requests.html" class="nav-link">📩 Incoming Requests</a>
-  <a href="properties.html"        class="nav-link">🏢 My Properties</a>
+  <div class="sb-logo" onclick="location.href='../index.html'">RentProx</div>
+  <a href="homepage.html"         class="nav-link">🏠 Dashboard</a>
+  <a href="../index.html"         class="nav-link">🔍 Browse Properties</a>
+  <a href="my_requests.html"      class="nav-link">📋 My Requests</a>
+  <a href="my_rental.html"        class="nav-link">🏡 My Rental</a>
+  <a href="incoming_requests.html"class="nav-link">📩 Incoming Requests</a>
+  <a href="addproperty.html"      class="nav-link">➕ Add Property</a>
+  <a href="properties.html"       class="nav-link">🏢 My Properties</a>
+  <a href="ledger.html"           class="nav-link">💰 Rent Ledger</a>
   <div class="sb-footer">
     <button class="btn-logout" id="logout-btn">Log Out</button>
   </div>
@@ -118,9 +178,9 @@
     <span style="font-weight:700;color:var(--muted)">Rental Agreement</span>
     <div class="prof-wrap">
       <div class="prof-pill" id="prof-pill">
-        <span class="js-user-name">Loading…</span>
+        <span class="js-user-name">…</span>
         <div class="prof-av">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
           </svg>
         </div>
@@ -135,19 +195,17 @@
     </div>
   </header>
 
-  <div class="content" id="agr-content">
+  <div class="content" id="main-content">
     <div class="sk" style="height:120px;margin-bottom:18px"></div>
     <div class="sk" style="height:200px;margin-bottom:18px"></div>
-    <div class="sk" style="height:160px"></div>
+    <div class="sk" style="height:120px"></div>
   </div>
 </div>
 
 <script src="../api.js"></script>
 <script>
-let agr     = null;
-let prop    = null;
-let role    = null; // 'owner' | 'tenant'
-let editMode= false;
+let agr = null, prop = null, role = null, spay = null;
+let editMode = false;
 
 (async function init(){
   const user = await Auth.guard('../login_plm.html');
@@ -157,138 +215,231 @@ let editMode= false;
   document.getElementById('logout-btn').onclick  = ()=>Auth.logout('../login_plm.html');
   document.getElementById('logout-drop').onclick = ()=>Auth.logout('../login_plm.html');
   const pill=document.getElementById('prof-pill'), drop=document.getElementById('prof-drop');
-  pill.addEventListener('click',e=>{ e.stopPropagation(); drop.classList.toggle('on'); });
+  pill.addEventListener('click',e=>{e.stopPropagation();drop.classList.toggle('on');});
   window.addEventListener('click',()=>drop.classList.remove('on'));
 
-  // Get listing id from URL
-  const params    = new URLSearchParams(window.location.search);
-  const listingId = params.get('listing');
-  if(!listingId){ showError('Listing ID missing hai. Wapas jao.'); return; }
-
+  const listingId = new URLSearchParams(window.location.search).get('listing');
+  if(!listingId){ showErr('Listing ID missing. Wapas jao.'); return; }
   await loadAgreement(listingId);
 })();
 
 async function loadAgreement(listingId){
   try{
     const d = await apiFetch(`/user/agreement/${listingId}`);
-    if(!d.success){ showError(d.message); return; }
-
+    if(!d.success){ showErr(d.message); return; }
     agr  = d.data.agreement;
     prop = d.data.property;
     role = d.data.userRole;
-
-    renderAgreement();
-  } catch{ showError('Agreement load nahi hua. Backend chal raha hai?'); }
+    spay = d.data.securityPayment;
+    render();
+  } catch{ showErr('Agreement load nahi hua.'); }
 }
 
-function renderAgreement(){
-  const alreadySigned = role==='owner' ? agr.ownerSigned : agr.tenantSigned;
-  const isActive      = agr.status === 'ACTIVE';
+function render(){
+  const isActive   = agr.status === 'ACTIVE';
+  const bothSigned = agr.tenantSigned && agr.ownerSigned;
+  const mySigned   = role==='owner' ? agr.ownerSigned : agr.tenantSigned;
 
-  document.getElementById('agr-content').innerHTML = `
+  document.getElementById('main-content').innerHTML = `
 
     <!-- HEADER -->
     <div class="agr-header">
       <div class="agr-title">Rental Agreement</div>
-      <div class="agr-sub">${prop.address}, ${prop.city}</div>
-      <div class="status-bar">
-        <span class="agr-badge ${agr.status.toLowerCase()}">${agr.status}</span>
-        <div class="sign-status">
-          <div class="sign-pill ${agr.ownerSigned?'signed':''}">
-            ${agr.ownerSigned?'✅':'⏳'} Owner ${agr.ownerSigned?'Signed':'Pending'}
-          </div>
-          <div class="sign-pill ${agr.tenantSigned?'signed':''}">
-            ${agr.tenantSigned?'✅':'⏳'} Tenant ${agr.tenantSigned?'Signed':'Pending'}
-          </div>
-        </div>
+      <div class="agr-sub">📍 ${prop.address}, ${prop.city}</div>
+      <div class="status-row">
+        <span class="agr-badge b-${agr.status.toLowerCase()}">${agr.status}</span>
+        <div class="sign-pill ${agr.ownerSigned?'done':''}">${agr.ownerSigned?'✅':'⏳'} Owner ${agr.ownerSigned?'Signed':'Pending'}</div>
+        <div class="sign-pill ${agr.tenantSigned?'done':''}">${agr.tenantSigned?'✅':'⏳'} Tenant ${agr.tenantSigned?'Signed':'Pending'}</div>
       </div>
     </div>
 
     <!-- FINANCIAL TERMS -->
     <div class="section">
-      <div class="section-title"><span>1</span> Financial Terms</div>
-      <div class="terms-grid" id="financial-view">
-        <div class="term-item"><div class="term-label">Monthly Rent</div>       <div class="term-val highlight">PKR ${agr.monthlyRent.toLocaleString()}</div></div>
-        <div class="term-item"><div class="term-label">Security Deposit</div>   <div class="term-val">PKR ${agr.securityDeposit.toLocaleString()}</div></div>
-        <div class="term-item"><div class="term-label">Advance Months</div>     <div class="term-val">${agr.advanceMonths} month(s)</div></div>
-        <div class="term-item"><div class="term-label">Total Advance</div>      <div class="term-val">PKR ${(agr.monthlyRent * agr.advanceMonths).toLocaleString()}</div></div>
+      <div class="sec-title"><div class="sec-num">1</div> Financial Terms</div>
+      <div class="terms-grid">
+        <div class="ti"><div class="tl">Monthly Rent</div>     <div class="tv hi">PKR ${agr.monthlyRent.toLocaleString()}</div></div>
+        <div class="ti"><div class="tl">Security Deposit</div> <div class="tv">PKR ${agr.securityDeposit.toLocaleString()}</div></div>
+        <div class="ti"><div class="tl">Advance Months</div>   <div class="tv">${agr.advanceMonths} month(s)</div></div>
+        <div class="ti"><div class="tl">Total Due Now</div>    <div class="tv">PKR ${(agr.securityDeposit + agr.monthlyRent * agr.advanceMonths).toLocaleString()}</div></div>
       </div>
+
       ${role==='owner' && !isActive ? `
-      <!-- EDIT FORM (owner only) -->
-      <div class="edit-form ${editMode?'on':''}" id="edit-form">
-        <div class="form-grid" style="margin-top:20px">
-          <div class="form-group"><label class="form-label">Monthly Rent (PKR)</label><input class="form-input" id="e-rent"     type="number" value="${agr.monthlyRent}"></div>
-          <div class="form-group"><label class="form-label">Security Deposit</label>  <input class="form-input" id="e-sec"      type="number" value="${agr.securityDeposit}"></div>
-          <div class="form-group"><label class="form-label">Advance Months</label>    <input class="form-input" id="e-adv"      type="number" value="${agr.advanceMonths}" min="1" max="6"></div>
-          <div class="form-group"><label class="form-label">Duration (months)</label> <input class="form-input" id="e-dur"      type="number" value="${agr.durationMonths}"></div>
-          <div class="form-group"><label class="form-label">Start Date</label>        <input class="form-input" id="e-start"    type="date"   value="${agr.startDate.slice(0,10)}"></div>
-          <div class="form-group"><label class="form-label">End Date</label>          <input class="form-input" id="e-end"      type="date"   value="${agr.endDate.slice(0,10)}"></div>
-          <div class="form-group"><label class="form-label">Notice Period (days)</label><input class="form-input" id="e-notice" type="number" value="${agr.noticePeriodDays}"></div>
+      <div style="margin-top:14px">
+        <button class="btn-edit" onclick="toggleEdit()">✏️ Edit Terms</button>
+      </div>
+      <div class="edit-section ${editMode?'on':''}" id="edit-form">
+        <div class="fg">
+          <div class="fgi"><label class="fgl">Monthly Rent</label>    <input class="fginput" id="e-rent"   type="number" value="${agr.monthlyRent}"></div>
+          <div class="fgi"><label class="fgl">Security Deposit</label><input class="fginput" id="e-sec"    type="number" value="${agr.securityDeposit}"></div>
+          <div class="fgi"><label class="fgl">Advance Months</label>  <input class="fginput" id="e-adv"    type="number" value="${agr.advanceMonths}" min="1" max="6"></div>
+          <div class="fgi"><label class="fgl">Duration (months)</label><input class="fginput" id="e-dur"   type="number" value="${agr.durationMonths}"></div>
+          <div class="fgi"><label class="fgl">Start Date</label>      <input class="fginput" id="e-start"  type="date"   value="${agr.startDate.slice(0,10)}"></div>
+          <div class="fgi"><label class="fgl">End Date</label>        <input class="fginput" id="e-end"    type="date"   value="${agr.endDate.slice(0,10)}"></div>
+          <div class="fgi"><label class="fgl">Notice Period (days)</label><input class="fginput" id="e-notice" type="number" value="${agr.noticePeriodDays}"></div>
         </div>
-        <div style="display:flex;gap:20px;margin-bottom:10px;flex-wrap:wrap;">
-          <label class="form-check"><input type="checkbox" id="e-util"  ${agr.utilitiesIncluded ?'checked':''}> Utilities Included</label>
-          <label class="form-check"><input type="checkbox" id="e-maint" ${agr.maintenanceByOwner?'checked':''}> Maintenance by Owner</label>
-          <label class="form-check"><input type="checkbox" id="e-pets"  ${agr.petsAllowed       ?'checked':''}> Pets Allowed</label>
+        <div class="fchecks">
+          <label class="fcheck"><input type="checkbox" id="e-util"  ${agr.utilitiesIncluded ?'checked':''}> Utilities Included</label>
+          <label class="fcheck"><input type="checkbox" id="e-maint" ${agr.maintenanceByOwner?'checked':''}> Maintenance by Owner</label>
+          <label class="fcheck"><input type="checkbox" id="e-pets"  ${agr.petsAllowed       ?'checked':''}> Pets Allowed</label>
         </div>
-        <div class="form-group">
-          <label class="form-label">Additional Terms</label>
-          <textarea class="form-input" id="e-terms" style="min-height:70px">${agr.additionalTerms||''}</textarea>
+        <div class="fgi" style="margin-bottom:14px">
+          <label class="fgl">Additional Terms</label>
+          <textarea class="fginput" id="e-terms" style="min-height:60px">${agr.additionalTerms}</textarea>
         </div>
-        <div style="display:flex;gap:10px;margin-top:10px">
-          <button onclick="saveEdit()" style="padding:10px 22px;background:var(--green);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit">Save Changes</button>
-          <button onclick="toggleEdit()" style="padding:10px 18px;border:1px solid var(--border);border-radius:8px;font-weight:600;cursor:pointer;background:#fff;font-family:inherit">Cancel</button>
+        <div style="display:flex;gap:10px">
+          <button onclick="saveEdit()" class="btn-sign">Save</button>
+          <button onclick="toggleEdit()" class="btn-edit">Cancel</button>
         </div>
       </div>` : ''}
     </div>
 
     <!-- DURATION -->
     <div class="section">
-      <div class="section-title"><span>2</span> Duration & Notice</div>
+      <div class="sec-title"><div class="sec-num">2</div> Duration & Notice</div>
       <div class="terms-grid">
-        <div class="term-item"><div class="term-label">Contract Duration</div><div class="term-val">${agr.durationMonths} months</div></div>
-        <div class="term-item"><div class="term-label">Start Date</div>       <div class="term-val">${new Date(agr.startDate).toLocaleDateString('en-PK')}</div></div>
-        <div class="term-item"><div class="term-label">End Date</div>         <div class="term-val">${new Date(agr.endDate).toLocaleDateString('en-PK')}</div></div>
-        <div class="term-item"><div class="term-label">Notice Period</div>    <div class="term-val">${agr.noticePeriodDays} days</div></div>
+        <div class="ti"><div class="tl">Duration</div>       <div class="tv">${agr.durationMonths} months</div></div>
+        <div class="ti"><div class="tl">Start Date</div>     <div class="tv">${new Date(agr.startDate).toLocaleDateString('en-PK')}</div></div>
+        <div class="ti"><div class="tl">End Date</div>       <div class="tv">${new Date(agr.endDate).toLocaleDateString('en-PK')}</div></div>
+        <div class="ti"><div class="tl">Notice Period</div>  <div class="tv">${agr.noticePeriodDays} days</div></div>
       </div>
     </div>
 
     <!-- CONDITIONS -->
     <div class="section">
-      <div class="section-title"><span>3</span> Conditions</div>
-      <div class="bool-row"><span>Utilities (Bijli/Paani) Included</span><span class="chip ${agr.utilitiesIncluded?'yes':'no'}">${agr.utilitiesIncluded?'Yes':'No'}</span></div>
-      <div class="bool-row"><span>Maintenance by Owner</span>            <span class="chip ${agr.maintenanceByOwner?'yes':'no'}">${agr.maintenanceByOwner?'Yes':'No'}</span></div>
-      <div class="bool-row"><span>Pets Allowed</span>                    <span class="chip ${agr.petsAllowed?'yes':'no'}">${agr.petsAllowed?'Yes':'No'}</span></div>
-      ${agr.additionalTerms ? `<div style="padding:12px 0;color:var(--muted);font-size:0.85rem"><strong style="color:var(--text)">Additional Terms:</strong> ${agr.additionalTerms}</div>` : ''}
+      <div class="sec-title"><div class="sec-num">3</div> Conditions</div>
+      <div class="bool-row"><span>Utilities Included</span>   <span class="chip ${agr.utilitiesIncluded ?'y':'n'}">${agr.utilitiesIncluded ?'Yes':'No'}</span></div>
+      <div class="bool-row"><span>Maintenance by Owner</span> <span class="chip ${agr.maintenanceByOwner?'y':'n'}">${agr.maintenanceByOwner?'Yes':'No'}</span></div>
+      <div class="bool-row"><span>Pets Allowed</span>         <span class="chip ${agr.petsAllowed       ?'y':'n'}">${agr.petsAllowed       ?'Yes':'No'}</span></div>
+      ${agr.additionalTerms?`<div style="padding:10px 0;color:var(--muted);font-size:0.84rem"><strong style="color:var(--text)">Additional Terms:</strong> ${agr.additionalTerms}</div>`:''}
     </div>
 
-    <!-- ACTION BAR -->
+    <!-- SIGN ACTION -->
     ${!isActive ? `
     <div class="action-bar">
       <div class="action-left">
-        <strong>${alreadySigned ? 'Aap ne sign kar diya ✅' : 'Signature Required'}</strong>
-        ${alreadySigned ? 'Doosre party ke sign ka intezaar hai.' : 'Agreement ko sign karne se pehle tamam terms parh lein.'}
+        <strong>${mySigned?'✅ Aap ne sign kar diya':'✍️ Signature Required'}</strong>
+        <p>${mySigned?'Doosre party ka intezaar hai.':'Agreement tamam terms parh ke sign karein.'}</p>
       </div>
-      <div class="action-btns">
-        ${role==='owner' && !isActive ? `<button class="btn-edit" onclick="toggleEdit()">✏️ Edit Terms</button>` : ''}
-        ${!alreadySigned ? `<button class="btn-sign" onclick="signAgreement()">✍️ Sign Agreement</button>` : ''}
+      <div class="abtns">
+        ${!mySigned?`<button class="btn-sign" onclick="doSign()">✍️ Sign Agreement</button>`:''}
       </div>
-    </div>` : `
-    <div class="action-bar" style="background:#e8f5e9;border-color:var(--green)">
-      <div><strong style="color:var(--green)">✅ Agreement Active</strong><br><span style="font-size:0.85rem;color:var(--muted)">Dono parties ne sign kar liya. Contract ${new Date(agr.startDate).toLocaleDateString('en-PK')} se ${new Date(agr.endDate).toLocaleDateString('en-PK')} tak hai.</span></div>
-    </div>`}
+    </div>` : ''}
+
+    <!-- PAYMENT SECTION (dono sign ke baad, sirf tenant ke liye) -->
+    ${bothSigned && !isActive && role==='tenant' ? renderPaymentSection() : ''}
+
+    <!-- OWNER VERIFY SECTION -->
+    ${bothSigned && !isActive && role==='owner' && spay ? renderVerifySection() : ''}
+
+    <!-- ACTIVE STATE -->
+    ${isActive ? `
+    <div class="action-bar green-bg">
+      <div class="action-left">
+        <strong style="color:var(--green)">✅ Agreement Active</strong>
+        <p>Contract ${new Date(agr.startDate).toLocaleDateString('en-PK')} se ${new Date(agr.endDate).toLocaleDateString('en-PK')} tak valid hai.</p>
+      </div>
+      ${role==='tenant'?`<div class="abtns"><button class="btn-sign" onclick="location.href='my_rental.html'">🏡 My Rental →</button></div>`:''}
+    </div>` : ''}
   `;
 }
 
-function toggleEdit(){
-  editMode = !editMode;
-  const form = document.getElementById('edit-form');
-  if(form) form.classList.toggle('on', editMode);
+function renderPaymentSection(){
+  const totalDue = agr.securityDeposit + agr.monthlyRent * agr.advanceMonths;
+
+  if(!spay){
+    return `
+    <div class="pay-box">
+      <h3>💳 Security Deposit Payment</h3>
+      <p>Dono parties ne sign kar liya! Ab security deposit + advance submit karein. Owner verify karega aur agreement active ho jayegi.</p>
+      <div class="pay-amount-box">
+        <div><div class="lbl">Total Amount Due</div><div class="val">PKR ${totalDue.toLocaleString()}</div></div>
+        <div style="text-align:right;font-size:0.78rem;color:var(--muted)">
+          Security: PKR ${agr.securityDeposit.toLocaleString()}<br>
+          Advance (${agr.advanceMonths}mo): PKR ${(agr.monthlyRent*agr.advanceMonths).toLocaleString()}
+        </div>
+      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">EasyPaisa/JazzCash/Bank transfer karein aur Transaction ID yahan enter karein:</p>
+      <div class="pay-input-row">
+        <input class="pay-input" id="txn-id" placeholder="Transaction ID (e.g. TXN123456789)">
+        <button class="btn-pay" onclick="submitPayment()">Submit Payment</button>
+      </div>
+    </div>`;
+  }
+
+  const statusMap = {
+    PENDING_VERIFICATION: { cls:'pending',  icon:'⏳', title:'Verification Pending',  sub:'Owner verify kar raha hai. Thodi der wait karein.' },
+    VERIFIED:             { cls:'verified', icon:'✅', title:'Payment Verified!',      sub:'Owner ne confirm kar diya. Agreement active ho gayi.' },
+    REJECTED:             { cls:'rejected', icon:'❌', title:'Payment Rejected',       sub: spay.rejectedReason || 'Transaction ID sahi nahi tha.' },
+  };
+  const s = statusMap[spay.status];
+
+  return `
+  <div class="pay-box">
+    <h3>💳 Security Deposit Payment</h3>
+    <div class="pay-status ${s.cls}">
+      <div class="pay-status-icon">${s.icon}</div>
+      <div class="pay-status-text">
+        <strong>${s.title}</strong>
+        <span>${s.sub}</span>
+      </div>
+    </div>
+    <div style="margin-top:14px;font-size:0.83rem;color:var(--muted)">
+      Transaction ID: <strong style="color:var(--text)">${spay.transactionId}</strong> &nbsp;·&nbsp;
+      Amount: <strong>PKR ${spay.amount.toLocaleString()}</strong>
+    </div>
+    ${spay.status==='REJECTED' ? `
+    <div style="margin-top:16px">
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:10px">Dobara submit karein:</p>
+      <div class="pay-input-row">
+        <input class="pay-input" id="txn-id" placeholder="Naya Transaction ID">
+        <button class="btn-pay" onclick="submitPayment()">Re-Submit</button>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+function renderVerifySection(){
+  if(spay.status === 'VERIFIED') return '';
+
+  return `
+  <div class="verify-box">
+    <h3>🔍 Payment Verification</h3>
+    <p style="font-size:0.85rem;color:#92400e;margin-bottom:14px">Tenant ne security deposit submit ki hai. Verify karein:</p>
+    <div class="verify-info">
+      <div class="vi-row"><span class="vi-lbl">Transaction ID</span><span class="vi-val">${spay.transactionId}</span></div>
+      <div class="vi-row"><span class="vi-lbl">Amount</span>        <span class="vi-val">PKR ${spay.amount.toLocaleString()}</span></div>
+      <div class="vi-row"><span class="vi-lbl">Submitted At</span>  <span class="vi-val">${new Date(spay.submittedAt).toLocaleString('en-PK')}</span></div>
+    </div>
+    <input class="reject-input" id="reject-reason" placeholder="Rejection reason (agar reject kar rahe hain)..." id="reject-input">
+    <div class="verify-btns">
+      <button class="btn-verify" onclick="verifyPayment('verify')">✅ Verify — Activate Agreement</button>
+      <button class="btn-reject" onclick="showRejectInput()">❌ Reject</button>
+    </div>
+    <button id="confirm-reject-btn" style="display:none;margin-top:10px;width:100%;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit" onclick="verifyPayment('reject')">Confirm Rejection</button>
+  </div>`;
+}
+
+function showRejectInput(){
+  const ri = document.getElementById('reject-reason');
+  const cb = document.getElementById('confirm-reject-btn');
+  if(ri){ ri.classList.add('on'); ri.focus(); }
+  if(cb) cb.style.display = 'block';
+}
+
+/* ── ACTIONS ───────────────────────────────────────── */
+async function doSign(){
+  if(!confirm('Agreement ki tamam terms parh li hain? Sign karna chahte hain?')) return;
+  try{
+    const d = await apiFetch(`/user/agreement/${agr.id}/sign`,{method:'PUT'});
+    if(d.success){ agr=d.data; showToast(d.message); await reloadAgreement(); }
+    else showToast(d.message||'Sign fail.','error');
+  } catch{ showToast('Network error.','error'); }
 }
 
 async function saveEdit(){
   try{
     const d = await apiFetch(`/user/agreement/${agr.id}`,{
-      method: 'PUT',
+      method:'PUT',
       body: JSON.stringify({
         monthlyRent:       document.getElementById('e-rent').value,
         securityDeposit:   document.getElementById('e-sec').value,
@@ -303,22 +454,52 @@ async function saveEdit(){
         additionalTerms:   document.getElementById('e-terms').value,
       })
     });
-    if(d.success){ agr=d.data; editMode=false; showToast('Agreement update ho gaya!'); renderAgreement(); }
+    if(d.success){ agr=d.data; editMode=false; showToast('Update ho gaya!'); render(); }
     else showToast(d.message||'Update fail.','error');
   } catch{ showToast('Network error.','error'); }
 }
 
-async function signAgreement(){
-  if(!confirm('Kya aap is agreement ki tamam terms se mutafiq hain aur sign karna chahte hain?')) return;
+function toggleEdit(){ editMode=!editMode; render(); }
+
+async function submitPayment(){
+  const txnId = document.getElementById('txn-id')?.value?.trim();
+  if(!txnId){ showToast('Transaction ID darj karein.','error'); return; }
+  const totalDue = agr.securityDeposit + agr.monthlyRent * agr.advanceMonths;
   try{
-    const d = await apiFetch(`/user/agreement/${agr.id}/sign`,{ method:'PUT' });
-    if(d.success){ agr=d.data; showToast(d.message); renderAgreement(); }
-    else showToast(d.message||'Sign fail.','error');
+    const d = await apiFetch(`/user/agreement/${agr.id}/pay`,{
+      method:'POST',
+      body: JSON.stringify({ transactionId: txnId, amount: totalDue })
+    });
+    if(d.success){ spay=d.data; showToast(d.message); render(); }
+    else showToast(d.message||'Payment submit fail.','error');
   } catch{ showToast('Network error.','error'); }
 }
 
-function showError(msg){
-  document.getElementById('agr-content').innerHTML=`<div class="err"><h3>Error</h3><p>${msg}</p><a href="my_requests.html" style="color:var(--green);font-weight:700">← Wapas Jao</a></div>`;
+async function verifyPayment(action){
+  const reason = document.getElementById('reject-reason')?.value?.trim() || '';
+  if(action==='reject' && !reason){ showToast('Rejection reason likhein.','error'); return; }
+  if(!confirm(action==='verify'?'Payment verify karein aur agreement activate karein?':'Payment reject karein?')) return;
+  try{
+    const d = await apiFetch(`/user/agreement/${agr.id}/verify`,{
+      method:'PUT',
+      body: JSON.stringify({ action, rejectedReason: reason })
+    });
+    if(d.success){ showToast(d.message); await reloadAgreement(); }
+    else showToast(d.message||'Error.','error');
+  } catch{ showToast('Network error.','error'); }
+}
+
+async function reloadAgreement(){
+  const listingId = new URLSearchParams(window.location.search).get('listing');
+  await loadAgreement(listingId);
+}
+
+function showErr(msg){
+  document.getElementById('main-content').innerHTML=`
+    <div class="err-box">
+      <h3>Error</h3><p>${msg}</p>
+      <a href="my_requests.html" style="color:var(--green);font-weight:700;display:inline-block;margin-top:10px">← Wapas Jao</a>
+    </div>`;
 }
 </script>
 </body>
