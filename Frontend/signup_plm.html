@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (data.success) {
         Auth.save(data.data.token, data.data.user);
         showToast('Account ban gaya! Dashboard par ja rahe hain...');
-        setTimeout(() => { window.location.href = 'User/dashboard.html'; }, 1200);
+        setTimeout(() => { window.location.href = 'User/index.html'; }, 1200);
       } else {
         passErr.textContent = data.message || 'Signup fail hua.';
         passErr.style.display = 'block';
