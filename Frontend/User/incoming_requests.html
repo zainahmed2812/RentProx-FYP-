@@ -11,19 +11,19 @@
       --bg:#f8f9fa; --white:#fff;
       --text:#1a1d23; --muted:#666;
       --border:#ededed; --shadow:0 4px 20px rgba(0,0,0,0.07);
-      --sidebar:260px;
+      
     }
     *{ box-sizing:border-box; margin:0; padding:0; }
     body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); display:flex; height:100vh; overflow:hidden; }
 
-    .sidebar{ width:var(--sidebar); background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; }
-    .sb-logo{ padding:0 24px 28px; font-weight:800; color:var(--green); font-size:1.4rem; cursor:pointer; }
-    .nav-link{ display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--muted); font-weight:500; font-size:0.93rem; }
-    .nav-link:hover{ color:var(--green); background:#f0fdf4; }
-    .nav-link.active{ color:var(--green); background:#e8f5e9; border-right:4px solid var(--green); font-weight:700; }
-    .sb-footer{ padding:20px; border-top:1px solid var(--border); margin-top:auto; }
-    .btn-logout{ width:100%; padding:11px; background:var(--white); border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; color:var(--muted); font-family:inherit; }
-    .btn-logout:hover{ color:#ef4444; border-color:#ef4444; }
+    
+    
+    
+    
+    
+    
+    
+    
 
     .main-wrap{ flex:1; display:flex; flex-direction:column; overflow-y:auto; }
     .topbar{ height:68px; background:var(--white); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 36px; position:sticky; top:0; z-index:90; }
@@ -84,27 +84,59 @@
     .sk{ background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:8px; height:50px; margin-bottom:8px; }
     @keyframes sh{ 0%{background-position:200% 0}100%{background-position:-200% 0} }
     .empty{ text-align:center; padding:50px; color:var(--muted); }
+  
+    /* ── SIDEBAR & OVERLAY ── */
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; }
+    .sidebar { width: 260px; background: #fff; border-right: 1px solid #ededed; display: flex; flex-direction: column; padding: 20px 0; z-index: 1001; flex-shrink: 0; }
+    .sidebar-logo { padding: 0 24px 30px; font-weight: 800; color: #28b446; font-size: 1.4rem; cursor: pointer; }
+    .nav-group { flex: 1; overflow-y: auto; }
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 24px; text-decoration: none; color: #666; font-weight: 500; font-size: 0.95rem; cursor: pointer; }
+    .nav-link:hover { color: #28b446; background: #f0fdf4; }
+    .nav-link.active { color: #28b446; background: #e8f5e9; border-right: 4px solid #28b446; font-weight: 700; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid #ededed; margin-top: auto; }
+    .btn-logout-side { width: 100%; padding: 12px; background: #fff; border: 1px solid #ededed; border-radius: 8px; font-weight: 600; cursor: pointer; color: #666; font-family: inherit; }
+    .btn-logout-side:hover { color: #ef4444; border-color: #ef4444; }
+    /* ── MENU TOGGLE ── */
+    .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #333; margin-right: 15px; padding: 0; line-height: 1; }
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: left 0.3s ease; }
+      .sidebar.active { left: 0; }
+      .sidebar-overlay.active { display: block; }
+      .menu-toggle { display: block; }
+    }
   </style>
 </head>
 <body>
 
-<nav class="sidebar">
-  <div class="sb-logo" onclick="location.href='homepage.html'">RentProx</div>
-  <a href="homepage.html"         class="nav-link">🏠 Homepage</a>
-  <a href="../index.html"          class="nav-link">🔍 Browse Properties</a>
-  <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
-  <a href="addproperty.html"       class="nav-link">➕ Add Property</a>
-  <a href="properties.html"        class="nav-link">🏢 My Properties</a>
-  <a href="incoming_requests.html" class="nav-link active">📩 Incoming Requests</a>
-  <a href="ledger.html"            class="nav-link">💰Rent Ledger</a>
-  <div class="sb-footer">
-    <button class="btn-logout" id="logout-btn">Log Out</button>
-  </div>
-</nav>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo" onclick="location.href='../index.html'">RentProx</div>
+    <div class="nav-group">
+      <a href="homepage.html" class="nav-link">🏠 Dashboard</a>
+      <a href="../index.html" class="nav-link">🔍 Browse Properties</a>
+      <a href="my_requests.html" class="nav-link">📋 My Requests</a>
+      <a href="my_rental.html" class="nav-link">🏡 My Rental</a>
+      <a href="incoming_requests.html" class="nav-link active">📩 Incoming Requests</a>
+      <a href="addproperty.html" class="nav-link">➕ Add Property</a>
+      <a href="properties.html" class="nav-link">🏢 Property Management</a>
+      <a href="ledger.html" class="nav-link">💰 Rent Ledger</a>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn-logout-side" id="logout-btn">Log Out</button>
+    </div>
+  </nav>
+
+
+
 
 <div class="main-wrap">
   <header class="topbar">
-    <span class="topbar-title">Incoming Requests</span>
+      <div style="display:flex;align-items:center;">
+        <button class="menu-toggle" id="menu-toggle">☰</button>
+        <span class="topbar-title">Incoming Requests</span>
+      </div>
     <div class="prof-wrap">
       <div class="prof-pill" id="prof-pill">
         <span class="js-user-name">Loading…</span>
@@ -270,6 +302,16 @@ async function respond(id, action){
 function renderEmpty(msg){
   document.getElementById('table-wrap').innerHTML=`<div class="empty"><p>${msg}</p></div>`;
 }
+</script>
+<script>
+  (function(){
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    var toggle  = document.getElementById('menu-toggle');
+    if (!sidebar || !overlay || !toggle) return;
+    toggle.onclick  = function(){ sidebar.classList.add('active');    overlay.classList.add('active'); };
+    overlay.onclick = function(){ sidebar.classList.remove('active'); overlay.classList.remove('active'); };
+  })();
 </script>
 </body>
 </html>
