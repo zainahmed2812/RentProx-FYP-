@@ -11,19 +11,19 @@
       --bg:#f8f9fa; --white:#fff;
       --text:#1a1d23; --muted:#666;
       --border:#ededed; --shadow:0 4px 20px rgba(0,0,0,0.07);
-      
+      --sidebar:260px;
     }
     *{ box-sizing:border-box; margin:0; padding:0; }
     body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); display:flex; height:100vh; overflow:hidden; }
 
-    
-    
-    
-    
-    
-    
-    
-    
+    .sidebar{ width:var(--sidebar); background:var(--white); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; flex-shrink:0; }
+    .sb-logo{ padding:0 24px 28px; font-weight:800; color:var(--green); font-size:1.4rem; cursor:pointer; }
+    .nav-link{ display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--muted); font-weight:500; font-size:0.93rem; }
+    .nav-link:hover{ color:var(--green); background:#f0fdf4; }
+    .nav-link.active{ color:var(--green); background:#e8f5e9; border-right:4px solid var(--green); font-weight:700; }
+    .sb-footer{ padding:20px; border-top:1px solid var(--border); margin-top:auto; }
+    .btn-logout{ width:100%; padding:11px; background:var(--white); border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; color:var(--muted); font-family:inherit; }
+    .btn-logout:hover{ color:#ef4444; border-color:#ef4444; }
 
     .main-wrap{ flex:1; display:flex; flex-direction:column; overflow-y:auto; }
     .topbar{ height:68px; background:var(--white); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 36px; position:sticky; top:0; z-index:90; }
@@ -41,31 +41,59 @@
     .drop-item{ padding:13px 20px; color:var(--muted); font-size:0.88rem; font-weight:500; }
     .drop-item.red{ color:#ef4444; border-top:1px solid #f5f5f5; cursor:pointer; }
 
-    .content{ padding:36px; }
-    .page-head{ margin-bottom:28px; }
+    .content{ padding:32px 36px; }
+    .page-head{ margin-bottom:24px; }
     .page-head h1{ font-size:1.5rem; font-weight:700; }
     .page-head p{ color:var(--muted); margin-top:4px; }
 
-    /* SUMMARY CARDS */
-    .summary-row{ display:flex; gap:16px; margin-bottom:28px; }
-    .sum-card{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:20px 24px; flex:1; box-shadow:var(--shadow); }
-    .sum-label{ font-size:0.8rem; color:var(--muted); font-weight:600; margin-bottom:6px; text-transform:uppercase; }
+    /* ─── PAYMENT ALERT SECTION ─── */
+    .pay-alerts{ margin-bottom:26px; display:flex; flex-direction:column; gap:12px; }
+    .pay-alert{
+      background:#fff7ed; border:1.5px solid #fed7aa; border-radius:12px;
+      padding:18px 22px; display:flex; align-items:center; gap:16px;
+      box-shadow:0 2px 10px rgba(251,146,60,0.12);
+    }
+    .pay-alert-icon{ font-size:1.6rem; flex-shrink:0; }
+    .pay-alert-body{ flex:1; }
+    .pay-alert-body strong{ display:block; font-size:0.93rem; color:#92400e; margin-bottom:3px; }
+    .pay-alert-body span{ font-size:0.82rem; color:#b45309; }
+    .pay-alert-txn{
+      background:#fff; border:1px solid #fed7aa; border-radius:8px;
+      padding:6px 12px; font-size:0.83rem; font-weight:700; color:#92400e; margin-top:8px;
+      display:inline-block;
+    }
+    .btn-go-verify{
+      padding:9px 18px; background:#f59e0b; color:#fff; border:none;
+      border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit;
+      font-size:0.83rem; white-space:nowrap; flex-shrink:0;
+    }
+    .btn-go-verify:hover{ background:#d97706; }
+
+    /* SUMMARY */
+    .summary-row{ display:flex; gap:16px; margin-bottom:26px; flex-wrap:wrap; }
+    .sum-card{ background:var(--white); border:1px solid var(--border); border-radius:12px; padding:20px 24px; flex:1; min-width:120px; box-shadow:var(--shadow); }
+    .sum-label{ font-size:0.78rem; color:var(--muted); font-weight:600; margin-bottom:6px; text-transform:uppercase; }
     .sum-val{ font-size:1.7rem; font-weight:800; }
-    .sum-card.pending .sum-val { color:#c2410c; }
+    .sum-card.pending  .sum-val{ color:#c2410c; }
     .sum-card.accepted .sum-val{ color:var(--green); }
     .sum-card.declined .sum-val{ color:#ef4444; }
+    .sum-card.alerts   .sum-val{ color:#f59e0b; }
 
     /* TABS */
     .tabs{ display:flex; gap:4px; margin-bottom:22px; background:#f1f5f9; border-radius:10px; padding:4px; width:fit-content; }
-    .tab{ padding:9px 20px; border-radius:7px; font-weight:600; font-size:0.85rem; cursor:pointer; border:none; background:transparent; color:var(--muted); font-family:inherit; }
+    .tab{ padding:9px 20px; border-radius:7px; font-weight:600; font-size:0.85rem; cursor:pointer; border:none; background:transparent; color:var(--muted); font-family:inherit; position:relative; }
     .tab.active{ background:var(--white); color:var(--text); box-shadow:0 2px 6px rgba(0,0,0,0.08); }
+    .tab-dot{ position:absolute; top:6px; right:6px; width:8px; height:8px; border-radius:50%; background:#f59e0b; }
 
-    /* REQUEST TABLE */
+    /* TABLE */
     .req-table{ width:100%; border-collapse:collapse; background:var(--white); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); border:1px solid var(--border); }
     .req-table th{ padding:14px 18px; font-size:0.75rem; color:var(--muted); font-weight:700; text-transform:uppercase; border-bottom:2px solid var(--border); text-align:left; }
     .req-table td{ padding:16px 18px; border-bottom:1px solid #f9f9f9; font-size:0.88rem; vertical-align:middle; }
     .req-table tr:last-child td{ border-bottom:none; }
     .req-table tr:hover td{ background:#fafafa; }
+    /* Row highlight for payment pending */
+    .req-table tr.pay-pending-row td{ background:#fffbeb; }
+    .req-table tr.pay-pending-row:hover td{ background:#fef3c7; }
 
     .tenant-cell{ display:flex; align-items:center; gap:10px; }
     .t-av{ width:36px; height:36px; border-radius:50%; background:#e8f5e9; color:var(--green); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; flex-shrink:0; }
@@ -74,69 +102,42 @@
     .badge-pending { background:#fff7ed; color:#c2410c; }
     .badge-accepted{ background:#e8f5e9; color:var(--green); }
     .badge-declined{ background:#fff5f5; color:#ef4444; }
+    .badge-pay     { background:#fef3c7; color:#92400e; font-size:0.68rem; margin-top:4px; display:inline-block; }
 
-    .action-btns{ display:flex; gap:8px; }
-    .btn-accept{ padding:7px 14px; background:var(--green); color:#fff; border:none; border-radius:7px; font-weight:600; cursor:pointer; font-size:0.8rem; font-family:inherit; }
+    .action-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+    .btn-accept { padding:7px 14px; background:var(--green); color:#fff; border:none; border-radius:7px; font-weight:600; cursor:pointer; font-size:0.8rem; font-family:inherit; }
     .btn-accept:hover{ background:var(--green-dark); }
     .btn-decline{ padding:7px 14px; background:var(--white); color:#ef4444; border:1px solid #ef4444; border-radius:7px; font-weight:600; cursor:pointer; font-size:0.8rem; font-family:inherit; }
     .btn-decline:hover{ background:#fff5f5; }
+    .btn-agr{ padding:7px 14px; background:#64748b; color:#fff; border:none; border-radius:7px; font-weight:600; cursor:pointer; font-size:0.8rem; font-family:inherit; }
+    .btn-verify-now{ padding:7px 14px; background:#f59e0b; color:#fff; border:none; border-radius:7px; font-weight:700; cursor:pointer; font-size:0.8rem; font-family:inherit; }
+    .btn-verify-now:hover{ background:#d97706; }
 
     .sk{ background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:8px; height:50px; margin-bottom:8px; }
     @keyframes sh{ 0%{background-position:200% 0}100%{background-position:-200% 0} }
     .empty{ text-align:center; padding:50px; color:var(--muted); }
-  
-    /* ── SIDEBAR & OVERLAY ── */
-    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; }
-    .sidebar { width: 260px; background: #fff; border-right: 1px solid #ededed; display: flex; flex-direction: column; padding: 20px 0; z-index: 1001; flex-shrink: 0; }
-    .sidebar-logo { padding: 0 24px 30px; font-weight: 800; color: #28b446; font-size: 1.4rem; cursor: pointer; }
-    .nav-group { flex: 1; overflow-y: auto; }
-    .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 24px; text-decoration: none; color: #666; font-weight: 500; font-size: 0.95rem; cursor: pointer; }
-    .nav-link:hover { color: #28b446; background: #f0fdf4; }
-    .nav-link.active { color: #28b446; background: #e8f5e9; border-right: 4px solid #28b446; font-weight: 700; }
-    .sidebar-footer { padding: 20px; border-top: 1px solid #ededed; margin-top: auto; }
-    .btn-logout-side { width: 100%; padding: 12px; background: #fff; border: 1px solid #ededed; border-radius: 8px; font-weight: 600; cursor: pointer; color: #666; font-family: inherit; }
-    .btn-logout-side:hover { color: #ef4444; border-color: #ef4444; }
-    /* ── MENU TOGGLE ── */
-    .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #333; margin-right: 15px; padding: 0; line-height: 1; }
-    /* ── MOBILE ── */
-    @media (max-width: 768px) {
-      .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: left 0.3s ease; }
-      .sidebar.active { left: 0; }
-      .sidebar-overlay.active { display: block; }
-      .menu-toggle { display: block; }
-    }
   </style>
 </head>
 <body>
 
-  <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-  <nav class="sidebar" id="sidebar">
-    <div class="sidebar-logo" onclick="location.href='../index.html'">RentProx</div>
-    <div class="nav-group">
-      <a href="homepage.html" class="nav-link">🏠 Dashboard</a>
-      <a href="../index.html" class="nav-link">🔍 Browse Properties</a>
-      <a href="my_requests.html" class="nav-link">📋 My Requests</a>
-      <a href="my_rental.html" class="nav-link">🏡 My Rental</a>
-      <a href="incoming_requests.html" class="nav-link active">📩 Incoming Requests</a>
-      <a href="addproperty.html" class="nav-link">➕ Add Property</a>
-      <a href="properties.html" class="nav-link">🏢 Property Management</a>
-      <a href="ledger.html" class="nav-link">💰 Rent Ledger</a>
-    </div>
-    <div class="sidebar-footer">
-      <button class="btn-logout-side" id="logout-btn">Log Out</button>
-    </div>
-  </nav>
-
-
-
+<nav class="sidebar">
+  <div class="sb-logo" onclick="location.href='homepage.html'">RentProx</div>
+  <a href="homepage.html"          class="nav-link">🏠 Dashboard</a>
+  <a href="../index.html"          class="nav-link">🔍 Browse Properties</a>
+  <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
+  <a href="my_rental.html"         class="nav-link">🏡 My Rental</a>
+  <a href="incoming_requests.html" class="nav-link active">📩 Incoming Requests</a>
+  <a href="addproperty.html"       class="nav-link">➕ Add Property</a>
+  <a href="properties.html"        class="nav-link">🏢 My Properties</a>
+  <a href="ledger.html"            class="nav-link">💰 Rent Ledger</a>
+  <div class="sb-footer">
+    <button class="btn-logout" id="logout-btn">Log Out</button>
+  </div>
+</nav>
 
 <div class="main-wrap">
   <header class="topbar">
-      <div style="display:flex;align-items:center;">
-        <button class="menu-toggle" id="menu-toggle">☰</button>
-        <span class="topbar-title">Incoming Requests</span>
-      </div>
+    <span class="topbar-title">Incoming Requests</span>
     <div class="prof-wrap">
       <div class="prof-pill" id="prof-pill">
         <span class="js-user-name">Loading…</span>
@@ -159,14 +160,18 @@
   <div class="content">
     <div class="page-head">
       <h1>Incoming Rental Requests</h1>
-      <p>Tenants ki requests — accept ya decline karein.</p>
+      <p>Tenants ki requests manage karein aur payments verify karein.</p>
     </div>
+
+    <!-- ─── PAYMENT ALERTS (dynamically rendered) ─── -->
+    <div id="pay-alerts-section"></div>
 
     <!-- SUMMARY -->
     <div class="summary-row">
       <div class="sum-card pending" ><div class="sum-label">Pending</div> <div class="sum-val" id="cnt-pending">—</div></div>
       <div class="sum-card accepted"><div class="sum-label">Accepted</div><div class="sum-val" id="cnt-accepted">—</div></div>
       <div class="sum-card declined"><div class="sum-label">Declined</div><div class="sum-val" id="cnt-declined">—</div></div>
+      <div class="sum-card alerts"  ><div class="sum-label">Pay Pending</div><div class="sum-val" id="cnt-alerts">0</div></div>
     </div>
 
     <!-- TABS -->
@@ -213,12 +218,45 @@ async function loadRequests(){
     document.getElementById('cnt-pending').textContent  = allData.pending.length;
     document.getElementById('cnt-accepted').textContent = allData.accepted.length;
     document.getElementById('cnt-declined').textContent = allData.declined.length;
+    document.getElementById('cnt-alerts').textContent   = (allData.paymentAlerts||[]).length;
 
+    // ─── Payment alerts render ───
+    renderPaymentAlerts(allData.paymentAlerts || []);
     renderTable(allData.all);
   } catch{
     showToast('Network error.','error');
     renderEmpty('Backend se connect nahi ho saka.');
   }
+}
+
+// ─── Payment Alert Banners ────────────────────────────
+function renderPaymentAlerts(alerts){
+  const sec = document.getElementById('pay-alerts-section');
+  if(!alerts.length){ sec.innerHTML=''; return; }
+
+  sec.innerHTML = `
+    <div class="pay-alerts">
+      <div style="font-weight:700;font-size:0.85rem;color:#92400e;margin-bottom:4px">
+        🔔 ${alerts.length} Payment Verification Pending
+      </div>
+      ${alerts.map(r => `
+        <div class="pay-alert">
+          <div class="pay-alert-icon">💳</div>
+          <div class="pay-alert-body">
+            <strong>${r.tenant.name} ne security deposit submit ki hai!</strong>
+            <span>Property: ${r.property.address}, ${r.property.city}</span>
+            <div class="pay-alert-txn">
+              Transaction ID: ${r.agreement.securityPayment.transactionId} &nbsp;·&nbsp;
+              Amount: PKR ${r.agreement.securityPayment.amount.toLocaleString()}
+            </div>
+          </div>
+          <button class="btn-go-verify"
+            onclick="location.href='agreement.html?listing=${r.id}'">
+            Verify Now →
+          </button>
+        </div>
+      `).join('')}
+    </div>`;
 }
 
 function switchTab(tab, el){
@@ -249,35 +287,60 @@ function renderTable(list){
       </tr>
     </thead>
     <tbody>
-      ${list.map(r=>`
-        <tr>
-          <td>
-            <div class="tenant-cell">
-              <div class="t-av">${r.tenant.name.charAt(0).toUpperCase()}</div>
-              <div>
-                <div style="font-weight:700">${r.tenant.name}</div>
-                <div style="font-size:0.75rem;color:var(--muted)">${r.tenant.phone}</div>
+      ${list.map(r => {
+        // Payment pending check
+        const payPending = r.status==='ACCEPTED' &&
+          r.agreement?.tenantSigned && r.agreement?.ownerSigned &&
+          r.agreement?.securityPayment?.status === 'PENDING_VERIFICATION';
+
+        const rowClass = payPending ? 'pay-pending-row' : '';
+
+        let actionBtns = '';
+        if(r.status==='PENDING'){
+          actionBtns = `
+            <button class="btn-accept"  onclick="respond('${r.id}','accept')">Accept</button>
+            <button class="btn-decline" onclick="respond('${r.id}','decline')">Decline</button>`;
+        } else if(r.status==='ACCEPTED'){
+          if(payPending){
+            // ─── Payment verify karo button ───
+            actionBtns = `
+              <button class="btn-verify-now" onclick="location.href='agreement.html?listing=${r.id}'">
+                💳 Verify Payment
+              </button>`;
+          } else {
+            actionBtns = `
+              <button class="btn-agr" onclick="location.href='agreement.html?listing=${r.id}'">
+                Agreement
+              </button>`;
+          }
+        } else {
+          actionBtns = `<span style="color:var(--muted);font-size:0.8rem">No action</span>`;
+        }
+
+        return `
+          <tr class="${rowClass}">
+            <td>
+              <div class="tenant-cell">
+                <div class="t-av">${r.tenant.name.charAt(0).toUpperCase()}</div>
+                <div>
+                  <div style="font-weight:700">${r.tenant.name}</div>
+                  <div style="font-size:0.75rem;color:var(--muted)">${r.tenant.phone}</div>
+                </div>
               </div>
-            </div>
-          </td>
-          <td>
-            <div style="font-weight:600">${r.property.address}</div>
-            <div style="font-size:0.76rem;color:var(--muted)">${r.property.city} · PKR ${r.property.rentAmount.toLocaleString()}</div>
-          </td>
-          <td style="color:var(--muted);font-size:0.82rem;max-width:180px">${r.message||'—'}</td>
-          <td style="color:var(--muted);font-size:0.8rem">${new Date(r.createdAt).toLocaleDateString('en-PK')}</td>
-          <td><span class="badge badge-${r.status.toLowerCase()}">${r.status}</span></td>
-          <td>
-            <div class="action-btns">
-              ${r.status==='PENDING' ? `
-                <button class="btn-accept"  onclick="respond('${r.id}','accept')">Accept</button>
-                <button class="btn-decline" onclick="respond('${r.id}','decline')">Decline</button>
-              ` : r.status==='ACCEPTED' ? `
-                <button class="btn-accept" style="background:#64748b" onclick="location.href='agreement.html?listing=${r.id}'">Agreement</button>
-              ` : '<span style="color:var(--muted);font-size:0.8rem">No action</span>'}
-            </div>
-          </td>
-        </tr>`).join('')}
+            </td>
+            <td>
+              <div style="font-weight:600">${r.property.address}</div>
+              <div style="font-size:0.76rem;color:var(--muted)">${r.property.city} · PKR ${r.property.rentAmount.toLocaleString()}</div>
+            </td>
+            <td style="color:var(--muted);font-size:0.82rem;max-width:180px">${r.message||'—'}</td>
+            <td style="color:var(--muted);font-size:0.8rem">${new Date(r.createdAt).toLocaleDateString('en-PK')}</td>
+            <td>
+              <span class="badge badge-${r.status.toLowerCase()}">${r.status}</span>
+              ${payPending ? '<br><span class="badge badge-pay">💳 Payment Pending</span>' : ''}
+            </td>
+            <td><div class="action-btns">${actionBtns}</div></td>
+          </tr>`;
+      }).join('')}
     </tbody>
   </table>`;
 }
@@ -290,9 +353,6 @@ async function respond(id, action){
     if(d.success){
       showToast(d.message);
       await loadRequests();
-      // Re-render current tab
-      const btn = document.querySelector(`.tab.active`);
-      if(btn) switchTab(curTab, btn);
     } else {
       showToast(d.message||'Error.','error');
     }
@@ -302,16 +362,6 @@ async function respond(id, action){
 function renderEmpty(msg){
   document.getElementById('table-wrap').innerHTML=`<div class="empty"><p>${msg}</p></div>`;
 }
-</script>
-<script>
-  (function(){
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('sidebar-overlay');
-    var toggle  = document.getElementById('menu-toggle');
-    if (!sidebar || !overlay || !toggle) return;
-    toggle.onclick  = function(){ sidebar.classList.add('active');    overlay.classList.add('active'); };
-    overlay.onclick = function(){ sidebar.classList.remove('active'); overlay.classList.remove('active'); };
-  })();
 </script>
 </body>
 </html>

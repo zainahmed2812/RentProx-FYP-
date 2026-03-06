@@ -1,12 +1,8 @@
 // src/routes/public/listings.js
 // ══════════════════════════════════════════════════════
-// PUBLIC — login ki zarurat nahi
-// GET /api/listings        → sab available properties (with filter + pagination)
-// GET /api/listings/:id    → single property detail
-//
-// index.js mein add karo:
-//   import publicListings from './routes/public/listings.js';
-//   app.use('/api/listings', publicListings);
+// PUBLIC — no auth needed
+// GET /api/listings      → available properties (paginated, filtered)
+// GET /api/listings/:id  → single property detail
 // ══════════════════════════════════════════════════════
 
 import express from 'express';
@@ -21,18 +17,20 @@ router.get('/', async (req, res) => {
     const { city, areaUnit, maxRent, minRent, page = 1, limit = 12 } = req.query;
 
     const where = {
+      // ─── BUG FIX 1: isAvailable=false properties bilkul na aayein ───
+      // Jab owner accept karta hai → property.isAvailable = false hoti hai
+      // Yeh ensure karta hai k rented properties listing se hatt jaayein
       isAvailable: true,
-      listings: {
-        none: { isActive: true, status: 'ACCEPTED' }  // accepted listing wali properties hide karo
-      },
-      ...(city     && { city:     { contains: city,    mode: 'insensitive' } }),
+
+      // Optional filters
+      ...(city     && { city:     { contains: city, mode: 'insensitive' } }),
       ...(areaUnit && { areaUnit }),
       ...((minRent || maxRent) && {
         rentAmount: {
           ...(minRent && { gte: parseFloat(minRent) }),
           ...(maxRent && { lte: parseFloat(maxRent) }),
         }
-      })
+      }),
     };
 
     const skip  = (parseInt(page) - 1) * parseInt(limit);
@@ -44,7 +42,10 @@ router.get('/', async (req, res) => {
       take:    parseInt(limit),
       orderBy: { createdAt: 'desc' },
       include: {
-        owner: { select: { id: true, name: true, phone: true } }
+        // ownerId zaruri hai frontend pe owner check ke liye (apni property pe request block)
+        owner:  { select: { id: true, name: true, phone: true } },
+        // Images include karo — pehli primary image card pe dikhayi jayegi
+        images: { where: { isPrimary: true }, take: 1 },
       }
     });
 
@@ -56,13 +57,13 @@ router.get('/', async (req, res) => {
           total,
           page:       parseInt(page),
           limit:      parseInt(limit),
-          totalPages: Math.ceil(total / parseInt(limit))
+          totalPages: Math.ceil(total / parseInt(limit)),
         }
       }
     });
 
   } catch (err) {
-    console.error('[listings]', err);
+    console.error('[listings GET]', err);
     return res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
@@ -72,7 +73,10 @@ router.get('/:id', async (req, res) => {
   try {
     const property = await db.property.findUnique({
       where:   { id: req.params.id },
-      include: { owner: { select: { id: true, name: true, phone: true, email: true } } }
+      include: {
+        owner:  { select: { id: true, name: true, phone: true, email: true } },
+        images: { orderBy: { order: 'asc' } },  // sab images detail modal ke liye
+      }
     });
 
     if (!property) return res.status(404).json({ success: false, message: 'Property nahi mili.' });
@@ -80,7 +84,7 @@ router.get('/:id', async (req, res) => {
     return res.json({ success: true, data: property });
 
   } catch (err) {
-    console.error('[listings/:id]', err);
+    console.error('[listings/:id GET]', err);
     return res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
