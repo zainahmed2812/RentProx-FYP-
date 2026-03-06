@@ -77,7 +77,7 @@
     .btn-submit:disabled { opacity:0.6; cursor:not-allowed; }
 
     /* --- RESPONSIVE QUERIES --- */
-    @media (max-width: 992px) {
+    @media (max-width: 768px) {
       .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: 0.3s ease; }
       .sidebar.active { left: 0; }
       .sidebar-overlay.active { display: block; }
@@ -136,16 +136,17 @@
 <body>
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-  <nav class="sidebar" id="sidebar">
-    <div class="sidebar-logo">RentProx</div>
+    <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo" onclick="location.href='homepage.html'">RentProx</div>
     <div class="nav-group">
-      <a href="homepage.html"         class="nav-link active">🏠 Dashboard</a>
-      <a href="../index.html"          class="nav-link">🔍 Browse Properties</a>
-      <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
+      <a href="homepage.html" class="nav-link">🏠 Dashboard</a>
+      <a href="../index.html" class="nav-link">🔍 Browse Properties</a>
+      <a href="my_requests.html" class="nav-link">📋 My Requests</a>
+      <a href="my_rental.html" class="nav-link">🏡 My Rental</a>
       <a href="incoming_requests.html" class="nav-link">📩 Incoming Requests</a>
-      <a href="addproperty.html"       class="nav-link">➕ Add Property</a>
-      <a href="properties.html"        class="nav-link">🏢 Property Management</a>
-      <a href="ledger.html"            class="nav-link">💰 Rent Ledger</a>
+      <a href="addproperty.html" class="nav-link active">➕ Add Property</a>
+      <a href="properties.html" class="nav-link">🏢 Property Management</a>
+      <a href="ledger.html" class="nav-link">💰 Rent Ledger</a>
     </div>
     <div class="sidebar-footer">
       <button class="btn-logout-side" id="logout-btn">Log Out</button>
