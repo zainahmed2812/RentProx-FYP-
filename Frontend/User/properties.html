@@ -26,24 +26,44 @@
     .btn-logout-side { width:100%; padding:12px; background:#fff; border:1px solid var(--border-color); border-radius:8px; font-weight:600; cursor:pointer; color:var(--text-muted); }
     .btn-logout-side:hover { color:#ef4444; border-color:#ef4444; }
 
-    /* --- TOP BAR --- */
+    /* --- CONTENT AREA --- */
     .content-area { flex:1; display:flex; flex-direction:column; overflow-y:auto; position: relative; }
-    
+
     .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); margin-right: 15px; }
 
-    
-    
-    
-    
-    
-    
-    
+    /* --- TOPBAR --- */
+    .topbar { height: 64px; background: #fff; border-bottom: 1px solid #ededed; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; position: sticky; top: 0; z-index: 90; flex-shrink: 0; }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-title { font-weight: 700; color: #666; font-size: 0.95rem; }
 
-    /* --- CONTENT --- */
+    /* --- PROFILE PILL --- */
+    .profile-container { position: relative; }
+    .profile-trigger { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 14px; border: 1.5px solid #28b446; border-radius: 30px; cursor: pointer; background: #fff; }
+    .profile-trigger span { color: #28b446; font-weight: 600; font-size: 0.9rem; }
+    .trigger-avatar-circle { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f0f0f0; border: 1px solid #ddd; }
+    .profile-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: 260px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); border: 1px solid #ededed; display: none; flex-direction: column; z-index: 1000; overflow: hidden; }
+    .profile-dropdown.active { display: flex; }
+    .dropdown-header { padding: 16px 18px; border-bottom: 1px solid #f5f5f5; }
+    .dropdown-name { font-weight: 700; font-size: 0.92rem; color: #1a1d23; }
+    .dropdown-email { font-size: 0.73rem; color: #666; margin-top: 2px; }
+    .dropdown-item { display: block; padding: 13px 18px; text-decoration: none; color: #666; font-size: 0.88rem; font-weight: 500; cursor: pointer; }
+    .dropdown-item:hover { background: #f8fafc; color: #1a1d23; }
+    .dropdown-item.logout { color: #ef4444; border-top: 1px solid #f5f5f5; }
+    .dropdown-item.logout:hover { background: #fff5f5; }
+
+    /* --- MAIN CONTENT --- */
     .main-padding { padding:40px; }
-    .view-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; gap: 20px; }
+    .view-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; gap: 20px; }
     .view-header h1 { margin:0; font-size:1.5rem; font-weight:700; }
     .btn-post-listing { background:var(--primary-green); color:#fff; border:none; padding:12px 24px; border-radius:8px; font-weight:700; cursor:pointer; white-space: nowrap; }
+
+    /* --- OVERVIEW CARD --- */
+    .quota-card { background:#fff; border-radius:12px; padding:24px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm); margin-bottom:30px; }
+    .quota-header { font-weight:700; font-size:1rem; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:10px; }
+    .stats-row { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:20px; }
+    .stat-item { padding: 10px 0; }
+    .stat-label { color:var(--text-muted); font-size:0.85rem; font-weight:500; display:block; margin-bottom:5px; }
+    .stat-value { font-size:1.4rem; font-weight:700; color:#000; }
 
     /* PROPERTY CARDS */
     .property-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(350px,1fr)); gap:24px; }
@@ -57,8 +77,8 @@
     .occupancy-stats { background:#fcfcfc; border:1px solid #f0f0f0; border-radius:8px; padding:12px; display:flex; justify-content:space-between; }
     .stat-box { text-align:center; flex:1; }
     .stat-box:not(:last-child) { border-right:1px solid #eee; }
-    .stat-label { font-size:0.7rem; color:var(--text-muted); display:block; text-transform:uppercase; font-weight:700; }
-    .stat-val { font-weight:700; font-size:1rem; color:var(--text-dark); }
+    .stat-box .stat-label { font-size:0.7rem; color:var(--text-muted); display:block; text-transform:uppercase; font-weight:700; }
+    .stat-box .stat-val { font-weight:700; font-size:1rem; color:var(--text-dark); }
     .card-actions { padding:15px 20px; border-top:1px solid #f5f5f5; display:flex; gap:10px; flex-wrap: wrap; }
     .btn-action { flex:1; min-width: 100px; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:#fff; font-weight:600; cursor:pointer; color:var(--text-muted); font-size: 0.85rem; }
     .btn-action:hover { border-color:var(--primary-green); color:var(--primary-green); }
@@ -76,57 +96,38 @@
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     .empty-state { text-align:center; padding:60px 20px; color:var(--text-muted); grid-column:1/-1; }
 
-    /* --- RESPONSIVE BREAKPOINTS --- */
+    /* --- RESPONSIVE --- */
     @media (max-width: 768px) {
       .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: 0.3s ease; }
       .sidebar.active { left: 0; }
       .sidebar-overlay.active { display: block; }
       .menu-toggle { display: block; }
       .main-padding { padding: 25px; }
+      .topbar { padding: 0 16px; height: 58px; }
+      .profile-trigger span { display: none; }
     }
 
     @media (max-width: 600px) {
       .view-header { flex-direction: column; align-items: flex-start; }
       .btn-post-listing { width: 100%; }
       .property-grid { grid-template-columns: 1fr; }
-      
-      .card-actions .btn-action { flex: 1 1 100%; } /* Stack buttons on very small screens */
-    }
-  
-    /* ── TOPBAR ── */
-    .topbar { height: 64px; background: #fff; border-bottom: 1px solid #ededed; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; position: sticky; top: 0; z-index: 90; flex-shrink: 0; }
-    .topbar-left { display: flex; align-items: center; gap: 12px; }
-    .topbar-title { font-weight: 700; color: #666; font-size: 0.95rem; }
-    /* ── PROFILE PILL ── */
-    .profile-container { position: relative; }
-    .profile-trigger { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 14px; border: 1.5px solid #28b446; border-radius: 30px; cursor: pointer; background: #fff; }
-    .profile-trigger span { color: #28b446; font-weight: 600; font-size: 0.9rem; }
-    .trigger-avatar-circle { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f0f0f0; border: 1px solid #ddd; }
-    .profile-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: 260px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); border: 1px solid #ededed; display: none; flex-direction: column; z-index: 1000; overflow: hidden; }
-    .profile-dropdown.active { display: flex; }
-    .dropdown-header { padding: 16px 18px; border-bottom: 1px solid #f5f5f5; }
-    .dropdown-name { font-weight: 700; font-size: 0.92rem; color: #1a1d23; }
-    .dropdown-email { font-size: 0.73rem; color: #666; margin-top: 2px; }
-    .dropdown-item { display: block; padding: 13px 18px; text-decoration: none; color: #666; font-size: 0.88rem; font-weight: 500; cursor: pointer; }
-    .dropdown-item:hover { background: #f8fafc; color: #1a1d23; }
-    .dropdown-item.logout { color: #ef4444; border-top: 1px solid #f5f5f5; }
-    .dropdown-item.logout:hover { background: #fff5f5; }
-    @media (max-width: 768px) {
-      .topbar { padding: 0 16px; height: 58px; }
-      .profile-trigger span { display: none; }
+      .card-actions .btn-action { flex: 1 1 100%; }
     }
 
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .stat-item { border-bottom: 1px solid var(--border-color); }
+    }
   </style>
 </head>
 <body>
 
   <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <nav class="sidebar" id="sidebar">
-    <div class="sidebar-logo" onclick="location.href='homepage.html'">RentProx</div>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo" onclick="location.href='../homepage.html'">RentProx</div>
     <div class="nav-group">
-      <a href="homepage.html" class="nav-link">🏠 Dashboard</a>
-      <a href="../index.html" class="nav-link">🔍 Browse Properties</a>
+      <a href="../homepage.html" class="nav-link">🔍 Browse Properties</a>
       <a href="my_requests.html" class="nav-link">📋 My Requests</a>
       <a href="my_rental.html" class="nav-link">🏡 My Rental</a>
       <a href="incoming_requests.html" class="nav-link">📩 Incoming Requests</a>
@@ -140,31 +141,33 @@
   </nav>
 
   <div class="content-area">
-      <header class="topbar">
-    <div class="topbar-left">
-      <button class="menu-toggle" id="menu-toggle">☰</button>
-      <span class="topbar-title">Property Management</span>
-    </div>
-    <div class="profile-container">
-      <div class="profile-trigger" id="profile-trigger">
-        <span class="js-user-name">Loading…</span>
-        <div class="trigger-avatar-circle">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menu-toggle">☰</button>
+        <span class="topbar-title">Property Management</span>
+      </div>
+      <div class="profile-container">
+        <div class="profile-trigger" id="profile-trigger">
+          <span class="js-user-name">Loading…</span>
+          <div class="trigger-avatar-circle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+        </div>
+        <div class="profile-dropdown" id="profile-dropdown">
+          <div class="dropdown-header">
+            <div class="dropdown-name js-user-name">—</div>
+            <div class="dropdown-email js-user-email">—</div>
+          </div>
+          <a href="#" class="dropdown-item logout" id="logout-dropdown">Logout</a>
         </div>
       </div>
-      <div class="profile-dropdown" id="profile-dropdown">
-        <div class="dropdown-header">
-          <div class="dropdown-name js-user-name">—</div>
-          <div class="dropdown-email js-user-email">—</div>
-        </div>
-        <a href="#" class="dropdown-item logout" id="logout-dropdown">Logout</a>
-      </div>
-    </div>
-  </header>
+    </header>
 
     <main class="main-padding">
+
+      <!-- PAGE HEADER -->
       <div class="view-header">
         <div>
           <h1>Your Listed Properties</h1>
@@ -172,12 +175,39 @@
         </div>
         <button class="btn-post-listing" onclick="window.location.href='addproperty.html'">+ Add New Property</button>
       </div>
+
+      <!-- OVERVIEW CARD -->
+      <div class="quota-card">
+        <div class="quota-header">Overview</div>
+        <div class="stats-row">
+          <div class="stat-item">
+            <span class="stat-label">My Properties</span>
+            <span class="stat-value" id="stat-props">—</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Active Rentals</span>
+            <span class="stat-value" id="stat-rentals">—</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Pending Payments</span>
+            <span class="stat-value" id="stat-pending" style="color:#ef4444">—</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Collected</span>
+            <span class="stat-value" id="stat-collected" style="color:var(--primary-green)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROPERTIES GRID -->
       <div class="property-grid" id="prop-grid">
         <div class="skeleton"></div><div class="skeleton"></div>
       </div>
+
     </main>
   </div>
 
+  <!-- EDIT MODAL -->
   <div class="modal-overlay" id="edit-modal">
     <div class="modal">
       <h2 style="margin-top:0">Edit Property</h2>
@@ -199,160 +229,160 @@
 
   <script src="../api.js"></script>
   <script>
-  let allProperties = [];
+    let allProperties = [];
 
-  // Mobile Menu Logic
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebar-overlay');
-  const menuToggle = document.getElementById('menu-toggle');
+    // Mobile Menu
+    const sidebar    = document.getElementById('sidebar');
+    const overlay    = document.getElementById('sidebar-overlay');
+    const menuToggle = document.getElementById('menu-toggle');
 
-  menuToggle.onclick = () => {
-    sidebar.classList.add('active');
-    overlay.classList.add('active');
-  };
+    menuToggle.onclick = () => { sidebar.classList.add('active'); overlay.classList.add('active'); };
+    overlay.onclick    = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
 
-  overlay.onclick = () => {
-    sidebar.classList.remove('active');
-    overlay.classList.remove('active');
-  };
+    // Profile Dropdown
+    (function(){
+      const trigger  = document.getElementById('profile-trigger');
+      const dropdown = document.getElementById('profile-dropdown');
+      if (!trigger || !dropdown) return;
+      trigger.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('active'); });
+      window.addEventListener('click', () => dropdown.classList.remove('active'));
+    })();
 
-  (async function init() {
-    const user = await Auth.guard('../login_plm.html');
-    if (!user) return;
-    Auth.fillProfile();
+    (async function init() {
+      const user = await Auth.guard('../login_plm.html');
+      if (!user) return;
+      Auth.fillProfile();
 
-    document.getElementById('logout-btn').onclick = () => Auth.logout('../login_plm.html');
-    document.getElementById('logout-dropdown').onclick = e => { e.preventDefault(); Auth.logout('../login_plm.html'); };
+      document.getElementById('logout-btn').onclick      = () => Auth.logout('../login_plm.html');
+      document.getElementById('logout-dropdown').onclick = e  => { e.preventDefault(); Auth.logout('../login_plm.html'); };
 
-    
+      // Load overview stats and properties in parallel
+      await Promise.all([loadStats(), loadProperties()]);
+    })();
 
-    await loadProperties();
-  })();
-
-  async function loadProperties() {
-    try {
-      const data = await apiFetch('/user/property');
-      if (!data.success) { renderEmpty(); return; }
-      allProperties = data.data || [];
-      renderProperties(allProperties);
-    } catch {
-      showToast('Properties load nahi huin. Network check karein.', 'error');
-      renderEmpty();
+    async function loadStats() {
+      try {
+        const data = await apiFetch('/user/dashboard');
+        if (!data.success) return;
+        const s = data.data.stats;
+        document.getElementById('stat-props').textContent     = s.totalProperties ?? 0;
+        document.getElementById('stat-rentals').textContent   = s.totalRentals ?? 0;
+        document.getElementById('stat-pending').textContent   = s.pendingPayments ?? 0;
+        document.getElementById('stat-collected').textContent = 'PKR ' + (s.totalCollected || 0).toLocaleString();
+      } catch { /* silently skip */ }
     }
-  }
 
-  function renderProperties(list) {
-    const grid = document.getElementById('prop-grid');
-    if (!list || list.length === 0) { renderEmpty(); return; }
+    async function loadProperties() {
+      try {
+        const data = await apiFetch('/user/property');
+        if (!data.success) { renderEmpty(); return; }
+        allProperties = data.data || [];
+        renderProperties(allProperties);
+      } catch {
+        showToast('Properties load nahi huin. Network check karein.', 'error');
+        renderEmpty();
+      }
+    }
 
-    grid.innerHTML = list.map(p => {
-      const occupied = p.rentals ? p.rentals.length : 0;
-      const avail    = Math.max(0, 1 - occupied);
-      return `
-        <div class="property-card">
-          <div class="card-image-placeholder">
-            <div class="rental-badge">Rental Unit</div>
-            <div style="color:#aaa;font-weight:bold;font-size:0.9rem;">${p.address}</div>
-          </div>
-          <div class="card-body">
-            <div class="price-tag">PKR ${p.rentAmount.toLocaleString()} <span style="font-size:0.8rem;font-weight:400;color:var(--text-muted);">/ month</span></div>
-            <div class="prop-title">${p.address}</div>
-            <span class="prop-location">📍 ${p.city} · ${p.area} ${p.areaUnit}</span>
-            <div class="occupancy-stats">
-              <div class="stat-box"><span class="stat-label">Total</span><span class="stat-val">1</span></div>
-              <div class="stat-box"><span class="stat-label">Occupied</span><span class="stat-val" style="color:var(--primary-green)">${occupied}</span></div>
-              <div class="stat-box"><span class="stat-label">Avail.</span><span class="stat-val" style="color:#ef4444">${avail}</span></div>
+    function renderProperties(list) {
+      const grid = document.getElementById('prop-grid');
+      if (!list || list.length === 0) { renderEmpty(); return; }
+
+      grid.innerHTML = list.map(p => {
+        const occupied = p.rentals ? p.rentals.length : 0;
+        const avail    = Math.max(0, 1 - occupied);
+        return `
+          <div class="property-card">
+            <div class="card-image-placeholder">
+              <div class="rental-badge">Rental Unit</div>
+              <div style="color:#aaa;font-weight:bold;font-size:0.9rem;">${p.address}</div>
             </div>
-          </div>
-          <div class="card-actions">
-            <button class="btn-action" onclick="openEditModal('${p.id}')">Edit</button>
-            <button class="btn-action" onclick="window.location.href='ledger.html'">Ledger</button>
-            <button class="btn-action btn-danger" onclick="deleteProperty('${p.id}')">Delete</button>
-          </div>
+            <div class="card-body">
+              <div class="price-tag">PKR ${p.rentAmount.toLocaleString()} <span style="font-size:0.8rem;font-weight:400;color:var(--text-muted);">/ month</span></div>
+              <div class="prop-title">${p.address}</div>
+              <span class="prop-location">📍 ${p.city} · ${p.area} ${p.areaUnit}</span>
+              <div class="occupancy-stats">
+                <div class="stat-box"><span class="stat-label">Total</span><span class="stat-val">1</span></div>
+                <div class="stat-box"><span class="stat-label">Occupied</span><span class="stat-val" style="color:var(--primary-green)">${occupied}</span></div>
+                <div class="stat-box"><span class="stat-label">Avail.</span><span class="stat-val" style="color:#ef4444">${avail}</span></div>
+              </div>
+            </div>
+            <div class="card-actions">
+              <button class="btn-action" onclick="openEditModal('${p.id}')">Edit</button>
+              <button class="btn-action" onclick="window.location.href='ledger.html'">Ledger</button>
+              <button class="btn-action btn-danger" onclick="deleteProperty('${p.id}')">Delete</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function renderEmpty() {
+      document.getElementById('prop-grid').innerHTML = `
+        <div class="empty-state">
+          <p style="font-size:1.1rem;font-weight:600;margin-bottom:10px;">Koi property nahi mili</p>
+          <p>Apni pehli property add karein.</p>
+          <button class="btn-post-listing" style="margin-top:16px" onclick="window.location.href='addproperty.html'">+ Add Property</button>
         </div>`;
-    }).join('');
-  }
-
-  function renderEmpty() {
-    document.getElementById('prop-grid').innerHTML = `
-      <div class="empty-state">
-        <p style="font-size:1.1rem;font-weight:600;margin-bottom:10px;">Koi property nahi mili</p>
-        <p>Apni pehli property add karein.</p>
-        <button class="btn-post-listing" style="margin-top:16px" onclick="window.location.href='addproperty.html'">+ Add Property</button>
-      </div>`;
-  }
-
-  function openEditModal(id) {
-    const p = allProperties.find(x => x.id === id);
-    if (!p) return;
-    document.getElementById('edit-id').value      = p.id;
-    document.getElementById('edit-city').value    = p.city;
-    document.getElementById('edit-address').value = p.address;
-    document.getElementById('edit-rent').value    = p.rentAmount;
-    document.getElementById('edit-desc').value    = p.description || '';
-    document.getElementById('edit-modal').classList.add('active');
-  }
-
-  function closeEditModal() {
-    document.getElementById('edit-modal').classList.remove('active');
-  }
-
-  async function saveEdit() {
-    const id      = document.getElementById('edit-id').value;
-    const city    = document.getElementById('edit-city').value.trim();
-    const address = document.getElementById('edit-address').value.trim();
-    const rent    = document.getElementById('edit-rent').value;
-    const desc    = document.getElementById('edit-desc').value.trim();
-
-    if (!city || !address || !rent) {
-      showToast('City, Address aur Rent zaruri hain.', 'error');
-      return;
     }
 
-    try {
-      const data = await apiFetch(`/user/property/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ city, address, rentAmount: rent, description: desc })
-      });
-      if (data.success) {
-        showToast('Property update ho gayi!');
-        closeEditModal();
-        await loadProperties();
-      } else {
-        showToast(data.message || 'Update fail hua.', 'error');
+    function openEditModal(id) {
+      const p = allProperties.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('edit-id').value      = p.id;
+      document.getElementById('edit-city').value    = p.city;
+      document.getElementById('edit-address').value = p.address;
+      document.getElementById('edit-rent').value    = p.rentAmount;
+      document.getElementById('edit-desc').value    = p.description || '';
+      document.getElementById('edit-modal').classList.add('active');
+    }
+
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.remove('active');
+    }
+
+    async function saveEdit() {
+      const id      = document.getElementById('edit-id').value;
+      const city    = document.getElementById('edit-city').value.trim();
+      const address = document.getElementById('edit-address').value.trim();
+      const rent    = document.getElementById('edit-rent').value;
+      const desc    = document.getElementById('edit-desc').value.trim();
+
+      if (!city || !address || !rent) {
+        showToast('City, Address aur Rent zaruri hain.', 'error');
+        return;
       }
-    } catch {
-      showToast('Network error.', 'error');
-    }
-  }
 
-  async function deleteProperty(id) {
-    if (!confirm('Kya aap is property ko delete karna chahte hain? Yeh action wapas nahi ho sakta.')) return;
-    try {
-      const data = await apiFetch(`/user/property/${id}`, { method: 'DELETE' });
-      if (data.success) {
-        showToast('Property delete ho gayi!');
-        await loadProperties();
-      } else {
-        showToast(data.message || 'Delete fail hua.', 'error');
+      try {
+        const data = await apiFetch(`/user/property/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ city, address, rentAmount: rent, description: desc })
+        });
+        if (data.success) {
+          showToast('Property update ho gayi!');
+          closeEditModal();
+          await Promise.all([loadStats(), loadProperties()]);
+        } else {
+          showToast(data.message || 'Update fail hua.', 'error');
+        }
+      } catch {
+        showToast('Network error.', 'error');
       }
-    } catch {
-      showToast('Network error.', 'error');
     }
-  }
+
+    async function deleteProperty(id) {
+      if (!confirm('Kya aap is property ko delete karna chahte hain? Yeh action wapas nahi ho sakta.')) return;
+      try {
+        const data = await apiFetch(`/user/property/${id}`, { method: 'DELETE' });
+        if (data.success) {
+          showToast('Property delete ho gayi!');
+          await Promise.all([loadStats(), loadProperties()]);
+        } else {
+          showToast(data.message || 'Delete fail hua.', 'error');
+        }
+      } catch {
+        showToast('Network error.', 'error');
+      }
+    }
   </script>
-<script>
-  // Topbar profile dropdown
-  (function(){
-    var trigger  = document.getElementById('profile-trigger');
-    var dropdown = document.getElementById('profile-dropdown');
-    if (!trigger || !dropdown) return;
-    trigger.addEventListener('click', function(e) { e.stopPropagation(); dropdown.classList.toggle('active'); });
-    window.addEventListener('click', function() { dropdown.classList.remove('active'); });
-    // Logout
-    var logoutDrop = document.getElementById('logout-dropdown');
-    if (logoutDrop) logoutDrop.addEventListener('click', function(e) { e.preventDefault(); Auth.logout('../login_plm.html'); });
-  })();
-</script>
 </body>
 </html>

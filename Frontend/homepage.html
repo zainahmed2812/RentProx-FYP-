@@ -13,10 +13,10 @@
       --border:#ededed; --shadow:0 4px 20px rgba(0,0,0,0.08);
     }
     *{ box-sizing:border-box; margin:0; padding:0; }
-    body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); }
+    body{ font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); display:flex; height:100vh; overflow:hidden; }
 
     /* NAV */
-    nav{
+    nav:not(.sidebar){
       background:var(--white); border-bottom:1px solid var(--border);
       padding:0 40px; height:64px; display:flex; align-items:center;
       justify-content:space-between; position:sticky; top:0; z-index:100;
@@ -222,56 +222,145 @@
       background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px;
       padding:12px 16px; font-size:0.85rem; color:#1e40af; margin-bottom:14px;
     }
+
+    /* ── SIDEBAR & OVERLAY ── */
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999; }
+    .sidebar { width: 260px; background: #fff; border-right: 1px solid #ededed; display: flex; flex-direction: column; padding: 20px 0; z-index: 1001; flex-shrink: 0; }
+    .sidebar-logo { padding: 0 24px 30px; font-weight: 800; color: #28b446; font-size: 1.4rem; cursor: pointer; }
+    .nav-group { flex: 1; }
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 24px; text-decoration: none; color: #666; font-weight: 500; font-size: 0.95rem; cursor: pointer; }
+    .nav-link:hover { color: #28b446; background: #f0fdf4; }
+    .nav-link.active { color: #28b446; background: #e8f5e9; border-right: 4px solid #28b446; font-weight: 700; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid #ededed; margin-top: auto; }
+    .btn-logout-side { width: 100%; padding: 12px; background: #fff; border: 1px solid #ededed; border-radius: 8px; font-weight: 600; cursor: pointer; color: #666; font-family: inherit; }
+    .btn-logout-side:hover { color: #ef4444; border-color: #ef4444; }
+
+    /* ── MAIN WRAP ── */
+    .main-wrap { flex: 1; display: flex; flex-direction: column; overflow-y: auto; min-width: 0; }
+
+    /* ── MENU TOGGLE ── */
+    .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #333; margin-right: 15px; padding: 0; line-height: 1; }
+
+    /* ── TOPBAR ── */
+    .topbar { height: 64px; background: #fff; border-bottom: 1px solid #ededed; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; position: sticky; top: 0; z-index: 90; flex-shrink: 0; }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .topbar-title { font-weight: 700; color: #666; font-size: 0.95rem; }
+    .profile-container { position: relative; }
+    .profile-trigger { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 14px; border: 1.5px solid #28b446; border-radius: 30px; cursor: pointer; background: #fff; }
+    .profile-trigger span { color: #28b446; font-weight: 600; font-size: 0.9rem; }
+    .trigger-avatar-circle { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f0f0f0; border: 1px solid #ddd; }
+    .profile-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: 260px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); border: 1px solid #ededed; display: none; flex-direction: column; z-index: 1000; overflow: hidden; }
+    .profile-dropdown.active { display: flex; }
+    .dropdown-header { padding: 16px 18px; border-bottom: 1px solid #f5f5f5; }
+    .dropdown-name { font-weight: 700; font-size: 0.92rem; color: #1a1d23; }
+    .dropdown-email { font-size: 0.73rem; color: #666; margin-top: 2px; }
+    .dropdown-item { display: block; padding: 13px 18px; text-decoration: none; color: #666; font-size: 0.88rem; font-weight: 500; cursor: pointer; }
+    .dropdown-item:hover { background: #f8fafc; color: #1a1d23; }
+    .dropdown-item.logout { color: #ef4444; border-top: 1px solid #f5f5f5; }
+    .dropdown-item.logout:hover { background: #fff5f5; }
+
+    /* ── CITY AUTOCOMPLETE ── */
+    .city-wrap { position: relative; flex: 1; }
+    .city-wrap input { width: 100%; }
+    .city-suggestions { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #fff; border: 1px solid #ededed; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 999; max-height: 220px; overflow-y: auto; display: none; }
+    .city-suggestions.show { display: block; }
+    .suggestion-item { padding: 10px 14px; cursor: pointer; font-size: 0.88rem; color: #1a1d23; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f5f5f5; }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover, .suggestion-item.kbd-active { background: #f0fdf4; color: #28b446; }
+    .gps-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; color: #aaa; line-height: 1; border-radius: 4px; font-size: 1rem; }
+    .gps-btn:hover { color: #28b446; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) { .container { padding: 28px 24px; } }
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: 0.3s ease; }
+      .sidebar.active { left: 0; }
+      .sidebar-overlay.active { display: block; }
+      .menu-toggle { display: block; }
+      .topbar { padding: 0 16px; height: 58px; }
+      .profile-trigger span { display: none; }
+      .hero { padding: 40px 16px; }
+      .hero h1 { font-size: 1.7rem; }
+      .hero p { font-size: 0.9rem; margin-bottom: 24px; }
+      .search-wrap { flex-direction: column; padding: 12px; gap: 10px; }
+      .search-wrap input, .search-wrap select { width: 100%; flex: none; }
+      .btn-search { width: 100%; padding: 13px; }
+      .stats-bar { padding: 10px 16px; gap: 8px; flex-wrap: wrap; font-size: 0.8rem; }
+      .container { padding: 20px 16px; }
+      .grid { grid-template-columns: 1fr; gap: 14px; }
+      .modal { width: calc(100vw - 32px); max-width: 500px; padding: 22px 18px; }
+    }
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 1.4rem; }
+      .grid { grid-template-columns: 1fr; }
+      .card-img { height: 150px; }
+    }
+
   </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="logo">RentProx</div>
-  <div class="nav-right">
-    <div id="guest-nav">
-      <a href="login_plm.html"  class="btn-nav btn-outline">Login</a>
-      <a href="signup_plm.html" class="btn-nav btn-filled" style="margin-left:8px">Sign Up</a>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo" onclick="location.href='index.html'">RentProx</div>
+    <div class="nav-group">
+      <a href="homepage.html"                  class="nav-link active">🔍 Browse Properties</a>
+      <a href="User/my_requests.html"       class="nav-link">📋 My Requests</a>
+      <a href="User/my_rental.html"         class="nav-link">🏡 My Rental</a>
+      <a href="User/incoming_requests.html" class="nav-link">📩 Incoming Requests</a>
+      <a href="User/addproperty.html"       class="nav-link">➕ Add Property</a>
+      <a href="User/properties.html"        class="nav-link">🏢 Property Management</a>
+      <a href="User/ledger.html"            class="nav-link">💰 Rent Ledger</a>
     </div>
-    <div id="user-nav" style="display:none; align-items:center; gap:10px;">
-      <a href="User/my_requests.html"       class="btn-nav btn-outline">📋 My Requests</a>
-      <a href="User/incoming_requests.html" class="btn-nav btn-outline">📩 Incoming</a>
-      <a href="User/homepage.html"          class="btn-nav btn-outline">Dashboard</a>
-      <div class="nav-pill" id="nav-pill-wrap">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
-        <span id="nav-name">User</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:2px"><polyline points="6 9 12 15 18 9"/></svg>
+    <div class="sidebar-footer">
+      <button class="btn-logout-side" id="logout-btn">Log Out</button>
+    </div>
+  </nav>
+
+  <div class="main-wrap">
+
+<!-- TOPBAR -->
+<header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menu-toggle">☰</button>
+      <span class="topbar-title">Browse Properties</span>
+    </div>
+    <div class="profile-container">
+      <div id="guest-nav" style="display:flex;gap:8px;">
+        <a href="login_plm.html"  class="btn-nav btn-outline">Login</a>
+        <a href="signup_plm.html" class="btn-nav btn-filled">Sign Up</a>
       </div>
-      <div id="user-drop" style="
-        display:none; position:absolute; top:calc(100% + 8px); right:0;
-        background:#fff; border:1px solid #ededed; border-radius:12px;
-        box-shadow:0 10px 30px rgba(0,0,0,0.12); min-width:210px; overflow:hidden; z-index:999;
-      ">
-        <div style="padding:14px 18px; border-bottom:1px solid #f5f5f5;">
-          <div style="font-weight:700;font-size:0.9rem;" id="drop-name">—</div>
-          <div style="font-size:0.75rem;color:#666;" id="drop-email">—</div>
+      <div id="user-nav" style="display:none;">
+        <div class="profile-trigger" id="profile-trigger">
+          <span class="js-user-name">Loading…</span>
+          <div class="trigger-avatar-circle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
         </div>
-        <a href="User/homepage.html"          style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">🏠 Dashboard</a>
-        <a href="User/my_requests.html"       style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">📋 My Requests</a>
-        <a href="User/my_rental.html"         style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">🏡 My Rental</a>
-        <a href="User/incoming_requests.html" style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">📩 Incoming Requests</a>
-        <a href="User/addproperty.html"       style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">➕ Add Property</a>
-        <a href="User/properties.html"        style="display:block;padding:12px 18px;text-decoration:none;color:#666;font-size:0.87rem;font-weight:500;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">🏢 My Properties</a>
-        <div id="drop-logout" style="display:block;padding:12px 18px;color:#ef4444;font-size:0.87rem;font-weight:600;cursor:pointer;border-top:1px solid #f5f5f5;" onmouseover="this.style.background='#fff5f5'" onmouseout="this.style.background=''">Logout</div>
+        <div class="profile-dropdown" id="profile-dropdown">
+          <div class="dropdown-header">
+            <div class="dropdown-name js-user-name">—</div>
+            <div class="dropdown-email js-user-email">—</div>
+          </div>
+          <a href="#" class="dropdown-item logout" id="logout-dropdown">Logout</a>
+        </div>
       </div>
     </div>
-  </div>
-</nav>
+  </header>
 
 <!-- HERO -->
 <section class="hero">
   <h1>Find Your <span>Perfect Home</span></h1>
   <p>Thousands of verified rental properties across Pakistan</p>
   <div class="search-wrap">
-    <input  type="text"   id="f-city"    placeholder="🏙️  City (e.g. Lahore, Karachi)">
+    <div class="city-wrap">
+      <input type="text" id="f-city" placeholder="🏙️  City (e.g. Lahore, Karachi)" autocomplete="off">
+      <button class="gps-btn" id="gps-btn" title="Detect my location">📍</button>
+      <div class="city-suggestions" id="city-suggestions"></div>
+    </div>
     <select id="f-unit">
       <option value="">All Sizes</option>
       <option value="MARLA">Marla</option>
@@ -324,25 +413,26 @@ let filters   = {};
   const user = Auth.getUser();
   if(user && Auth.getToken()){
     document.getElementById('guest-nav').style.display = 'none';
-    const un = document.getElementById('user-nav');
-    un.style.display = 'flex';
-    document.getElementById('nav-name').textContent   = user.name;
-    document.getElementById('drop-name').textContent  = user.name;
-    document.getElementById('drop-email').textContent = user.email;
+    document.getElementById('user-nav').style.display = 'block';
+    document.querySelectorAll('.js-user-name').forEach(el => el.textContent = user.name);
+    document.querySelectorAll('.js-user-email').forEach(el => el.textContent = user.email);
   }
 
-  const pill = document.getElementById('nav-pill-wrap');
-  const drop = document.getElementById('user-drop');
-  if(pill && drop){
-    pill.addEventListener('click', e => {
-      e.stopPropagation();
-      drop.style.display = drop.style.display === 'block' ? 'none' : 'block';
-    });
-    window.addEventListener('click', () => { if(drop) drop.style.display = 'none'; });
+  // Topbar profile dropdown
+  const profileTrigger  = document.getElementById('profile-trigger');
+  const profileDropdown = document.getElementById('profile-dropdown');
+  if(profileTrigger && profileDropdown){
+    profileTrigger.addEventListener('click', e => { e.stopPropagation(); profileDropdown.classList.toggle('active'); });
+    window.addEventListener('click', () => profileDropdown.classList.remove('active'));
   }
 
-  const logoutBtn = document.getElementById('drop-logout');
-  if(logoutBtn) logoutBtn.onclick = () => Auth.logout('login_plm.html');
+  // Logout — topbar dropdown
+  const logoutDropdown = document.getElementById('logout-dropdown');
+  if(logoutDropdown) logoutDropdown.addEventListener('click', e => { e.preventDefault(); Auth.logout('login_plm.html'); });
+
+  // Logout — sidebar button
+  const logoutSide = document.getElementById('logout-btn');
+  if(logoutSide) logoutSide.addEventListener('click', () => Auth.logout('login_plm.html'));
 
   load(1);
 })();
@@ -551,5 +641,144 @@ function renderPg(pg){
 }
 function empty(msg){ return `<div class="empty"><h3>${msg}</h3><p>Filters change kar ke dobara try karein.</p></div>`; }
 </script>
+</div><!-- /.main-wrap -->
+
+
+<script>
+/* ── SIDEBAR TOGGLE ── */
+(function(){
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  var toggle  = document.getElementById('menu-toggle');
+  if(!sidebar || !overlay || !toggle) return;
+  toggle.onclick  = function(){ sidebar.classList.add('active');    overlay.classList.add('active'); };
+  overlay.onclick = function(){ sidebar.classList.remove('active'); overlay.classList.remove('active'); };
+  sidebar.querySelectorAll('.nav-link').forEach(function(a){
+    a.addEventListener('click', function(){ sidebar.classList.remove('active'); overlay.classList.remove('active'); });
+  });
+})();
+
+/* ── CITY AUTOCOMPLETE + GPS ── */
+const PK_CITIES = [
+  'Lahore','Karachi','Islamabad','Rawalpindi','Faisalabad','Multan',
+  'Gujranwala','Peshawar','Quetta','Sialkot','Bahawalpur','Sargodha',
+  'Hyderabad','Sukkur','Abbottabad','Murree','Gujrat','Jhang',
+  'Sheikhupura','Larkana','Mardan','Sahiwal','Kasur','Rahim Yar Khan'
+];
+
+(function initCitySearch(){
+  const input       = document.getElementById('f-city');
+  const suggestions = document.getElementById('city-suggestions');
+  const gpsBtn      = document.getElementById('gps-btn');
+  if(!input || !suggestions || !gpsBtn) return;
+
+  let kbdIndex      = -1;
+  let debounceTimer = null;
+  let cachedCities  = null;
+
+  /* GPS detect */
+  function detectLocation(){
+    if(!navigator.geolocation) return;
+    gpsBtn.textContent = '⏳';
+    navigator.geolocation.getCurrentPosition(
+      async function(pos){
+        try{
+          const { latitude, longitude } = pos.coords;
+          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en`);
+          const data = await res.json();
+          const city = data.address.city || data.address.town || data.address.village || data.address.county || '';
+          if(city && !input.value){
+            input.value = city;
+            input.style.borderColor = '#28b446';
+            if(typeof showToast === 'function') showToast('📍 Location detected: ' + city);
+            doSearch();
+          }
+        } catch(e){}
+        gpsBtn.textContent = '📍';
+      },
+      function(){ gpsBtn.textContent = '📍'; },
+      { timeout: 8000 }
+    );
+  }
+
+  /* Fetch cities from backend */
+  async function fetchCities(){
+    try{
+      const res  = await fetch('http://localhost:5000/api/listings?limit=200');
+      const data = await res.json();
+      if(data.success && data.data.properties){
+        return [...new Set(data.data.properties.map(p=>p.city).filter(Boolean))].sort();
+      }
+    } catch(e){}
+    return PK_CITIES;
+  }
+
+  /* Highlight matching text */
+  function highlight(text, q){
+    if(!q) return text;
+    const i = text.toLowerCase().indexOf(q.toLowerCase());
+    if(i === -1) return text;
+    return text.slice(0,i) + '<strong style="color:#28b446">' + text.slice(i,i+q.length) + '</strong>' + text.slice(i+q.length);
+  }
+
+  /* Show suggestions list */
+  function showSuggestions(cities, query){
+    const q = query.toLowerCase().trim();
+    const filtered = q
+      ? cities.filter(c=>c.toLowerCase().startsWith(q)).concat(cities.filter(c=>c.toLowerCase().includes(q)&&!c.toLowerCase().startsWith(q)))
+      : cities.slice(0,8);
+    if(!filtered.length){ hideSuggestions(); return; }
+    kbdIndex = -1;
+    suggestions.innerHTML = filtered.slice(0,10).map(city=>
+      `<div class="suggestion-item" data-city="${city}"><span>🏙️</span><span>${highlight(city,q)}</span></div>`
+    ).join('');
+    suggestions.querySelectorAll('.suggestion-item').forEach(item=>{
+      item.addEventListener('mousedown', function(e){
+        e.preventDefault();
+        input.value = this.dataset.city;
+        hideSuggestions();
+        doSearch();
+      });
+    });
+    suggestions.classList.add('show');
+  }
+
+  function hideSuggestions(){ suggestions.classList.remove('show'); kbdIndex = -1; }
+
+  /* Events */
+  input.addEventListener('input', function(){
+    clearTimeout(debounceTimer);
+    const q = this.value.trim();
+    debounceTimer = setTimeout(async function(){
+      const cities = cachedCities || await fetchCities();
+      cachedCities = cities;
+      showSuggestions(cities, q);
+    }, 200);
+  });
+
+  input.addEventListener('focus', async function(){
+    const cities = cachedCities || await fetchCities();
+    cachedCities = cities;
+    showSuggestions(cities, this.value.trim());
+  });
+
+  input.addEventListener('blur', function(){ setTimeout(hideSuggestions, 150); });
+
+  input.addEventListener('keydown', function(e){
+    const items = suggestions.querySelectorAll('.suggestion-item');
+    if(e.key==='ArrowDown'){ e.preventDefault(); kbdIndex=Math.min(kbdIndex+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('kbd-active',i===kbdIndex)); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); kbdIndex=Math.max(kbdIndex-1,-1); items.forEach((el,i)=>el.classList.toggle('kbd-active',i===kbdIndex)); }
+    else if(e.key==='Enter'){ if(kbdIndex>=0&&items[kbdIndex]) input.value=items[kbdIndex].dataset.city; hideSuggestions(); doSearch(); }
+    else if(e.key==='Escape') hideSuggestions();
+  });
+
+  gpsBtn.addEventListener('click', function(e){ e.preventDefault(); detectLocation(); });
+
+  /* On load: detect location + pre-fetch cities */
+  detectLocation();
+  fetchCities().then(c=>{ cachedCities=c; });
+})();
+</script>
+
 </body>
 </html>

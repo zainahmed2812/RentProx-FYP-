@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Already logged in? Redirect
   if (Auth.getToken()) {
-    window.location.href = 'User/homepage.html';
+    window.location.href = 'homepage.html';
     return;
   }
 
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.data.user.isAdmin) {
           window.location.href = 'Admin/admin_dashboard.html';
         } else {
-          window.location.href = 'User/homepage.html';
+          window.location.href = 'homepage.html';
         }
       } else {
         errMsg.textContent = data.message || 'Login failed.';
