@@ -23,7 +23,9 @@ model User {
   ownedRentals  Rental[]   @relation("OwnerRentals")
   tenantRentals Rental[]   @relation("TenantRentals")
   sentListings  Listing[]  @relation("TenantListings")
-  complaints    Complaint[] @relation("TenantComplaints")
+
+  // NEW
+  dissolutionRequests DissolutionRequest[] @relation("TenantDissolutions")
 }
 
 model Property {
@@ -40,27 +42,8 @@ model Property {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  rentals    Rental[]
-  listings   Listing[]
-  complaints Complaint[]
-  images     PropertyImage[]   // NEW — property ki images
-}
-
-// ─────────────────────────────────────────────────────
-// NEW: PROPERTY IMAGE
-// Server pe upload ki gayi images ka path store hoga.
-// ek property ki multiple images ho sakti hain.
-// ─────────────────────────────────────────────────────
-model PropertyImage {
-  id        String   @id @default(cuid())
-  url       String   // e.g. /uploads/properties/abc123-front.jpg
-  filename  String   // original filename for reference
-  isPrimary Boolean  @default(false)  // pehli/main image
-  order     Int      @default(0)      // display order
-  createdAt DateTime @default(now())
-
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  propertyId String
+  rentals  Rental[]
+  listings Listing[]
 }
 
 model Rental {
@@ -94,12 +77,11 @@ model Payment {
 }
 
 model Listing {
-  id       String        @id @default(cuid())
-  status   ListingStatus @default(PENDING)
-  isActive Boolean       @default(true)
-  message  String        @default("")
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id        String        @id @default(cuid())
+  status    ListingStatus @default(PENDING)
+  message   String        @default("")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   propertyId String
@@ -135,71 +117,45 @@ model Agreement {
   tenantSignedAt DateTime?
   ownerSignedAt  DateTime?
 
+  // NEW: dissolution audit
+  dissolvedAt     DateTime?
+  dissolvedBy     String    @default("")
+  dissolutionNote String    @default("")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   listingId String  @unique
 
-  securityPayment SecurityDepositPayment?
+  // NEW: back-relation
+  dissolutionRequest DissolutionRequest?
 }
 
-model SecurityDepositPayment {
-  id             String               @id @default(cuid())
-  transactionId  String
-  amount         Float
-  status         DepositPaymentStatus @default(PENDING_VERIFICATION)
-  rejectedReason String               @default("")
-  submittedAt    DateTime             @default(now())
-  verifiedAt     DateTime?
-
-  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
-  agreementId String    @unique
-}
-
-model Complaint {
-  id          String          @id @default(cuid())
-  type        ComplaintType   @default(MAINTENANCE)
-  title       String
-  description String
-  status      ComplaintStatus @default(OPEN)
-  adminNote   String          @default("")
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-
-  tenant   User   @relation("TenantComplaints", fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId String
-
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  propertyId String
-}
+// ─────────────────────────────────────────────────────
+//  NEW MODEL: DISSOLUTION REQUEST
+// ─────────────────────────────────────────────────────
 
 model DissolutionRequest {
   id     String                   @id @default(cuid())
   status DissolutionRequestStatus @default(PENDING)
 
-  // Tenant ki side
-  reason             String    // Kyu dissolve karna chahta hai
-  proposedVacateDate DateTime? // Tenant ki suggested khali karne ki tarikh
+  reason             String
+  proposedVacateDate DateTime?
   requestedAt        DateTime  @default(now())
 
-  // Owner ka jawab
-  ownerNote    String    @default("")
-  respondedAt  DateTime?
+  ownerNote   String    @default("")
+  respondedAt DateTime?
 
-  // Relations
   tenant      User      @relation("TenantDissolutions", fields: [tenantId],   references: [id], onDelete: Cascade)
   tenantId    String
 
   agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
-  agreementId String    @unique  // Ek agreement ka ek hi active dissolution request
+  agreementId String    @unique
 }
 
-
-
-
 // ─────────────────────────────────────────────────────
-// ENUMS
+//  ENUMS
 // ─────────────────────────────────────────────────────
 
 enum AreaUnit {
@@ -222,27 +178,9 @@ enum AgreementStatus {
   CANCELLED
 }
 
-enum DepositPaymentStatus {
-  PENDING_VERIFICATION
-  VERIFIED
-  REJECTED
-}
-
-enum ComplaintType {
-  MAINTENANCE
-  COMPLAINT
-  OTHER
-}
-
-enum ComplaintStatus {
-  OPEN
-  IN_PROGRESS
-  RESOLVED
-  CLOSED
-}
-
+// NEW
 enum DissolutionRequestStatus {
-  PENDING   // Tenant ne request ki, owner ka intezaar
-  ACCEPTED  // Owner ne maan liya → agreement CANCELLED
-  DECLINED  // Owner ne mana kiya, agreement chalti rahe
+  PENDING
+  ACCEPTED
+  DECLINED
 }
