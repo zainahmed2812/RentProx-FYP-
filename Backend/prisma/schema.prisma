@@ -174,6 +174,30 @@ model Complaint {
   propertyId String
 }
 
+model DissolutionRequest {
+  id     String                   @id @default(cuid())
+  status DissolutionRequestStatus @default(PENDING)
+
+  // Tenant ki side
+  reason             String    // Kyu dissolve karna chahta hai
+  proposedVacateDate DateTime? // Tenant ki suggested khali karne ki tarikh
+  requestedAt        DateTime  @default(now())
+
+  // Owner ka jawab
+  ownerNote    String    @default("")
+  respondedAt  DateTime?
+
+  // Relations
+  tenant      User      @relation("TenantDissolutions", fields: [tenantId],   references: [id], onDelete: Cascade)
+  tenantId    String
+
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreementId String    @unique  // Ek agreement ka ek hi active dissolution request
+}
+
+
+
+
 // ─────────────────────────────────────────────────────
 // ENUMS
 // ─────────────────────────────────────────────────────
@@ -215,4 +239,10 @@ enum ComplaintStatus {
   IN_PROGRESS
   RESOLVED
   CLOSED
+}
+
+enum DissolutionRequestStatus {
+  PENDING   // Tenant ne request ki, owner ka intezaar
+  ACCEPTED  // Owner ne maan liya → agreement CANCELLED
+  DECLINED  // Owner ne mana kiya, agreement chalti rahe
 }
