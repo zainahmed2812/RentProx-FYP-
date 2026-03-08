@@ -680,17 +680,17 @@
           ...(filters.max  && { maxRent:  filters.max  }),
         });
         const d = await fetch(`http://localhost:5000/api/listings?${p}`).then(r=>r.json());
-        if(!d.success){ g.innerHTML=empty('Koi property nahi mili.'); return; }
+        if(!d.success){ g.innerHTML=empty('No properties found.'); return; }
         document.getElementById('total-count').textContent = d.data.pagination.total;
         renderCards(d.data.properties);
         renderPg(d.data.pagination);
       } catch {
-        document.getElementById('grid').innerHTML = empty('Backend se connect nahi ho saka.');
+        document.getElementById('grid').innerHTML = empty('Could not connect to the server.');
       }
     }
 
     function renderCards(list){
-      if(!list.length){ document.getElementById('grid').innerHTML=empty('Koi property nahi mili.'); return; }
+      if(!list.length){ document.getElementById('grid').innerHTML=empty('No properties found.'); return; }
       const user = Auth.getUser();
       document.getElementById('grid').innerHTML = list.map(p => {
         const isMyProperty = user && p.owner.id === user.id;
@@ -728,7 +728,7 @@
       document.getElementById('m-req').innerHTML     = '';
       document.getElementById('m-send-btn').style.display = 'block';
       const d = await fetch(`http://localhost:5000/api/listings/${id}`).then(r=>r.json()).catch(()=>null);
-      if(!d?.success){ document.getElementById('m-body').innerHTML='<p style="color:#ef4444">Load nahi hua.</p>'; return; }
+      if(!d?.success){ document.getElementById('m-body').innerHTML='<p style="color:#ef4444">Failed to load property details.</p>'; return; }
       const p = d.data;
       const galleryEl = document.getElementById('m-gallery');
       if(p.images && p.images.length > 0){
@@ -751,12 +751,12 @@
         sendBtn.style.display = 'none';
       } else if(!user){
         sendBtn.style.display = 'none';
-        document.getElementById('m-req').innerHTML = `<div class="login-note">Request bhejne ke liye <a href="login_plm.html">login karein</a>.</div>`;
+        document.getElementById('m-req').innerHTML = `<div class="login-note">Please <a href="login_plm.html">login</a> to send a rental request.</div>`;
       } else if(p.owner.id === user.id){
         sendBtn.style.display = 'none';
-        document.getElementById('m-req').innerHTML = `<div class="owner-note">🏠 <strong>Yeh aap ki apni property hai.</strong><br><small>Request send nahi kar sakte.</small><br><br><a href="User/properties.html" style="color:#1e40af;font-weight:700;font-size:0.85rem">→ Property Management Page</a></div>`;
+        document.getElementById('m-req').innerHTML = `<div class="owner-note">🏠 <strong>This is your own property.</strong><br><small>You cannot send a request for your own listing.</small><br><br><a href="User/properties.html" style="color:#1e40af;font-weight:700;font-size:0.85rem">→ Go to Property Management</a></div>`;
       } else {
-        document.getElementById('m-req').innerHTML = `<p style="font-size:0.82rem;color:var(--muted);margin-top:14px">Owner ko optional message:</p><textarea class="msg" id="req-msg" placeholder="e.g. Main family ke saath 6 mahine ke liye rent karna chahta hun..."></textarea>`;
+        document.getElementById('m-req').innerHTML = `<p style="font-size:0.82rem;color:var(--muted);margin-top:14px">Optional message to the owner:</p><textarea class="msg" id="req-msg" placeholder="e.g. I am looking to rent with my family for 6 months..."></textarea>`;
       }
     }
 
@@ -768,8 +768,8 @@
       btn.disabled=true; btn.textContent='Sending...';
       try{
         const d = await apiFetch('/user/requests',{ method:'POST', body: JSON.stringify({ propertyId:selPropId, message:msg }) });
-        if(d.success){ showToast('Request bheji gayi!'); closeModal(); load(curPage); }
-        else { showToast(d.message||'Request nahi bheji ja saki.','error'); }
+        if(d.success){ showToast('Request sent! Waiting for the owner to respond.'); closeModal(); load(curPage); }
+        else { showToast(d.message||'Failed to send request.','error'); }
       } catch { showToast('Network error.','error'); }
       finally { btn.disabled=false; btn.textContent='Send Request'; }
     }
@@ -798,7 +798,7 @@
         .map(i=>`<button class="pg ${i===pg.page?'active':''}" onclick="load(${i})">${i}</button>`)
         .join('');
     }
-    function empty(msg){ return `<div class="empty"><h3>${msg}</h3><p>Filters change kar ke dobara try karein.</p></div>`; }
+    function empty(msg){ return `<div class="empty"><h3>${msg}</h3><p>Try adjusting your filters and search again.</p></div>`; }
   </script>
 
   <script>
