@@ -21,6 +21,7 @@ import ownerRequests   from './routes/User/ownerRequests.js';
 import agreementRoutes from './routes/User/agreement.js';
 import myRentalRoutes  from './routes/User/myRentedProperty.js';
 import adminComplaints from './routes/Admin/complaints.js';
+import dissolutionRoutes from './routes/User/dissolution.js';
 
 // Middleware
 import { errorHandler } from './middleware/errorMiddleware.js';
@@ -69,6 +70,8 @@ app.use('/api/owner/requests', ownerRequests);   // owner  — requests manage k
 app.use('/api/user/agreement', agreementRoutes); // dono   — agreement dekho/sign
 app.use('/api/user',              myRentalRoutes);   // GET /api/user/my-rental + complaints
 app.use('/api/admin/complaints',  adminComplaints);  // Admin complaint management
+app.use('/api/user',  dissolutionRoutes);
+app.use('/api/owner', dissolutionRoutes);
 
 // ── Health Check ───────────────────────────────────────
 app.get('/api/health', (req, res) => {
