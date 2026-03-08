@@ -159,7 +159,7 @@
   <div class="content">
     <div class="page-head">
       <h1>Incoming Rental Requests</h1>
-      <p>Tenants ki requests manage karein aur payments verify karein.</p>
+      <p>Manage tenant requests and verify payments.</p>
     </div>
 
     <!-- ─── PAYMENT ALERTS (dynamically rendered) ─── -->
@@ -211,7 +211,7 @@ let curTab  = 'all';
 async function loadRequests(){
   try{
     const d = await apiFetch('/owner/requests');
-    if(!d.success){ renderEmpty('Data load nahi hua.'); return; }
+    if(!d.success){ renderEmpty('data not loaded'); return; }
     allData = d.data;
 
     document.getElementById('cnt-pending').textContent  = allData.pending.length;
@@ -224,7 +224,7 @@ async function loadRequests(){
     renderTable(allData.all);
   } catch{
     showToast('Network error.','error');
-    renderEmpty('Backend se connect nahi ho saka.');
+    renderEmpty('not connected with backend.');
   }
 }
 
@@ -242,7 +242,7 @@ function renderPaymentAlerts(alerts){
         <div class="pay-alert">
           <div class="pay-alert-icon">💳</div>
           <div class="pay-alert-body">
-            <strong>${r.tenant.name} ne security deposit submit ki hai!</strong>
+            <strong>${r.tenant.name} has submitted security deposit!</strong>
             <span>Property: ${r.property.address}, ${r.property.city}</span>
             <div class="pay-alert-txn">
               Transaction ID: ${r.agreement.securityPayment.transactionId} &nbsp;·&nbsp;
@@ -269,7 +269,7 @@ function switchTab(tab, el){
 function renderTable(list){
   const wrap = document.getElementById('table-wrap');
   if(!list?.length){
-    wrap.innerHTML = `<div class="empty"><p>Koi request nahi mili.</p></div>`;
+    wrap.innerHTML = `<div class="empty"><p>No request received.</p></div>`;
     return;
   }
 
@@ -346,7 +346,7 @@ function renderTable(list){
 
 async function respond(id, action){
   const label = action==='accept' ? 'accept' : 'decline';
-  if(!confirm(`Kya aap yeh request ${label} karna chahte hain?`)) return;
+  if(!confirm(`did you want this request ${label}?`)) return;
   try{
     const d = await apiFetch(`/owner/requests/${id}/${label}`,{ method:'PUT' });
     if(d.success){

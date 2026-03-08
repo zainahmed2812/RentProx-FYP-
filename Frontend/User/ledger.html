@@ -218,7 +218,7 @@
     async function loadPayments() {
       try {
         const data = await apiFetch('/payments');
-        if (!data.success) { renderEmpty('Data load nahi hua.'); return; }
+        if (!data.success) { renderEmpty('Data not loaded.'); return; }
         allPayments = data.data || [];
         renderLedger(allPayments);
       } catch {

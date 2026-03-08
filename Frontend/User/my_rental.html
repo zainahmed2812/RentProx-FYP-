@@ -249,7 +249,7 @@ async function loadRental(){
     rentalData    = d.data;
     allComplaints = d.data.complaints || [];
     renderAll();
-  } catch{ renderError('Backend se connect nahi ho saka.'); }
+  } catch{ renderError('An error occurred while fetching rental data.'); }
 }
 
 function renderAll(){
@@ -264,7 +264,7 @@ function renderAll(){
 
     <div class="page-head">
       <h1>🏡 My Rental</h1>
-      <p>Aap ki rented property ki tamam details, agreement, aur maintenance requests.</p>
+      <p>your property all details are here.</p>
     </div>
 
     <!-- PROPERTY HERO -->
@@ -334,11 +334,11 @@ function renderAll(){
         </div>
         <div class="form-group">
           <label class="form-label">Title</label>
-          <input class="form-input" id="c-title" placeholder="e.g. AC kharab hai, Leakage hai...">
+          <input class="form-input" id="c-title" placeholder="e.g. Leaking faucet in kitchen"/>
         </div>
         <div class="form-group" style="grid-column:1/-1">
           <label class="form-label">Description</label>
-          <textarea class="form-input" id="c-desc" placeholder="Problem ki puri details likhein..." style="min-height:80px;resize:vertical"></textarea>
+          <textarea class="form-input" id="c-desc" placeholder="write full description here..." style="min-height:80px;resize:vertical"></textarea>
         </div>
       </div>
       <button class="btn-submit" id="submit-btn" onclick="submitComplaint()">Submit Request</button>
@@ -370,7 +370,7 @@ function filterComplaints(status, el){
 function renderComplaints(list){
   const cont = document.getElementById('complaint-list');
   if(!list.length){
-    cont.innerHTML=`<div class="empty-box"><h3>Koi request nahi</h3><p>Maintenance ya complaint submit karein.</p></div>`;
+    cont.innerHTML=`<div class="empty-box"><h3>No requests</h3><p>Submit a maintenance or complaint request.</p></div>`;
     return;
   }
   const typeIcons = { MAINTENANCE:'🔧', COMPLAINT:'⚠️', OTHER:'📝' };
@@ -395,8 +395,8 @@ async function submitComplaint(){
   const title = document.getElementById('c-title').value.trim();
   const desc  = document.getElementById('c-desc').value.trim();
 
-  if(!title){ showToast('Title zaruri hai.','error'); return; }
-  if(!desc)  { showToast('Description zaruri hai.','error'); return; }
+  if(!title){ showToast('Title is required.','error'); return; }
+  if(!desc)  { showToast('Description is required.','error'); return; }
 
   const btn = document.getElementById('submit-btn');
   btn.disabled=true; btn.textContent='Submitting...';
@@ -416,7 +416,7 @@ async function submitComplaint(){
       allComplaints.unshift({ ...d.data, property:{ address:rentalData.property.address, city:rentalData.property.city } });
       renderComplaints(allComplaints);
     } else {
-      showToast(d.message||'Submit nahi hua.','error');
+      showToast(d.message||' Not submitted.','error');
     }
   } catch{ showToast('Network error.','error'); }
   finally{ btn.disabled=false; btn.textContent='Submit Request'; }
@@ -426,8 +426,8 @@ function renderNoRental(){
   document.getElementById('main-content').innerHTML=`
     <div class="no-rental">
       <div style="font-size:3rem;margin-bottom:16px">🏠</div>
-      <h2>Abhi Koi Active Rental Nahi</h2>
-      <p>Koi property rent karne ke liye request bhejein aur agreement complete karein.</p>
+      <h2>No Active Rentals</h2>
+      <p>Submit a request to rent a property and complete the agreement.</p>
       <button class="btn-browse" onclick="location.href='../index.html'">Browse Properties</button>
     </div>`;
 }

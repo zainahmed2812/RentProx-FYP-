@@ -279,7 +279,7 @@
         allProperties = data.data || [];
         renderProperties(allProperties);
       } catch {
-        showToast('Properties load nahi huin. Network check karein.', 'error');
+        showToast('Properties not loaded. Check Network connection.', 'error');
         renderEmpty();
       }
     }
@@ -348,7 +348,7 @@
       const desc    = document.getElementById('edit-desc').value.trim();
 
       if (!city || !address || !rent) {
-        showToast('City, Address aur Rent zaruri hain.', 'error');
+        showToast('there must be City, Address and Rent.', 'error');
         return;
       }
 
@@ -358,11 +358,11 @@
           body: JSON.stringify({ city, address, rentAmount: rent, description: desc })
         });
         if (data.success) {
-          showToast('Property update ho gayi!');
+          showToast('Property updated!');
           closeEditModal();
           await Promise.all([loadStats(), loadProperties()]);
         } else {
-          showToast(data.message || 'Update fail hua.', 'error');
+          showToast(data.message || 'Update failed.', 'error');
         }
       } catch {
         showToast('Network error.', 'error');
@@ -370,14 +370,14 @@
     }
 
     async function deleteProperty(id) {
-      if (!confirm('Kya aap is property ko delete karna chahte hain? Yeh action wapas nahi ho sakta.')) return;
+      if (!confirm('did you want to delete this property? This action cannot be undone.')) return;
       try {
         const data = await apiFetch(`/user/property/${id}`, { method: 'DELETE' });
         if (data.success) {
-          showToast('Property delete ho gayi!');
+          showToast('Property deleted!');
           await Promise.all([loadStats(), loadProperties()]);
         } else {
-          showToast(data.message || 'Delete fail hua.', 'error');
+          showToast(data.message || 'not Deleted properly.', 'error');
         }
       } catch {
         showToast('Network error.', 'error');

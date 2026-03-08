@@ -174,7 +174,7 @@
   <div class="content">
     <div class="page-head">
       <h1>My Rental Requests</h1>
-      <p>Properties jinke liye aap ne request bheji hai — status aur agreement track karein.</p>
+      <p>Properties for which you have sent requests — track their status and agreement.</p>
     </div>
 
     <!-- TABS -->
@@ -216,12 +216,12 @@ let curTab      = 'all';
 async function loadRequests(){
   try{
     const d = await apiFetch('/user/requests');
-    if(!d.success){ renderEmpty('Requests load nahi huin.'); return; }
+    if(!d.success){ renderEmpty('Requests not loaded.'); return; }
     allRequests = d.data || [];
     renderList(allRequests);
   } catch {
     showToast('Network error.','error');
-    renderEmpty('Backend se connect nahi ho saka.');
+    renderEmpty(' No connection established with backend.');
   }
 }
 
@@ -237,8 +237,8 @@ function renderList(list){
   const cont = document.getElementById('req-list');
   if(!list.length){
     cont.innerHTML = `<div class="empty-state">
-      <h3>Koi request nahi mili</h3>
-      <p>Properties browse karein aur request bhejein.</p>
+      <h3>No request received</h3>
+      <p>Properties browse properties and send requests.</p>
       <a href="../index.html" style="color:var(--green);font-weight:700;text-decoration:none;display:inline-block;margin-top:12px">Browse Properties →</a>
     </div>`;
     return;
@@ -272,7 +272,7 @@ function renderList(list){
             ? `<button class="btn-sm green" onclick="viewAgreement('${r.id}')">View Agreement</button>`
             : ''}
           ${isAccepted && !hasAgreement
-            ? `<span style="font-size:0.8rem;color:var(--muted)">Agreement bann raha hai…</span>`
+            ? `<span style="font-size:0.8rem;color:var(--muted)">Making Agreement…</span>`
             : ''}
         </div>
       </div>
@@ -281,11 +281,11 @@ function renderList(list){
 }
 
 async function cancelRequest(id){
-  if(!confirm('Request cancel karna chahte hain?')) return;
+  if(!confirm('Want to cancel request?')) return;
   try{
     const d = await apiFetch(`/user/requests/${id}`,{ method:'DELETE' });
-    if(d.success){ showToast('Request cancel ho gayi.'); await loadRequests(); }
-    else showToast(d.message||'Cancel nahi hua.','error');
+    if(d.success){ showToast('Request canceled.'); await loadRequests(); }
+    else showToast(d.message||'Not Canceled.','error');
   } catch { showToast('Network error.','error'); }
 }
 

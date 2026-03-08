@@ -262,7 +262,7 @@ async function loadAgreement(listingId){
     role = d.data.userRole;
     spay = d.data.securityPayment;
     render();
-  } catch{ showErr('Agreement load nahi hua.'); }
+  } catch{ showErr('Agreement not loaded.'); }
 }
 
 function render(){
@@ -347,15 +347,15 @@ function render(){
     ${!isActive ? `
     <div class="action-bar">
       <div class="action-left">
-        <strong>${mySigned?'✅ Aap ne sign kar diya':'✍️ Signature Required'}</strong>
-        <p>${mySigned?'Doosre party ka intezaar hai.':'Agreement tamam terms parh ke sign karein.'}</p>
+        <strong>${mySigned?'you have signed it✅':'✍️ Signature Required'}</strong>
+        <p>${mySigned?'waiting for the other party.':'Sign Agreement by reading all terms & conditions.'}</p>
       </div>
       <div class="abtns">
         ${!mySigned?`<button class="btn-sign" onclick="doSign()">✍️ Sign Agreement</button>`:''}
       </div>
     </div>` : ''}
 
-    <!-- PAYMENT SECTION (dono sign ke baad, sirf tenant ke liye) -->
+    <!-- PAYMENT SECTION (both after sign, only for tenant) -->
     ${bothSigned && !isActive && role==='tenant' ? renderPaymentSection() : ''}
 
     <!-- OWNER VERIFY SECTION -->
@@ -366,7 +366,7 @@ function render(){
     <div class="action-bar green-bg">
       <div class="action-left">
         <strong style="color:var(--green)">✅ Agreement Active</strong>
-        <p>Contract ${new Date(agr.startDate).toLocaleDateString('en-PK')} se ${new Date(agr.endDate).toLocaleDateString('en-PK')} tak valid hai.</p>
+        <p>Contract ${new Date(agr.startDate).toLocaleDateString('en-PK')} till ${new Date(agr.endDate).toLocaleDateString('en-PK')} only valid.</p>
       </div>
       ${role==='tenant'?`<div class="abtns"><button class="btn-sign" onclick="location.href='my_rental.html'">🏡 My Rental →</button></div>`:''}
     </div>` : ''}
@@ -380,7 +380,7 @@ function renderPaymentSection(){
     return `
     <div class="pay-box">
       <h3>💳 Security Deposit Payment</h3>
-      <p>Dono parties ne sign kar liya! Ab security deposit + advance submit karein. Owner verify karega aur agreement active ho jayegi.</p>
+      <p>Both parties have signed! Now please submit the security deposit and advance payment. The owner will verify it and the agreement will become active.</p>
       <div class="pay-amount-box">
         <div><div class="lbl">Total Amount Due</div><div class="val">PKR ${totalDue.toLocaleString()}</div></div>
         <div style="text-align:right;font-size:0.78rem;color:var(--muted)">
@@ -388,7 +388,7 @@ function renderPaymentSection(){
           Advance (${agr.advanceMonths}mo): PKR ${(agr.monthlyRent*agr.advanceMonths).toLocaleString()}
         </div>
       </div>
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">EasyPaisa/JazzCash/Bank transfer karein aur Transaction ID yahan enter karein:</p>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">EasyPaisa/JazzCash/Bank transfer only. Enter Transaction ID here:</p>
       <div class="pay-input-row">
         <input class="pay-input" id="txn-id" placeholder="Transaction ID (e.g. TXN123456789)">
         <button class="btn-pay" onclick="submitPayment()">Submit Payment</button>
@@ -397,9 +397,9 @@ function renderPaymentSection(){
   }
 
   const statusMap = {
-    PENDING_VERIFICATION: { cls:'pending',  icon:'⏳', title:'Verification Pending',  sub:'Owner verify kar raha hai. Thodi der wait karein.' },
-    VERIFIED:             { cls:'verified', icon:'✅', title:'Payment Verified!',      sub:'Owner ne confirm kar diya. Agreement active ho gayi.' },
-    REJECTED:             { cls:'rejected', icon:'❌', title:'Payment Rejected',       sub: spay.rejectedReason || 'Transaction ID sahi nahi tha.' },
+    PENDING_VERIFICATION: { cls:'pending',  icon:'⏳', title:'Verification Pending',  sub:'Wait owner is verifying.' },
+    VERIFIED:             { cls:'verified', icon:'✅', title:'Payment Verified!',      sub:'Confirmed by owner. Agreement activated.' },
+    REJECTED:             { cls:'rejected', icon:'❌', title:'Payment Rejected',       sub: spay.rejectedReason || 'Transaction ID not correct.' },
   };
   const s = statusMap[spay.status];
 
@@ -440,7 +440,7 @@ function renderVerifySection(){
       <div class="vi-row"><span class="vi-lbl">Amount</span>        <span class="vi-val">PKR ${spay.amount.toLocaleString()}</span></div>
       <div class="vi-row"><span class="vi-lbl">Submitted At</span>  <span class="vi-val">${new Date(spay.submittedAt).toLocaleString('en-PK')}</span></div>
     </div>
-    <input class="reject-input" id="reject-reason" placeholder="Rejection reason (agar reject kar rahe hain)..." id="reject-input">
+    <input class="reject-input" id="reject-reason" placeholder="Rejection reason (if rejecting it)..." id="reject-input">
     <div class="verify-btns">
       <button class="btn-verify" onclick="verifyPayment('verify')">✅ Verify — Activate Agreement</button>
       <button class="btn-reject" onclick="showRejectInput()">❌ Reject</button>
@@ -458,7 +458,7 @@ function showRejectInput(){
 
 /* ── ACTIONS ───────────────────────────────────────── */
 async function doSign(){
-  if(!confirm('Agreement ki tamam terms parh li hain? Sign karna chahte hain?')) return;
+  if(!confirm('Have you read all the terms of the agreement? Do you want to sign it?')) return;
   try{
     const d = await apiFetch(`/user/agreement/${agr.id}/sign`,{method:'PUT'});
     if(d.success){ agr=d.data; showToast(d.message); await reloadAgreement(); }
@@ -484,7 +484,7 @@ async function saveEdit(){
         additionalTerms:   document.getElementById('e-terms').value,
       })
     });
-    if(d.success){ agr=d.data; editMode=false; showToast('Update ho gaya!'); render(); }
+    if(d.success){ agr=d.data; editMode=false; showToast('Updated!'); render(); }
     else showToast(d.message||'Update fail.','error');
   } catch{ showToast('Network error.','error'); }
 }
@@ -493,7 +493,7 @@ function toggleEdit(){ editMode=!editMode; render(); }
 
 async function submitPayment(){
   const txnId = document.getElementById('txn-id')?.value?.trim();
-  if(!txnId){ showToast('Transaction ID darj karein.','error'); return; }
+  if(!txnId){ showToast('Transaction ID required.','error'); return; }
   const totalDue = agr.securityDeposit + agr.monthlyRent * agr.advanceMonths;
   try{
     const d = await apiFetch(`/user/agreement/${agr.id}/pay`,{
@@ -507,8 +507,8 @@ async function submitPayment(){
 
 async function verifyPayment(action){
   const reason = document.getElementById('reject-reason')?.value?.trim() || '';
-  if(action==='reject' && !reason){ showToast('Rejection reason likhein.','error'); return; }
-  if(!confirm(action==='verify'?'Payment verify karein aur agreement activate karein?':'Payment reject karein?')) return;
+  if(action==='reject' && !reason){ showToast('Rejection reason required.','error'); return; }
+  if(!confirm(action==='verify'?'Verify payment and activate agreement?':'Reject payment?')) return;
   try{
     const d = await apiFetch(`/user/agreement/${agr.id}/verify`,{
       method:'PUT',

@@ -265,7 +265,7 @@
         <div class="img-upload-zone" id="upload-zone">
           <input type="file" id="img-input" accept="image/jpeg,image/jpg,image/png,image/webp" multiple>
           <div class="upload-icon">🖼️</div>
-          <div class="upload-text">Images yahan drop karein ya click karein</div>
+          <div class="upload-text">Drop images here or click here</div>
           <div class="upload-hint">JPG · PNG · WEBP &nbsp;|&nbsp; Max 5MB each &nbsp;|&nbsp; Up to 8 images</div>
         </div>
 
@@ -360,11 +360,11 @@
     const allowed  = ['image/jpeg','image/jpg','image/png','image/webp'];
     const filtered = files.filter(f => allowed.includes(f.type));
     const rejected = files.length - filtered.length;
-    if (rejected) showToast(`${rejected} file(s) skip — sirf JPG/PNG/WEBP allowed.`, 'error');
+    if (rejected) showToast(`${rejected} file(s) skip — only JPG/PNG/WEBP allowed.`, 'error');
 
     for (const file of filtered) {
       if (selectedFiles.length >= 8) { showToast('Max 8 images allowed.', 'error'); break; }
-      if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} — 5MB se badi hai, skip.`, 'error'); continue; }
+      if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} — larger than 5MB , skip.`, 'error'); continue; }
       selectedFiles.push(file);
     }
     renderPreviews();
@@ -408,7 +408,7 @@
     const desc     = document.getElementById('inp-desc').value.trim();
 
     if (!city || !address || !area || !rent) {
-      showToast('Zaruri fields (City, Address, Area, Rent) fill karein.', 'error');
+      showToast('important fields (City, Address, Area, Rent) fill it.', 'error');
       return;
     }
 
@@ -440,10 +440,10 @@
       const data = await res.json();
 
       if (data.success) {
-        showToast(`Property add ho gayi! ${selectedFiles.length} image(s) upload hui.`);
+        showToast(`Property added! ${selectedFiles.length} image(s) uploaded.`);
         setTimeout(() => { window.location.href = 'properties.html'; }, 1500);
       } else {
-        showToast(data.message || 'Property add nahi hui.', 'error');
+        showToast(data.message || 'Property not added.', 'error');
       }
     } catch {
       showToast('Network error. Check connection.', 'error');
