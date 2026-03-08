@@ -72,12 +72,12 @@ app.use('/api/admin/complaints',  adminComplaints);  // Admin complaint manageme
 
 // ── Health Check ───────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'RentProx API chal raha hai 🚀' });
+  res.json({ success: true, message: 'RentProx API working' });
 });
 
 // ── 404 ────────────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: `Route ${req.method} ${req.url} nahi mila` });
+  res.status(404).json({ success: false, message: `Route ${req.method} ${req.url} didnt exist` });
 });
 
 // ── Global Error Handler (LAST) ────────────────────────
