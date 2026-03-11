@@ -7,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────────────────
 model User {
   id        String   @id @default(cuid())
   name      String
@@ -20,14 +21,14 @@ model User {
   createdAt DateTime @default(now())
 
   properties    Property[]
+  sentListings  Listing[]  @relation("TenantListings")
   ownedRentals  Rental[]   @relation("OwnerRentals")
   tenantRentals Rental[]   @relation("TenantRentals")
-  sentListings  Listing[]  @relation("TenantListings")
 
-  // NEW
   dissolutionRequests DissolutionRequest[] @relation("TenantDissolutions")
 }
 
+// ─────────────────────────────────────────────────────
 model Property {
   id          String   @id @default(cuid())
   address     String
@@ -42,40 +43,11 @@ model Property {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId String
 
-  rentals  Rental[]
   listings Listing[]
+  rentals  Rental[]
 }
 
-model Rental {
-  id         String   @id @default(cuid())
-  startDate  DateTime @default(now())
-  rentAmount Float
-  createdAt  DateTime @default(now())
-
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  propertyId String
-
-  owner    User   @relation("OwnerRentals",  fields: [ownerId],  references: [id])
-  ownerId  String
-
-  tenant   User   @relation("TenantRentals", fields: [tenantId], references: [id])
-  tenantId String
-
-  payments Payment[]
-}
-
-model Payment {
-  id        String    @id @default(cuid())
-  amount    Float
-  month     String
-  paid      Boolean   @default(false)
-  paidAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  rental   Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade)
-  rentalId String
-}
-
+// ─────────────────────────────────────────────────────
 model Listing {
   id        String        @id @default(cuid())
   status    ListingStatus @default(PENDING)
@@ -94,6 +66,31 @@ model Listing {
   agreement Agreement?
 }
 
+// ─────────────────────────────────────────────────────
+//  RENTAL — Agreement active hone par create hota hai
+// ─────────────────────────────────────────────────────
+model Rental {
+  id         String   @id @default(cuid())
+  startDate  DateTime @default(now())
+  endDate    DateTime?
+  rentAmount Float
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+
+  owner    User   @relation("OwnerRentals",  fields: [ownerId],  references: [id])
+  ownerId  String
+
+  tenant   User   @relation("TenantRentals", fields: [tenantId], references: [id])
+  tenantId String
+
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreementId String    @unique
+}
+
+// ─────────────────────────────────────────────────────
 model Agreement {
   id     String          @id @default(cuid())
   status AgreementStatus @default(DRAFT)
@@ -117,7 +114,7 @@ model Agreement {
   tenantSignedAt DateTime?
   ownerSignedAt  DateTime?
 
-  // NEW: dissolution audit
+  // dissolution audit
   dissolvedAt     DateTime?
   dissolvedBy     String    @default("")
   dissolutionNote String    @default("")
@@ -128,14 +125,44 @@ model Agreement {
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   listingId String  @unique
 
-  // NEW: back-relation
+  rental             Rental?
   dissolutionRequest DissolutionRequest?
+  securityPayment    SecurityDepositPayment?
+  monthlyPayments    MonthlyRentPayment[]
 }
 
 // ─────────────────────────────────────────────────────
-//  NEW MODEL: DISSOLUTION REQUEST
-// ─────────────────────────────────────────────────────
+model SecurityDepositPayment {
+  id             String                       @id @default(cuid())
+  transactionId  String
+  amount         Float
+  status         SecurityDepositPaymentStatus @default(PENDING_VERIFICATION)
+  rejectedReason String                       @default("")
+  submittedAt    DateTime                     @default(now())
+  verifiedAt     DateTime?
 
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreementId String    @unique
+}
+
+// ─────────────────────────────────────────────────────
+model MonthlyRentPayment {
+  id             String                   @id @default(cuid())
+  month          String                   // "2026-04" format
+  transactionId  String
+  amount         Float
+  status         MonthlyRentPaymentStatus @default(PENDING_VERIFICATION)
+  rejectedReason String                   @default("")
+  submittedAt    DateTime                 @default(now())
+  verifiedAt     DateTime?
+
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreementId String
+
+  @@unique([agreementId, month])
+}
+
+// ─────────────────────────────────────────────────────
 model DissolutionRequest {
   id     String                   @id @default(cuid())
   status DissolutionRequestStatus @default(PENDING)
@@ -157,7 +184,6 @@ model DissolutionRequest {
 // ─────────────────────────────────────────────────────
 //  ENUMS
 // ─────────────────────────────────────────────────────
-
 enum AreaUnit {
   SQFT
   SQM
@@ -178,9 +204,20 @@ enum AgreementStatus {
   CANCELLED
 }
 
-// NEW
 enum DissolutionRequestStatus {
   PENDING
   ACCEPTED
   DECLINED
+}
+
+enum MonthlyRentPaymentStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+}
+
+enum SecurityDepositPaymentStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
 }

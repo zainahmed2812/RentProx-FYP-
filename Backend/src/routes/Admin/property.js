@@ -1,50 +1,100 @@
-// src/routes/Admin/property.js
+// src/routes/User/property.js
 // ══════════════════════════════════════════════════════
-// Admin Property Management
-// GET /api/admin/property        — tamam system properties
-// GET /api/admin/property/:id    — kisi bhi property detail
-// DELETE /api/admin/property/:id — kisi bhi property delete
+// POST   /api/user/property       → property add karo
+// GET    /api/user/property       → meri sab properties
+// DELETE /api/user/property/:id   → property delete karo
 // ══════════════════════════════════════════════════════
 
-import { Router } from 'express';
-import db from '../../helpers/db.js';
-import { sendSuccess, sendError, catchAsync } from '../../helpers/response.js';
-import { protect, adminOnly } from '../../middleware/authMiddleware.js';
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+import { protect }      from '../../middleware/authMiddleware.js';
 
-const router = Router();
-router.use(protect, adminOnly);
+const router = express.Router();
+const db     = new PrismaClient();
 
-// GET /api/admin/property
-router.get('/', catchAsync(async (req, res) => {
-  const properties = await db.property.findMany({
-    include: {
-      owner: { select: { id: true, name: true, email: true } },
-      rentals: { include: { tenant: { select: { id: true, name: true } } } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-  return sendSuccess(res, properties);
-}));
+router.use(protect);
 
-// GET /api/admin/property/:id
-router.get('/:id', catchAsync(async (req, res) => {
-  const property = await db.property.findUnique({
-    where: { id: req.params.id },
-    include: {
-      owner:   { select: { id: true, name: true, email: true } },
-      rentals: { include: { tenant: true, payments: true } },
-    },
-  });
-  if (!property) return sendError(res, 'Property nahi mili', 404);
-  return sendSuccess(res, property);
-}));
+// ── POST /api/user/property ───────────────────────────
+router.post('/', async (req, res) => {
+  try {
+    const { city, address, area, areaUnit, rentAmount, description } = req.body;
 
-// DELETE /api/admin/property/:id
-router.delete('/:id', catchAsync(async (req, res) => {
-  const existing = await db.property.findUnique({ where: { id: req.params.id } });
-  if (!existing) return sendError(res, 'Property nahi mili', 404);
-  await db.property.delete({ where: { id: req.params.id } });
-  return sendSuccess(res, null, 'Property delete ho gayi!');
-}));
+    if (!city || !address || !area || !rentAmount) {
+      return res.status(400).json({
+        success: false,
+        message: 'City, address, area, rentAmount zaruri hain.'
+      });
+    }
+
+    const property = await db.property.create({
+      data: {
+        city,
+        address,
+        area:        parseFloat(area),
+        areaUnit:    areaUnit || 'MARLA',
+        rentAmount:  parseFloat(rentAmount),
+        description: description || '',
+        ownerId:     req.user.id,
+      }
+    });
+
+    return res.status(201).json({
+      success: true,
+      data:    property,
+      message: 'Property add ho gayi!'
+    });
+
+  } catch (err) {
+    console.error('[property POST]', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// ── GET /api/user/property ────────────────────────────
+router.get('/', async (req, res) => {
+  try {
+    const properties = await db.property.findMany({
+      where:   { ownerId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        listings: {
+          where:   { status: 'ACCEPTED' },
+          include: {
+            tenant:    { select: { id: true, name: true, phone: true } },
+            agreement: { select: { id: true, status: true, monthlyRent: true } }
+          }
+        }
+      }
+    });
+
+    return res.json({ success: true, data: properties });
+
+  } catch (err) {
+    console.error('[property GET]', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// ── DELETE /api/user/property/:id ─────────────────────
+router.delete('/:id', async (req, res) => {
+  try {
+    const property = await db.property.findUnique({
+      where: { id: req.params.id }
+    });
+
+    if (!property)
+      return res.status(404).json({ success: false, message: 'Property nahi mili.' });
+    if (property.ownerId !== req.user.id)
+      return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
+
+    await db.property.delete({ where: { id: req.params.id } });
+
+    return res.json({ success: true, message: 'Property delete ho gayi.' });
+
+  } catch (err) {
+    console.error('[property DELETE]', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
 
 export default router;

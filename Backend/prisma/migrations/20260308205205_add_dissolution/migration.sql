@@ -1,55 +1,12 @@
-/*
-  Warnings:
+-- Fixed migration: sirf wo cheezein jo abhi tak apply nahi hui hain
 
-  - You are about to drop the column `isActive` on the `Listing` table. All the data in the column will be lost.
-  - You are about to drop the `Complaint` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `PropertyImage` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `SecurityDepositPayment` table. If the table is not empty, all the data it contains will be lost.
+-- AlterTable — Agreement mein dissolution columns add karo
+ALTER TABLE "Agreement" ADD COLUMN IF NOT EXISTS "dissolutionNote" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Agreement" ADD COLUMN IF NOT EXISTS "dissolvedAt" TIMESTAMP(3);
+ALTER TABLE "Agreement" ADD COLUMN IF NOT EXISTS "dissolvedBy" TEXT NOT NULL DEFAULT '';
 
-*/
--- CreateEnum
-CREATE TYPE "DissolutionRequestStatus" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED');
-
--- DropForeignKey
-ALTER TABLE "Complaint" DROP CONSTRAINT "Complaint_propertyId_fkey";
-
--- DropForeignKey
-ALTER TABLE "Complaint" DROP CONSTRAINT "Complaint_tenantId_fkey";
-
--- DropForeignKey
-ALTER TABLE "PropertyImage" DROP CONSTRAINT "PropertyImage_propertyId_fkey";
-
--- DropForeignKey
-ALTER TABLE "SecurityDepositPayment" DROP CONSTRAINT "SecurityDepositPayment_agreementId_fkey";
-
--- AlterTable
-ALTER TABLE "Agreement" ADD COLUMN     "dissolutionNote" TEXT NOT NULL DEFAULT '',
-ADD COLUMN     "dissolvedAt" TIMESTAMP(3),
-ADD COLUMN     "dissolvedBy" TEXT NOT NULL DEFAULT '';
-
--- AlterTable
-ALTER TABLE "Listing" DROP COLUMN "isActive";
-
--- DropTable
-DROP TABLE "Complaint";
-
--- DropTable
-DROP TABLE "PropertyImage";
-
--- DropTable
-DROP TABLE "SecurityDepositPayment";
-
--- DropEnum
-DROP TYPE "ComplaintStatus";
-
--- DropEnum
-DROP TYPE "ComplaintType";
-
--- DropEnum
-DROP TYPE "DepositPaymentStatus";
-
--- CreateTable
-CREATE TABLE "DissolutionRequest" (
+-- CreateTable — DissolutionRequest (agar pehle se exist nahi karti)
+CREATE TABLE IF NOT EXISTS "DissolutionRequest" (
     "id" TEXT NOT NULL,
     "status" "DissolutionRequestStatus" NOT NULL DEFAULT 'PENDING',
     "reason" TEXT NOT NULL,
@@ -64,10 +21,25 @@ CREATE TABLE "DissolutionRequest" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "DissolutionRequest_agreementId_key" ON "DissolutionRequest"("agreementId");
+CREATE UNIQUE INDEX IF NOT EXISTS "DissolutionRequest_agreementId_key" ON "DissolutionRequest"("agreementId");
 
--- AddForeignKey
-ALTER TABLE "DissolutionRequest" ADD CONSTRAINT "DissolutionRequest_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- AddForeignKey (agar pehle se exist nahi karta)
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'DissolutionRequest_tenantId_fkey'
+  ) THEN
+    ALTER TABLE "DissolutionRequest" ADD CONSTRAINT "DissolutionRequest_tenantId_fkey"
+    FOREIGN KEY ("tenantId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "DissolutionRequest" ADD CONSTRAINT "DissolutionRequest_agreementId_fkey" FOREIGN KEY ("agreementId") REFERENCES "Agreement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'DissolutionRequest_agreementId_fkey'
+  ) THEN
+    ALTER TABLE "DissolutionRequest" ADD CONSTRAINT "DissolutionRequest_agreementId_fkey"
+    FOREIGN KEY ("agreementId") REFERENCES "Agreement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;

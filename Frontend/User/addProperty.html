@@ -417,33 +417,16 @@
     btn.textContent = 'Uploading...';
 
     try {
-      // FormData use karo — text fields + images ek saath bhejo
-      const formData = new FormData();
-      formData.append('city',        city);
-      formData.append('address',     address);
-      formData.append('area',        area);
-      formData.append('areaUnit',    areaUnit);
-      formData.append('rentAmount',  rent);
-      formData.append('description', desc);
-
-      // Images append karo
-      selectedFiles.forEach(file => formData.append('images', file));
-
-      // NOTE: apiFetch JSON bhejta hai — yahan seedha fetch use karo
-      const token = Auth.getToken();
-      const res   = await fetch('http://localhost:5000/api/user/property', {
-        method:  'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        // Content-Type mat set karo — browser khud multipart/form-data set karta hai
-        body:    formData,
+      const data = await apiFetch('/user/property', {
+        method: 'POST',
+        body: JSON.stringify({ city, address, area, areaUnit, rentAmount: rent, description: desc })
       });
-      const data = await res.json();
 
       if (data.success) {
-        showToast(`Property added! ${selectedFiles.length} image(s) uploaded.`);
+        showToast('Property add ho gayi!');
         setTimeout(() => { window.location.href = 'properties.html'; }, 1500);
       } else {
-        showToast(data.message || 'Property not added.', 'error');
+        showToast(data.message || 'Property add nahi hui.', 'error');
       }
     } catch {
       showToast('Network error. Check connection.', 'error');

@@ -116,6 +116,31 @@
     .sk{ background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:sh 1.4s infinite; border-radius:8px; height:50px; margin-bottom:8px; }
     @keyframes sh{ 0%{background-position:200% 0}100%{background-position:-200% 0} }
     .empty{ text-align:center; padding:50px; color:var(--muted); }
+    /* ── DISSOLUTION ── */
+    .dis-alerts-wrap{ margin-bottom:20px; }
+    .dis-req-banner{ background:#fff5f5; border:1.5px solid #fca5a5; border-radius:12px; padding:18px 22px; display:flex; align-items:flex-start; gap:14px; margin-bottom:10px; }
+    .dis-req-icon{ font-size:1.5rem; flex-shrink:0; }
+    .dis-req-body{ flex:1; }
+    .dis-req-body strong{ display:block; font-size:0.9rem; color:#991b1b; margin-bottom:3px; }
+    .dis-req-body span{ font-size:0.82rem; color:#b91c1c; }
+    .dis-req-meta{ font-size:0.78rem; background:#fff; border:1px solid #fecaca; border-radius:7px; padding:6px 10px; margin-top:7px; color:#7f1d1d; }
+    .btn-dis-accept{ padding:9px 14px; background:#ef4444; color:#fff; border:none; border-radius:7px; font-weight:700; cursor:pointer; font-family:inherit; font-size:0.8rem; }
+    .btn-dis-decline{ padding:9px 12px; background:#fff; color:#ef4444; border:1.5px solid #fca5a5; border-radius:7px; font-weight:600; cursor:pointer; font-family:inherit; font-size:0.8rem; margin-left:6px; }
+    .btn-dis-direct{ padding:7px 12px; background:#fff5f5; color:#ef4444; border:1.5px solid #fca5a5; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.78rem; font-family:inherit; }
+    .sum-card.dis-sum .sum-val{ color:#ef4444; }
+    .dis-modal-bg{ position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9999; }
+    .dis-modal-bg.on{ display:flex; }
+    .dis-modal-box{ background:#fff; border-radius:14px; width:460px; padding:28px; box-shadow:0 20px 50px rgba(0,0,0,0.2); }
+    .dis-modal-box h3{ font-size:1.05rem; color:#991b1b; margin-bottom:6px; }
+    .dis-modal-box p{ font-size:0.84rem; color:var(--muted); margin-bottom:18px; }
+    .dis-modal-lbl{ font-size:0.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; display:block; margin-bottom:6px; }
+    .dis-modal-ta{ width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.87rem; outline:none; min-height:80px; resize:vertical; }
+    .dis-modal-ta:focus{ border-color:#ef4444; }
+    .dis-modal-btns{ display:flex; gap:10px; margin-top:16px; }
+    .dis-modal-confirm{ flex:1; padding:11px; background:#ef4444; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .dis-modal-confirm:disabled{ background:#94a3b8; cursor:not-allowed; }
+    .dis-modal-cancel-btn{ flex:1; padding:11px; background:#fff; color:var(--muted); border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit; }
+
   </style>
 </head>
 <body>
@@ -162,6 +187,9 @@
       <p>Manage tenant requests and verify payments.</p>
     </div>
 
+    <!-- ─── DISSOLUTION ALERTS ─── -->
+    <div id="dis-alerts-wrap"></div>
+
     <!-- ─── PAYMENT ALERTS (dynamically rendered) ─── -->
     <div id="pay-alerts-section"></div>
 
@@ -171,6 +199,7 @@
       <div class="sum-card accepted"><div class="sum-label">Accepted</div><div class="sum-val" id="cnt-accepted">—</div></div>
       <div class="sum-card declined"><div class="sum-label">Declined</div><div class="sum-val" id="cnt-declined">—</div></div>
       <div class="sum-card alerts"  ><div class="sum-label">Pay Pending</div><div class="sum-val" id="cnt-alerts">0</div></div>
+      <div class="sum-card dis-sum"><div class="sum-label">Dissolution</div><div class="sum-val" id="cnt-dis">0</div></div>
     </div>
 
     <!-- TABS -->
@@ -222,6 +251,7 @@ async function loadRequests(){
     // ─── Payment alerts render ───
     renderPaymentAlerts(allData.paymentAlerts || []);
     renderTable(allData.all);
+    await loadDissolutionAlerts();
   } catch{
     showToast('Network error.','error');
     renderEmpty('not connected with backend.');
@@ -310,7 +340,8 @@ function renderTable(list){
             actionBtns = `
               <button class="btn-agr" onclick="location.href='agreement.html?listing=${r.id}'">
                 Agreement
-              </button>`;
+              </button>
+              ${r.agreement?.id ? `<br><button class="btn-dis-direct" style="margin-top:6px" onclick="openDissolveModal('${r.agreement.id}','${r.property.address}')">⚠️ Dissolve</button>` : ''}`;
           }
         } else {
           actionBtns = `<span style="color:var(--muted);font-size:0.8rem">No action</span>`;
@@ -358,9 +389,109 @@ async function respond(id, action){
   } catch{ showToast('Network error.','error'); }
 }
 
+
+// ══════════════════ DISSOLUTION OWNER ════════════════
+let _curDisAgreementId = null;
+
+async function loadDissolutionAlerts() {
+  try {
+    const d = await apiFetch('/owner/dissolution');
+    if (!d.success) return;
+    const pending = d.data.pending || [];
+    document.getElementById('cnt-dis').textContent = pending.length;
+    renderDissolutionAlerts(pending);
+  } catch { /* silent */ }
+}
+
+function renderDissolutionAlerts(list) {
+  const wrap = document.getElementById('dis-alerts-wrap');
+  if (!list.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML =
+    '<div style="margin-bottom:4px;font-weight:700;font-size:0.85rem;color:#991b1b">⚠️ ' + list.length + ' Dissolution Request(s) Pending</div>' +
+    list.map(function(r) {
+      return '<div class="dis-req-banner">' +
+        '<div class="dis-req-icon">⚠️</div>' +
+        '<div class="dis-req-body">' +
+          '<strong>' + r.tenant.name + ' ne agreement dissolve karne ki request ki!</strong>' +
+          '<span>Property: ' + r.agreement.listing.property.address + ', ' + r.agreement.listing.property.city + '</span>' +
+          '<div class="dis-req-meta"><strong>Reason:</strong> ' + r.reason +
+            (r.proposedVacateDate ? ' &nbsp;|&nbsp; <strong>Proposed Vacate:</strong> ' + new Date(r.proposedVacateDate).toLocaleDateString('en-PK') : '') +
+          '</div>' +
+        '</div>' +
+        '<div style="flex-shrink:0">' +
+          '<button class="btn-dis-accept"  data-action="accept"  data-id="' + r.id + '">✅ Accept</button>' +
+          '<button class="btn-dis-decline" data-action="decline" data-id="' + r.id + '">❌ Decline</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+  wrap.querySelectorAll('.btn-dis-accept, .btn-dis-decline').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      respondDissolution(btn.dataset.id, btn.dataset.action);
+    });
+  });
+}
+
+async function respondDissolution(id, action) {
+  var ownerNote = '';
+  if (action === 'accept') {
+    ownerNote = prompt('Accept note (optional):') || '';
+    if (!confirm('Accept karne se agreement cancel ho jayegi. Confirm?')) return;
+  } else {
+    ownerNote = prompt('Decline karne ki wajah likhein (zaruri):') || '';
+    if (!ownerNote.trim()) { showToast('Wajah zaruri hai.', 'error'); return; }
+    if (!confirm('Dissolution decline karna chahte hain?')) return;
+  }
+  try {
+    const d = await apiFetch('/owner/dissolution/' + id + '/' + action, {
+      method: 'PUT', body: JSON.stringify({ ownerNote })
+    });
+    if (d.success) { showToast(d.message); await loadRequests(); }
+    else showToast(d.message || 'Error.', 'error');
+  } catch { showToast('Network error.', 'error'); }
+}
+
+function openDissolveModal(agreementId, propAddr) {
+  _curDisAgreementId = agreementId;
+  document.getElementById('dis-modal-prop').textContent = 'Property: ' + propAddr;
+  document.getElementById('dis-modal-ta').value = '';
+  document.getElementById('dis-modal-bg').classList.add('on');
+}
+function closeDissolveModal() {
+  document.getElementById('dis-modal-bg').classList.remove('on');
+  _curDisAgreementId = null;
+}
+async function confirmDirectDissolve() {
+  var reason = document.getElementById('dis-modal-ta').value.trim();
+  if (!reason) { showToast('Wajah likhna zaruri hai.', 'error'); return; }
+  var btn = document.getElementById('dis-modal-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Processing...';
+  try {
+    const d = await apiFetch('/owner/dissolution/direct', {
+      method: 'POST', body: JSON.stringify({ agreementId: _curDisAgreementId, reason })
+    });
+    if (d.success) { showToast(d.message); closeDissolveModal(); await loadRequests(); }
+    else showToast(d.message || 'Error.', 'error');
+  } catch { showToast('Network error.', 'error'); }
+  finally { btn.disabled = false; btn.textContent = '⚠️ Dissolve Agreement'; }
+}
+// ═════════════════════════════════════════════════════
 function renderEmpty(msg){
   document.getElementById('table-wrap').innerHTML=`<div class="empty"><p>${msg}</p></div>`;
 }
 </script>
+
+<div class="dis-modal-bg" id="dis-modal-bg">
+  <div class="dis-modal-box">
+    <h3>⚠️ Direct Agreement Dissolution</h3>
+    <p id="dis-modal-prop"></p>
+    <label class="dis-modal-lbl">Dissolution Ki Wajah *</label>
+    <textarea class="dis-modal-ta" id="dis-modal-ta" placeholder="Kyu agreement dissolve kar rahe hain?"></textarea>
+    <div class="dis-modal-btns">
+      <button class="dis-modal-cancel-btn" onclick="closeDissolveModal()">Cancel</button>
+      <button class="dis-modal-confirm" id="dis-modal-confirm-btn" onclick="confirmDirectDissolve()">⚠️ Dissolve Agreement</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

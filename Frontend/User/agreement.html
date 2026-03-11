@@ -361,6 +361,12 @@ function render(){
     <!-- OWNER VERIFY SECTION -->
     ${bothSigned && !isActive && role==='owner' && spay ? renderVerifySection() : ''}
 
+    <!-- PAYMENT SECTION — tenant, dono sign ke baad, not yet active -->
+    \${bothSigned && agr.status !== 'ACTIVE' && role==='tenant' ? renderPaymentSection() : ''}
+
+    <!-- OWNER VERIFY SECTION — owner, payment pending hai -->
+    \${bothSigned && agr.status !== 'ACTIVE' && role==='owner' && spay ? renderVerifySection() : ''}
+
     <!-- ACTIVE STATE -->
     ${isActive ? `
     <div class="action-bar green-bg">
@@ -457,6 +463,117 @@ function showRejectInput(){
 }
 
 /* ── ACTIONS ───────────────────────────────────────── */
+
+function renderPaymentSection(){
+  const totalDue = agr.securityDeposit + agr.monthlyRent * agr.advanceMonths;
+
+  if(!spay){
+    return `
+    <div class="pay-box">
+      <h3>💳 Security Deposit Payment</h3>
+      <p>Dono parties ne sign kar diya! Ab security deposit aur advance payment submit karein. Owner verify karega aur agreement active ho jayegi.</p>
+      <div class="pay-amount-box">
+        <div><div class="lbl">Total Amount Due</div><div class="val">PKR ${totalDue.toLocaleString()}</div></div>
+        <div style="text-align:right;font-size:0.78rem;color:var(--muted)">
+          Security: PKR ${agr.securityDeposit.toLocaleString()}<br>
+          Advance (${agr.advanceMonths}mo): PKR ${(agr.monthlyRent*agr.advanceMonths).toLocaleString()}
+        </div>
+      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">EasyPaisa / JazzCash / Bank transfer. Transaction ID yahan enter karein:</p>
+      <div class="pay-input-row">
+        <input class="pay-input" id="txn-id" placeholder="Transaction ID (e.g. TXN123456789)">
+        <button class="btn-pay" onclick="submitPayment()">Submit Payment</button>
+      </div>
+    </div>`;
+  }
+
+  const statusMap = {
+    PENDING_VERIFICATION: { cls:'pending',  icon:'⏳', title:'Verification Pending',   sub:'Owner verify kar raha hai.' },
+    VERIFIED:             { cls:'verified', icon:'✅', title:'Payment Verified!',       sub:'Owner ne confirm kar diya. Agreement active ho gayi.' },
+    REJECTED:             { cls:'rejected', icon:'❌', title:'Payment Reject Ho Gayi',  sub: spay.rejectedReason || 'Transaction ID sahi nahi tha.' },
+  };
+  const s = statusMap[spay.status];
+
+  return `
+  <div class="pay-box">
+    <h3>💳 Security Deposit Payment</h3>
+    <div class="pay-status ${s.cls}">
+      <div class="pay-status-icon">${s.icon}</div>
+      <div class="pay-status-text">
+        <strong>${s.title}</strong>
+        <span>${s.sub}</span>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:0.83rem;color:var(--muted)">
+      Transaction ID: <strong style="color:var(--text)">${spay.transactionId}</strong>
+      &nbsp;·&nbsp; Amount: <strong>PKR ${spay.amount.toLocaleString()}</strong>
+    </div>
+    ${spay.status==='REJECTED' ? `
+    <div style="margin-top:16px">
+      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:10px">Dobara submit karein:</p>
+      <div class="pay-input-row">
+        <input class="pay-input" id="txn-id" placeholder="Naya Transaction ID">
+        <button class="btn-pay" onclick="submitPayment()">Re-Submit</button>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+function renderVerifySection(){
+  if(!spay || spay.status === 'VERIFIED') return '';
+  return `
+  <div class="verify-box">
+    <h3>🔍 Payment Verification</h3>
+    <p style="font-size:0.85rem;color:#92400e;margin-bottom:14px">Tenant ne security deposit submit ki hai. Verify karein:</p>
+    <div class="verify-info">
+      <div class="vi-row"><span class="vi-lbl">Transaction ID</span><span class="vi-val">${spay.transactionId}</span></div>
+      <div class="vi-row"><span class="vi-lbl">Amount</span>        <span class="vi-val">PKR ${spay.amount.toLocaleString()}</span></div>
+      <div class="vi-row"><span class="vi-lbl">Submitted At</span>  <span class="vi-val">${new Date(spay.submittedAt).toLocaleString('en-PK')}</span></div>
+    </div>
+    <input class="reject-input" id="reject-reason" placeholder="Rejection reason (agar reject kar rahe hain)...">
+    <div class="verify-btns">
+      <button class="btn-verify" onclick="verifyPayment('verify')">✅ Verify — Activate Agreement</button>
+      <button class="btn-reject" onclick="showRejectInput()">❌ Reject</button>
+    </div>
+    <button id="confirm-reject-btn" style="display:none;margin-top:10px;width:100%;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit" onclick="verifyPayment('reject')">Confirm Rejection</button>
+  </div>`;
+}
+
+function showRejectInput(){
+  const ri = document.getElementById('reject-reason');
+  const cb = document.getElementById('confirm-reject-btn');
+  if(ri){ ri.classList.add('on'); ri.focus(); }
+  if(cb) cb.style.display='block';
+}
+
+async function submitPayment(){
+  const txnId = document.getElementById('txn-id')?.value?.trim();
+  if(!txnId){ showToast('Transaction ID zaruri hai.','error'); return; }
+  const totalDue = agr.securityDeposit + agr.monthlyRent * agr.advanceMonths;
+  try{
+    const d = await apiFetch(`/user/agreement/${agr.id}/pay`,{
+      method:'POST',
+      body: JSON.stringify({ transactionId: txnId, amount: totalDue })
+    });
+    if(d.success){ spay=d.data; showToast(d.message); render(); }
+    else showToast(d.message||'Payment submit nahi hui.','error');
+  } catch{ showToast('Network error.','error'); }
+}
+
+async function verifyPayment(action){
+  const reason = document.getElementById('reject-reason')?.value?.trim()||'';
+  if(action==='reject' && !reason){ showToast('Rejection reason zaruri hai.','error'); return; }
+  if(!confirm(action==='verify'?'Payment verify karke agreement activate karein?':'Payment reject karein?')) return;
+  try{
+    const d = await apiFetch(`/user/agreement/${agr.id}/verify`,{
+      method:'PUT',
+      body: JSON.stringify({ action, rejectedReason: reason })
+    });
+    if(d.success){ showToast(d.message); await reloadAgreement(); }
+    else showToast(d.message||'Error.','error');
+  } catch{ showToast('Network error.','error'); }
+}
+
 async function doSign(){
   if(!confirm('Have you read all the terms of the agreement? Do you want to sign it?')) return;
   try{

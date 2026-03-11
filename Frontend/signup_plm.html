@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const data = await apiFetch('/auth/signup', { method:'POST', body: JSON.stringify({ name, email, phone, cnic, address, password }) });
       if (data.success) {
         Auth.save(data.data.token, data.data.user);
-        setTimeout(() => { window.location.href = 'User/index.html'; }, 800);
+        setTimeout(() => { window.location.href = 'homepage.html'; }, 800);
       } else { showErr(data.message || 'Signup failed.'); }
     } catch { showErr('Could not connect to server. Is the backend running?'); }
     finally { btn.disabled = false; btn.textContent = 'CREATE ACCOUNT →'; }

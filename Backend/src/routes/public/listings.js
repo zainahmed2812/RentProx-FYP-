@@ -42,10 +42,7 @@ router.get('/', async (req, res) => {
       take:    parseInt(limit),
       orderBy: { createdAt: 'desc' },
       include: {
-        // ownerId zaruri hai frontend pe owner check ke liye (apni property pe request block)
-        owner:  { select: { id: true, name: true, phone: true } },
-        // Images include karo — pehli primary image card pe dikhayi jayegi
-        images: { where: { isPrimary: true }, take: 1 },
+        owner: { select: { id: true, name: true, phone: true } },
       }
     });
 
@@ -74,8 +71,7 @@ router.get('/:id', async (req, res) => {
     const property = await db.property.findUnique({
       where:   { id: req.params.id },
       include: {
-        owner:  { select: { id: true, name: true, phone: true, email: true } },
-        images: { orderBy: { order: 'asc' } },  // sab images detail modal ke liye
+        owner: { select: { id: true, name: true, phone: true, email: true } },
       }
     });
 

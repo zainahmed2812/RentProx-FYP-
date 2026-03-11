@@ -289,19 +289,23 @@
       if (!list || list.length === 0) { renderEmpty(); return; }
 
       grid.innerHTML = list.map(p => {
-        const occupied = p.rentals ? p.rentals.length : 0;
-        const avail    = Math.max(0, 1 - occupied);
+        // listings array se active rental check karo
+        const activeListing = (p.listings || []).find(l => l.agreement && l.agreement.status === 'ACTIVE');
+        const occupied = activeListing ? 1 : 0;
+        const avail    = occupied ? 0 : 1;
+        const tenant   = activeListing?.tenant;
         return `
           <div class="property-card">
             <div class="card-image-placeholder">
-              <div class="rental-badge">Rental Unit</div>
+              <div class="rental-badge">${occupied ? 'OCCUPIED' : 'AVAILABLE'}</div>
               <div style="color:#aaa;font-weight:bold;font-size:0.9rem;">${p.address}</div>
             </div>
             <div class="card-body">
               <div class="price-tag">PKR ${p.rentAmount.toLocaleString()} <span style="font-size:0.8rem;font-weight:400;color:var(--text-muted);">/ month</span></div>
               <div class="prop-title">${p.address}</div>
               <span class="prop-location">📍 ${p.city} · ${p.area} ${p.areaUnit}</span>
-              <div class="occupancy-stats">
+              ${tenant ? `<div style="margin-top:8px;font-size:0.82rem;color:#475569">👤 Tenant: <strong>${tenant.name}</strong> · ${tenant.phone}</div>` : ''}
+              <div class="occupancy-stats" style="margin-top:10px">
                 <div class="stat-box"><span class="stat-label">Total</span><span class="stat-val">1</span></div>
                 <div class="stat-box"><span class="stat-label">Occupied</span><span class="stat-val" style="color:var(--primary-green)">${occupied}</span></div>
                 <div class="stat-box"><span class="stat-label">Avail.</span><span class="stat-val" style="color:#ef4444">${avail}</span></div>

@@ -158,6 +158,25 @@
       .sidebar-overlay.active { display: block; }
       .menu-toggle { display: block; }
     }
+
+    /* ── DISSOLUTION ── */
+    .dissolution-card{ background:var(--white); border:2px solid #fecaca; border-radius:12px; padding:22px 24px; margin-bottom:22px; box-shadow:var(--shadow); }
+    .dissolution-card h2{ font-weight:700; font-size:0.95rem; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid #fee2e2; color:#991b1b; }
+    .dis-intro{ font-size:0.84rem; color:#7f1d1d; background:#fff5f5; border-radius:8px; padding:12px 14px; border-left:3px solid #fca5a5; margin-bottom:18px; line-height:1.6; }
+    .dis-banner{ border-radius:10px; padding:16px 18px; margin-bottom:14px; display:flex; align-items:flex-start; gap:12px; }
+    .dis-banner.pending { background:#fff7ed; border:1.5px solid #fed7aa; }
+    .dis-banner.accepted{ background:#e8f5e9; border:1.5px solid #86efac; }
+    .dis-banner.declined{ background:#fff5f5; border:1.5px solid #fecaca; }
+    .dis-banner-icon{ font-size:1.4rem; flex-shrink:0; margin-top:2px; }
+    .dis-banner-body strong{ display:block; font-size:0.9rem; margin-bottom:4px; }
+    .dis-banner-body p{ font-size:0.82rem; color:var(--muted); }
+    .dis-meta{ font-size:0.78rem; color:var(--muted); margin-top:8px; padding:7px 10px; background:rgba(255,255,255,0.8); border-radius:6px; }
+    .dis-meta strong{ color:var(--text); }
+    .btn-dis-send{ padding:11px 26px; background:#ef4444; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .btn-dis-send:hover{ background:#dc2626; }
+    .btn-dis-send:disabled{ background:#94a3b8; cursor:not-allowed; }
+    .btn-dis-withdraw{ padding:11px 18px; background:var(--white); color:#ef4444; border:1.5px solid #fecaca; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit; margin-left:10px; }
+    .btn-dis-retry{ font-size:0.84rem; font-weight:700; color:#991b1b; margin:14px 0 12px; }
   </style>
 </head>
 <body>
@@ -249,6 +268,7 @@ async function loadRental(){
     rentalData    = d.data;
     allComplaints = d.data.complaints || [];
     renderAll();
+    await loadDissolutionStatus(rentalData.agreement.id);
   } catch{ renderError('An error occurred while fetching rental data.'); }
 }
 
@@ -358,6 +378,15 @@ function renderAll(){
   `;
 
   renderComplaints(allComplaints);
+
+  // Dissolution card inject karo (baad mein JS se fill hoga)
+  const mainContent = document.getElementById('main-content');
+  if(mainContent && !document.getElementById('dissolution-body')){
+    const disCard = document.createElement('div');
+    disCard.className = 'dissolution-card';
+    disCard.innerHTML = '<h2>⚠️ Agreement Dissolution</h2><div id="dissolution-body"><div class="sk" style="height:60px"></div></div>';
+    mainContent.appendChild(disCard);
+  }
 }
 
 function filterComplaints(status, el){
@@ -438,7 +467,123 @@ function renderError(msg){
       <h3>${msg}</h3>
     </div>`;
 }
+
+// ══════════════════ DISSOLUTION ══════════════════════
+let _dissolution = null;
+
+async function loadDissolutionStatus(agreementId) {
+  try {
+    const d = await apiFetch('/user/dissolution/' + agreementId);
+    _dissolution = d.data || null;
+  } catch { _dissolution = null; }
+  renderDissolutionSection();
+}
+
+function renderDissolutionSection() {
+  const el = document.getElementById('dissolution-body');
+  if (!el) return;
+  const agreementId = rentalData && rentalData.agreement && rentalData.agreement.id;
+  const d = _dissolution;
+  const minDate = new Date().toISOString().split('T')[0];
+
+  // Build form using DOM — no quote issues
+  function buildForm(container) {
+    container.innerHTML =
+      '<div class="dis-intro">Agar aap yeh property chhodna chahte hain to dissolution request bhejein. ' +
+      'Owner ke accept karne ke baad agreement cancel ho jayegi. ' +
+      '<strong style="color:#991b1b">Yeh action reversible nahi hai.</strong></div>' +
+      '<div class="form-grid">' +
+        '<div class="form-group" style="grid-column:1/-1">' +
+          '<label class="form-label">Dissolution Ki Wajah *</label>' +
+          '<textarea class="form-input" id="dis-reason" placeholder="Kyu agreement khatam karna chahte hain?" style="min-height:75px;resize:vertical"></textarea>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Proposed Vacate Date (optional)</label>' +
+          '<input class="form-input" type="date" id="dis-vacate" min="' + minDate + '">' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+        '<button class="btn-dis-send" id="dis-submit-btn">⚠️ Send Dissolution Request</button>' +
+        '<span style="font-size:0.78rem;color:var(--muted)">Owner approval zaruri hai</span>' +
+      '</div>';
+    // Attach event safely
+    const btn = container.querySelector('#dis-submit-btn');
+    if (btn) btn.addEventListener('click', function() { submitDissolutionReq(agreementId); });
+  }
+
+  if (!d) {
+    el.innerHTML = '';
+    buildForm(el);
+
+  } else if (d.status === 'PENDING') {
+    el.innerHTML =
+      '<div class="dis-banner pending">' +
+        '<div class="dis-banner-icon">⏳</div>' +
+        '<div class="dis-banner-body">' +
+          '<strong>Dissolution Request Pending</strong>' +
+          '<p>Owner ke jawab ka intezaar hai.</p>' +
+          '<div class="dis-meta"><strong>Reason:</strong> ' + d.reason +
+            (d.proposedVacateDate ? ' &nbsp;|&nbsp; <strong>Proposed Vacate:</strong> ' + new Date(d.proposedVacateDate).toLocaleDateString('en-PK') : '') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<button class="btn-dis-withdraw" id="dis-withdraw-btn">✕ Request Wapas Lo</button>';
+    const wb = el.querySelector('#dis-withdraw-btn');
+    if (wb) wb.addEventListener('click', function() { withdrawDissolution(d.id); });
+
+  } else if (d.status === 'ACCEPTED') {
+    el.innerHTML =
+      '<div class="dis-banner accepted">' +
+        '<div class="dis-banner-icon">✅</div>' +
+        '<div class="dis-banner-body">' +
+          '<strong>Dissolution Accepted — Agreement Cancel Ho Gayi</strong>' +
+          '<p>Owner ne aap ki request accept kar li. Property wapas list ho gayi.</p>' +
+          (d.ownerNote ? '<div class="dis-meta"><strong>Owner Note:</strong> ' + d.ownerNote + '</div>' : '') +
+        '</div>' +
+      '</div>';
+
+  } else if (d.status === 'DECLINED') {
+    el.innerHTML =
+      '<div class="dis-banner declined">' +
+        '<div class="dis-banner-icon">❌</div>' +
+        '<div class="dis-banner-body">' +
+          '<strong>Request Decline Ho Gayi</strong>' +
+          '<p>Owner ne dissolution request decline ki. Agreement jari rahegi.</p>' +
+          (d.ownerNote ? '<div class="dis-meta"><strong>Owner Reason:</strong> ' + d.ownerNote + '</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="dis-retry">Dobara request bhejein:</div>';
+    buildForm(el);
+  }
+}
+// ═════════════════════════════════════════════════════
+async function submitDissolutionReq(agreementId) {
+  const reason = (document.getElementById('dis-reason') || {}).value || '';
+  const vacate = (document.getElementById('dis-vacate') || {}).value || '';
+  if (!reason.trim()) { showToast('Wajah likhna zaruri hai.', 'error'); return; }
+  if (!confirm('Kya aap dissolution request bhejna chahte hain?')) return;
+  const btn = document.getElementById('dis-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+  try {
+    const payload = { agreementId, reason: reason.trim() };
+    if (vacate) payload.proposedVacateDate = vacate;
+    const d = await apiFetch('/user/dissolution', { method: 'POST', body: JSON.stringify(payload) });
+    if (d.success) { _dissolution = d.data; showToast(d.message); renderDissolutionSection(); }
+    else { showToast(d.message || 'Request nahi bheji.', 'error'); if (btn) { btn.disabled = false; btn.textContent = '⚠️ Send Dissolution Request'; } }
+  } catch { showToast('Network error.', 'error'); if (btn) { btn.disabled = false; btn.textContent = '⚠️ Send Dissolution Request'; } }
+}
+
+async function withdrawDissolution(id) {
+  if (!confirm('Delete Request?')) return;
+  try {
+    const d = await apiFetch('/user/dissolution/' + id, { method: 'DELETE' });
+    if (d.success) { _dissolution = null; showToast(d.message); renderDissolutionSection(); }
+    else showToast(d.message || 'Not canceled.', 'error');
+  } catch { showToast('Network error.', 'error'); }
+}
+
 </script>
+
 <script>
   (function(){
     var sidebar = document.getElementById('sidebar');

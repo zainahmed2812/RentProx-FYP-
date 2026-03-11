@@ -1,11 +1,4 @@
 // src/routes/User/ownerRequests.js
-// ══════════════════════════════════════════════════════
-// HOME OWNER — login required
-// GET /api/owner/requests              → incoming requests + payment alerts
-// PUT /api/owner/requests/:id/accept   → accept karo
-// PUT /api/owner/requests/:id/decline  → decline karo
-// ══════════════════════════════════════════════════════
-
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { protect } from '../../middleware/authMiddleware.js';
@@ -15,7 +8,7 @@ const db     = new PrismaClient();
 
 router.use(protect);
 
-// ── GET /api/owner/requests ───────────────────────────
+// GET /api/owner/requests
 router.get('/', async (req, res) => {
   try {
     const requests = await db.listing.findMany({
@@ -24,22 +17,9 @@ router.get('/', async (req, res) => {
       include: {
         property: { select: { id: true, address: true, city: true, rentAmount: true } },
         tenant:   { select: { id: true, name: true, email: true, phone: true, cnic: true } },
-        // ─── BUG FIX 2a: securityPayment bhi include karo ───
-        // Taake owner ko pata chale k tenant ne payment submit ki hai ya nahi
-        agreement: {
-          include: { securityPayment: true }
-        }
+        agreement: true
       }
     });
-
-    // ─── BUG FIX 2b: Payment pending alerts ─────────────
-    // Accepted requests jahan dono ne sign kiya, payment PENDING_VERIFICATION hai
-    const paymentAlerts = requests.filter(r =>
-      r.status === 'ACCEPTED' &&
-      r.agreement?.tenantSigned &&
-      r.agreement?.ownerSigned &&
-      r.agreement?.securityPayment?.status === 'PENDING_VERIFICATION'
-    );
 
     return res.json({
       success: true,
@@ -48,7 +28,7 @@ router.get('/', async (req, res) => {
         pending:       requests.filter(r => r.status === 'PENDING'),
         accepted:      requests.filter(r => r.status === 'ACCEPTED'),
         declined:      requests.filter(r => r.status === 'DECLINED'),
-        paymentAlerts, // frontend pe notification badge ke liye
+        paymentAlerts: [],
       }
     });
 
@@ -58,7 +38,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ── PUT /api/owner/requests/:id/accept ───────────────
+// PUT /api/owner/requests/:id/accept
 router.put('/:id/accept', async (req, res) => {
   try {
     const listing = await db.listing.findUnique({
@@ -71,30 +51,25 @@ router.put('/:id/accept', async (req, res) => {
     if (listing.status !== 'PENDING')             return res.status(400).json({ success: false, message: 'Sirf PENDING request accept ho sakti hai.' });
 
     const result = await db.$transaction(async (tx) => {
-
-      // Accepted listing update
       const updatedListing = await tx.listing.update({
         where: { id: listing.id },
-        data:  { status: 'ACCEPTED', isActive: true }
+        data:  { status: 'ACCEPTED' }
       });
 
-      // Property unavailable
       await tx.property.update({
         where: { id: listing.propertyId },
-        data:  { isAvailable: false }   // ← BUG FIX 2c: yeh ensure karta hai listing se hatt jaaye
+        data:  { isAvailable: false }
       });
 
-      // Baaki sab pending requests decline + isActive=false (public listing se bhi hatao)
       await tx.listing.updateMany({
         where: {
           propertyId: listing.propertyId,
           id:         { not: listing.id },
           status:     'PENDING'
         },
-        data: { status: 'DECLINED', isActive: false }
+        data: { status: 'DECLINED' }
       });
 
-      // Agreement draft
       const startDate = new Date();
       const endDate   = new Date(startDate);
       endDate.setMonth(endDate.getMonth() + 12);
@@ -127,7 +102,7 @@ router.put('/:id/accept', async (req, res) => {
   }
 });
 
-// ── PUT /api/owner/requests/:id/decline ──────────────
+// PUT /api/owner/requests/:id/decline
 router.put('/:id/decline', async (req, res) => {
   try {
     const listing = await db.listing.findUnique({
@@ -141,7 +116,7 @@ router.put('/:id/decline', async (req, res) => {
 
     await db.listing.update({
       where: { id: listing.id },
-      data:  { status: 'DECLINED', isActive: false }
+      data:  { status: 'DECLINED' }
     });
 
     return res.json({ success: true, message: 'Request decline ho gayi.' });

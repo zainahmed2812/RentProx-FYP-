@@ -1,24 +1,4 @@
 // src/routes/User/dissolution.js
-// ══════════════════════════════════════════════════════
-// Agreement Dissolution — Tenant + Owner dono sides
-//
-// ── TENANT ENDPOINTS ─────────────────────────────────
-//   POST   /api/user/dissolution              → request bhejo
-//   GET    /api/user/dissolution/:agreementId → apni request dekho
-//   DELETE /api/user/dissolution/:id          → pending request wapas lo
-//
-// ── OWNER ENDPOINTS ──────────────────────────────────
-//   GET    /api/owner/dissolution             → sab incoming requests
-//   PUT    /api/owner/dissolution/:id/accept  → accept → agreement CANCELLED
-//   PUT    /api/owner/dissolution/:id/decline → decline
-//   POST   /api/owner/dissolution/direct      → bina request ke seedha dissolve
-//
-// ── index.js mein add karo ───────────────────────────
-//   import dissolutionRoutes from './routes/User/dissolution.js';
-//   app.use('/api/user',  dissolutionRoutes);
-//   app.use('/api/owner', dissolutionRoutes);
-// ══════════════════════════════════════════════════════
-
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { protect } from '../../middleware/authMiddleware.js';
@@ -28,96 +8,85 @@ const db     = new PrismaClient();
 
 router.use(protect);
 
-// ══════════════════════════════════════════════════════
-//  INTERNAL HELPER — agreement + listing + property reset
-//  Yeh function dono cases mein reuse hota hai:
-//  (1) owner accepts tenant's request
-//  (2) owner direct dissolve karta hai
-// ══════════════════════════════════════════════════════
-
+// Internal helper — agreement cancel + listing declined + property available
 async function performDissolution(tx, agreementId, dissolvedBy, note) {
-  // 1. Agreement CANCELLED + audit trail
   const agreement = await tx.agreement.update({
     where: { id: agreementId },
     data: {
-      status:         'CANCELLED',
-      dissolvedAt:    new Date(),
-      dissolvedBy,              // 'owner' ya 'tenant_request'
+      status:          'CANCELLED',
+      dissolvedAt:     new Date(),
+      dissolvedBy,
       dissolutionNote: note || '',
     },
     include: { listing: { select: { id: true, propertyId: true } } }
   });
 
-  // 2. Listing close karo
   await tx.listing.update({
     where: { id: agreement.listing.id },
-    data:  { status: 'DECLINED', isActive: false }
+    data:  { status: 'DECLINED' }
   });
 
-  // 3. Property wapas available
   await tx.property.update({
     where: { id: agreement.listing.propertyId },
     data:  { isAvailable: true }
   });
 
+  // Rental record deactivate karo
+  await tx.rental.updateMany({
+    where: { agreementId },
+    data:  { isActive: false, endDate: new Date() }
+  });
+
   return agreement;
 }
 
-// ══════════════════════════════════════════════════════
-//  TENANT ROUTES
-// ══════════════════════════════════════════════════════
+// ── TENANT ROUTES ─────────────────────────────────────
 
 // POST /api/user/dissolution
-// Tenant dissolution request bhejta hai
 router.post('/dissolution', async (req, res) => {
   try {
     const { agreementId, reason, proposedVacateDate } = req.body;
 
-    if (!agreementId)    return res.status(400).json({ success: false, message: 'agreementId is required.' });
-    if (!reason?.trim()) return res.status(400).json({ success: false, message: 'Dissolution reason is required.' });
+    if (!agreementId)    return res.status(400).json({ success: false, message: 'agreementId zaruri hai.' });
+    if (!reason?.trim()) return res.status(400).json({ success: false, message: 'Reason zaruri hai.' });
 
-    // Agreement verify + tenant ownership check
     const agreement = await db.agreement.findUnique({
       where:   { id: agreementId },
       include: { listing: true, dissolutionRequest: true }
     });
 
     if (!agreement)
-      return res.status(404).json({ success: false, message: 'Agreement not found.' });
-
+      return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
     if (agreement.listing.tenantId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'This is not your agreement.' });
-
+      return res.status(403).json({ success: false, message: 'Yeh aap ki agreement nahi.' });
     if (agreement.status !== 'ACTIVE')
-      return res.status(400).json({ success: false, message: 'Only ACTIVE agreements can be dissolved.' });
-
-    // Pehle se PENDING request check
+      return res.status(400).json({ success: false, message: 'Sirf ACTIVE agreement dissolve ho sakti hai.' });
     if (agreement.dissolutionRequest?.status === 'PENDING')
-      return res.status(409).json({ success: false, message: 'A request is already pending. Please wait for the owner\'s response or withdraw your request.' });
+      return res.status(409).json({ success: false, message: 'Ek request pehle se pending hai.' });
 
     const dissolution = await db.dissolutionRequest.upsert({
       where:  { agreementId },
       create: {
         agreementId,
-        tenantId:          req.user.id,
-        reason:            reason.trim(),
+        tenantId:           req.user.id,
+        reason:             reason.trim(),
         proposedVacateDate: proposedVacateDate ? new Date(proposedVacateDate) : null,
-        status:            'PENDING',
+        status:             'PENDING',
       },
-      update: {   // DECLINED thi to dobara PENDING mein bhejo
-        reason:            reason.trim(),
+      update: {
+        reason:             reason.trim(),
         proposedVacateDate: proposedVacateDate ? new Date(proposedVacateDate) : null,
-        status:            'PENDING',
-        ownerNote:         '',
-        respondedAt:       null,
-        requestedAt:       new Date(),
+        status:             'PENDING',
+        ownerNote:          '',
+        respondedAt:        null,
+        requestedAt:        new Date(),
       }
     });
 
     return res.status(201).json({
       success: true,
       data:    dissolution,
-      message: 'Dissolution request sent. Wait for the owner\'s response.'
+      message: 'Dissolution request bhej di gayi. Owner ke jawab ka intezaar karein.'
     });
 
   } catch (err) {
@@ -127,7 +96,6 @@ router.post('/dissolution', async (req, res) => {
 });
 
 // GET /api/user/dissolution/:agreementId
-// Tenant apni dissolution request status dekhe
 router.get('/dissolution/:agreementId', async (req, res) => {
   try {
     const agreement = await db.agreement.findUnique({
@@ -136,10 +104,9 @@ router.get('/dissolution/:agreementId', async (req, res) => {
     });
 
     if (!agreement)
-      return res.status(404).json({ success: false, message: 'Agreement not found.' });
-
+      return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
     if (agreement.listing.tenantId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'Access denied.' });
+      return res.status(403).json({ success: false, message: 'Access nahi hai.' });
 
     const dissolution = await db.dissolutionRequest.findUnique({
       where: { agreementId: req.params.agreementId }
@@ -154,7 +121,6 @@ router.get('/dissolution/:agreementId', async (req, res) => {
 });
 
 // DELETE /api/user/dissolution/:id
-// Tenant PENDING request wapas le
 router.delete('/dissolution/:id', async (req, res) => {
   try {
     const dissolution = await db.dissolutionRequest.findUnique({
@@ -162,17 +128,15 @@ router.delete('/dissolution/:id', async (req, res) => {
     });
 
     if (!dissolution)
-      return res.status(404).json({ success: false, message: 'Request not found.' });
-
+      return res.status(404).json({ success: false, message: 'Request nahi mili.' });
     if (dissolution.tenantId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'This is not your request.' });
-
+      return res.status(403).json({ success: false, message: 'Yeh aap ki request nahi.' });
     if (dissolution.status !== 'PENDING')
-      return res.status(400).json({ success: false, message: 'Only PENDING requests can be cancelled.' });
+      return res.status(400).json({ success: false, message: 'Sirf PENDING request cancel ho sakti hai.' });
 
     await db.dissolutionRequest.delete({ where: { id: req.params.id } });
 
-    return res.json({ success: true, message: 'Request cancelled.' });
+    return res.json({ success: true, message: 'Request wapas le li gayi.' });
 
   } catch (err) {
     console.error('[dissolution DELETE]', err);
@@ -180,12 +144,9 @@ router.delete('/dissolution/:id', async (req, res) => {
   }
 });
 
-// ══════════════════════════════════════════════════════
-//  OWNER ROUTES
-// ══════════════════════════════════════════════════════
+// ── OWNER ROUTES ──────────────────────────────────────
 
 // GET /api/owner/dissolution
-// Owner ke properties ki sab dissolution requests
 router.get('/dissolution', async (req, res) => {
   try {
     const requests = await db.dissolutionRequest.findMany({
@@ -226,7 +187,6 @@ router.get('/dissolution', async (req, res) => {
 });
 
 // PUT /api/owner/dissolution/:id/accept
-// Owner tenant ki request accept kare → agreement CANCELLED
 router.put('/dissolution/:id/accept', async (req, res) => {
   try {
     const { ownerNote = '' } = req.body;
@@ -241,42 +201,23 @@ router.put('/dissolution/:id/accept', async (req, res) => {
     });
 
     if (!dissolution)
-      return res.status(404).json({ success: false, message: 'Request not found.' });
-
+      return res.status(404).json({ success: false, message: 'Request nahi mili.' });
     if (dissolution.agreement.listing.property.ownerId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'This is not your property.' });
-
+      return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
     if (dissolution.status !== 'PENDING')
-      return res.status(400).json({ success: false, message: 'Only PENDING requests can be accepted.' });
-
+      return res.status(400).json({ success: false, message: 'Sirf PENDING request accept ho sakti hai.' });
     if (dissolution.agreement.status !== 'ACTIVE')
-      return res.status(400).json({ success: false, message: 'The agreement is not currently active.' });
+      return res.status(400).json({ success: false, message: 'Agreement active nahi hai.' });
 
     await db.$transaction(async (tx) => {
-      // 1. Request accept karo
       await tx.dissolutionRequest.update({
         where: { id: req.params.id },
-        data: {
-          status:      'ACCEPTED',
-          ownerNote:   ownerNote.trim(),
-          respondedAt: new Date(),
-        }
+        data:  { status: 'ACCEPTED', ownerNote: ownerNote.trim(), respondedAt: new Date() }
       });
-
-      // 2. Agreement + listing + property reset
-      await performDissolution(
-        tx,
-        dissolution.agreementId,
-        'tenant_request',
-        `Tenant request accept ki. ${ownerNote}`.trim()
-      );
+      await performDissolution(tx, dissolution.agreementId, 'tenant_request', ownerNote.trim());
     });
 
-    return res.json({
-      success: true,
-      message: 'Dissolution request re-accepted. Agreement CANCELLED and property is available for rent'
-
-    });
+    return res.json({ success: true, message: 'Request accept ho gayi. Agreement cancel aur property wapas available hai.' });
 
   } catch (err) {
     console.error('[dissolution accept]', err);
@@ -285,13 +226,12 @@ router.put('/dissolution/:id/accept', async (req, res) => {
 });
 
 // PUT /api/owner/dissolution/:id/decline
-// Owner tenant ki request decline kare — agreement chalti rahe
 router.put('/dissolution/:id/decline', async (req, res) => {
   try {
     const { ownerNote = '' } = req.body;
 
     if (!ownerNote?.trim())
-      return res.status(400).json({ success: false, message: 'Reason for decline is required.' });
+      return res.status(400).json({ success: false, message: 'Decline karne ki wajah zaruri hai.' });
 
     const dissolution = await db.dissolutionRequest.findUnique({
       where:   { id: req.params.id },
@@ -303,24 +243,18 @@ router.put('/dissolution/:id/decline', async (req, res) => {
     });
 
     if (!dissolution)
-      return res.status(404).json({ success: false, message: 'Request not found.' });
-
+      return res.status(404).json({ success: false, message: 'Request nahi mili.' });
     if (dissolution.agreement.listing.property.ownerId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'This is not your property.' });
-
+      return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
     if (dissolution.status !== 'PENDING')
-      return res.status(400).json({ success: false, message: 'Only PENDING requests can be declined.' });
+      return res.status(400).json({ success: false, message: 'Sirf PENDING request decline ho sakti hai.' });
 
     await db.dissolutionRequest.update({
       where: { id: req.params.id },
-      data: {
-        status:      'DECLINED',
-        ownerNote:   ownerNote.trim(),
-        respondedAt: new Date(),
-      }
+      data:  { status: 'DECLINED', ownerNote: ownerNote.trim(), respondedAt: new Date() }
     });
 
-    return res.json({ success: true, message: 'Dissolution request declined.' });
+    return res.json({ success: true, message: 'Request decline ho gayi.' });
 
   } catch (err) {
     console.error('[dissolution decline]', err);
@@ -329,13 +263,12 @@ router.put('/dissolution/:id/decline', async (req, res) => {
 });
 
 // POST /api/owner/dissolution/direct
-// Owner seedha agreement dissolve kare (tenant ki request ka intezaar kiye bina)
 router.post('/dissolution/direct', async (req, res) => {
   try {
     const { agreementId, reason } = req.body;
 
-    if (!agreementId)    return res.status(400).json({ success: false, message: 'agreementId is required.' });
-    if (!reason?.trim()) return res.status(400).json({ success: false, message: 'Reason for dissolution is required.' });
+    if (!agreementId)    return res.status(400).json({ success: false, message: 'agreementId zaruri hai.' });
+    if (!reason?.trim()) return res.status(400).json({ success: false, message: 'Reason zaruri hai.' });
 
     const agreement = await db.agreement.findUnique({
       where:   { id: agreementId },
@@ -343,22 +276,17 @@ router.post('/dissolution/direct', async (req, res) => {
     });
 
     if (!agreement)
-      return res.status(404).json({ success: false, message: 'Agreement not found.' });
-
+      return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
     if (agreement.listing.property.ownerId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'This is not your property.' });
-
+      return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
     if (agreement.status !== 'ACTIVE')
-      return res.status(400).json({ success: false, message: 'Only ACTIVE agreements can be dissolved.' });
+      return res.status(400).json({ success: false, message: 'Sirf ACTIVE agreement dissolve ho sakti hai.' });
 
     await db.$transaction(async (tx) => {
       await performDissolution(tx, agreementId, 'owner', reason.trim());
     });
 
-    return res.json({
-      success: true,
-      message: 'Agreement dissolved.'
-    });
+    return res.json({ success: true, message: 'Agreement dissolve ho gayi. Property wapas available hai.' });
 
   } catch (err) {
     console.error('[dissolution direct]', err);

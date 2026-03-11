@@ -1,78 +1,116 @@
 // src/routes/User/dashboard.js
-// ══════════════════════════════════════════════════════
-// User Dashboard
-// GET /api/user/dashboard
-// Returns: logged-in user ki tamam properties + stats
-// ══════════════════════════════════════════════════════
-
 import { Router } from 'express';
-import db from '../../helpers/db.js';
-import { sendSuccess, sendError, catchAsync } from '../../helpers/response.js';
+import { PrismaClient } from '@prisma/client';
 import { protect } from '../../middleware/authMiddleware.js';
 
 const router = Router();
-router.use(protect); // har route ke liye login zaruri hai
+const db     = new PrismaClient();
+router.use(protect);
 
 // GET /api/user/dashboard
-router.get('/', catchAsync(async (req, res) => {
-  const ownerId = req.user.id;
+router.get('/', async (req, res) => {
+  try {
+    const ownerId = req.user.id;
 
-  // Parallel queries - sab ek saath chalenge (fast)
-  const [properties, totalRentals, pendingPayments, paidAggregate] = await Promise.all([
+    const [properties, activeRentals, securityPayments, monthlyPayments] = await Promise.all([
 
-    // User ki tamam properties with rental info
-    db.property.findMany({
-      where: { ownerId },
-      include: {
-        rentals: {
-          include: {
-            tenant: { select: { id: true, name: true, phone: true } },
-            payments: { orderBy: { month: 'desc' }, take: 1 },
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    }),
-
-    // Total active rentals
-    db.rental.count({ where: { ownerId } }),
-
-    // Unpaid payments count
-    db.payment.count({ where: { paid: false, rental: { ownerId } } }),
-
-    // Total collected rent
-    db.payment.aggregate({
-      where: { paid: true, rental: { ownerId } },
-      _sum: { amount: true },
-    }),
-  ]);
-
-  // Recent 5 payments
-  const recentPayments = await db.payment.findMany({
-    where: { rental: { ownerId } },
-    include: {
-      rental: {
+      // Owner ki tamam properties
+      db.property.findMany({
+        where:   { ownerId },
         include: {
-          tenant: { select: { id: true, name: true } },
-          property: { select: { id: true, address: true, city: true } },
+          listings: {
+            where:   { status: 'ACCEPTED' },
+            include: {
+              tenant:    { select: { id: true, name: true, phone: true } },
+              agreement: { select: { id: true, status: true, monthlyRent: true } }
+            }
+          }
         },
-      },
-    },
-    orderBy: { paidAt: 'desc' },
-    take: 5,
-  });
+        orderBy: { createdAt: 'desc' }
+      }),
 
-  return sendSuccess(res, {
-    user: req.user,
-    stats: {
-      totalProperties:  properties.length,
-      totalRentals,
-      pendingPayments,
-      totalCollected:   paidAggregate._sum.amount || 0,
-    },
-    properties,
-    recentPayments,
-  });
-}));
+      // Active rentals count
+      db.rental.count({ where: { ownerId, isActive: true } }),
+
+      // Pending security deposits
+      db.securityDepositPayment.count({
+        where: {
+          status:    'PENDING_VERIFICATION',
+          agreement: { listing: { property: { ownerId } } }
+        }
+      }),
+
+      // Total collected (verified monthly + security)
+      db.monthlyRentPayment.aggregate({
+        where: {
+          status:    'VERIFIED',
+          agreement: { listing: { property: { ownerId } } }
+        },
+        _sum: { amount: true }
+      }),
+    ]);
+
+    // Security deposit total collected
+    const securityCollected = await db.securityDepositPayment.aggregate({
+      where: {
+        status:    'VERIFIED',
+        agreement: { listing: { property: { ownerId } } }
+      },
+      _sum: { amount: true }
+    });
+
+    // Pending monthly payments count
+    const pendingMonthly = await db.monthlyRentPayment.count({
+      where: {
+        status:    'PENDING_VERIFICATION',
+        agreement: { listing: { property: { ownerId } } }
+      }
+    });
+
+    // Recent 5 verified payments
+    const recentPayments = await db.monthlyRentPayment.findMany({
+      where: {
+        status:    'VERIFIED',
+        agreement: { listing: { property: { ownerId } } }
+      },
+      include: {
+        agreement: {
+          include: {
+            listing: {
+              include: {
+                tenant:   { select: { id: true, name: true } },
+                property: { select: { id: true, address: true, city: true } }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { verifiedAt: 'desc' },
+      take: 5
+    });
+
+    const totalCollected = (monthlyPayments._sum.amount || 0)
+                         + (securityCollected._sum.amount || 0);
+
+    return res.json({
+      success: true,
+      data: {
+        user: req.user,
+        stats: {
+          totalProperties: properties.length,
+          totalRentals:    activeRentals,
+          pendingPayments: pendingMonthly + securityPayments,
+          totalCollected,
+        },
+        properties,
+        recentPayments,
+      }
+    });
+
+  } catch (err) {
+    console.error('[dashboard GET]', err);
+    return res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
 
 export default router;
