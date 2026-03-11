@@ -177,6 +177,29 @@
     .btn-dis-send:disabled{ background:#94a3b8; cursor:not-allowed; }
     .btn-dis-withdraw{ padding:11px 18px; background:var(--white); color:#ef4444; border:1.5px solid #fecaca; border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit; margin-left:10px; }
     .btn-dis-retry{ font-size:0.84rem; font-weight:700; color:#991b1b; margin:14px 0 12px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .sidebar { position:fixed; left:-100%; top:0; height:100%; transition:left 0.3s ease; }
+      .sidebar.active { left:0; }
+      .sidebar-overlay.active { display:block; }
+      .menu-toggle { display:block; }
+      .content       { padding: 20px 16px; }
+      .topbar        { padding: 0 16px; height: 58px; }
+      .prof-pill span { display: none; }
+      .two-col        { grid-template-columns: 1fr !important; }
+      .form-grid      { grid-template-columns: 1fr !important; }
+      .info-row       { flex-direction: column; gap: 2px; }
+      .sec-card       { padding: 16px; }
+      .complaint-section { padding: 16px; }
+      .dissolution-card  { padding: 16px; }
+      .btn-dis-send, .btn-dis-withdraw { width: 100%; margin-left: 0; margin-top: 8px; }
+    }
+    @media (max-width: 480px) {
+      .page-head h1  { font-size: 1.2rem; }
+      .dis-banner    { flex-direction: column; }
+      .chip          { font-size: 0.65rem; }
+    }
   </style>
 </head>
 <body>
@@ -379,7 +402,7 @@ function renderAll(){
 
   renderComplaints(allComplaints);
 
-  // Dissolution card inject karo (baad mein JS se fill hoga)
+  // Inject dissolution card (will be filled by JS later)
   const mainContent = document.getElementById('main-content');
   if(mainContent && !document.getElementById('dissolution-body')){
     const disCard = document.createElement('div');
@@ -489,12 +512,12 @@ function renderDissolutionSection() {
   // Build form using DOM — no quote issues
   function buildForm(container) {
     container.innerHTML =
-      '<div class="dis-intro">Agar aap yeh property chhodna chahte hain to dissolution request bhejein. ' +
-      'Owner ke accept karne ke baad agreement cancel ho jayegi. ' +
-      '<strong style="color:#991b1b">Yeh action reversible nahi hai.</strong></div>' +
+      '<div class="dis-intro">If you wish to vacate this property, please submit a dissolution request. ' +
+      'Once the owner accepts, the agreement will be cancelled. ' +
+      '<strong style="color:#991b1b">This action cannot be undone.</strong></div>' +
       '<div class="form-grid">' +
         '<div class="form-group" style="grid-column:1/-1">' +
-          '<label class="form-label">Dissolution Ki Wajah *</label>' +
+          '<label class="form-label">Reason for Dissolution *</label>' +
           '<textarea class="form-input" id="dis-reason" placeholder="Kyu agreement khatam karna chahte hain?" style="min-height:75px;resize:vertical"></textarea>' +
         '</div>' +
         '<div class="form-group">' +
@@ -504,7 +527,7 @@ function renderDissolutionSection() {
       '</div>' +
       '<div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
         '<button class="btn-dis-send" id="dis-submit-btn">⚠️ Send Dissolution Request</button>' +
-        '<span style="font-size:0.78rem;color:var(--muted)">Owner approval zaruri hai</span>' +
+        '<span style="font-size:0.78rem;color:var(--muted)">Owner approval required</span>' +
       '</div>';
     // Attach event safely
     const btn = container.querySelector('#dis-submit-btn');
@@ -521,13 +544,13 @@ function renderDissolutionSection() {
         '<div class="dis-banner-icon">⏳</div>' +
         '<div class="dis-banner-body">' +
           '<strong>Dissolution Request Pending</strong>' +
-          '<p>Owner ke jawab ka intezaar hai.</p>' +
+          '<p>Waiting for the owner to respond.</p>' +
           '<div class="dis-meta"><strong>Reason:</strong> ' + d.reason +
             (d.proposedVacateDate ? ' &nbsp;|&nbsp; <strong>Proposed Vacate:</strong> ' + new Date(d.proposedVacateDate).toLocaleDateString('en-PK') : '') +
           '</div>' +
         '</div>' +
       '</div>' +
-      '<button class="btn-dis-withdraw" id="dis-withdraw-btn">✕ Request Wapas Lo</button>';
+      '<button class="btn-dis-withdraw" id="dis-withdraw-btn">✕ Withdraw Request</button>';
     const wb = el.querySelector('#dis-withdraw-btn');
     if (wb) wb.addEventListener('click', function() { withdrawDissolution(d.id); });
 
@@ -536,8 +559,8 @@ function renderDissolutionSection() {
       '<div class="dis-banner accepted">' +
         '<div class="dis-banner-icon">✅</div>' +
         '<div class="dis-banner-body">' +
-          '<strong>Dissolution Accepted — Agreement Cancel Ho Gayi</strong>' +
-          '<p>Owner ne aap ki request accept kar li. Property wapas list ho gayi.</p>' +
+          '<strong>Dissolution Accepted — Agreement Cancelled</strong>' +
+          '<p>The owner has accepted your request. The property has been relisted.</p>' +
           (d.ownerNote ? '<div class="dis-meta"><strong>Owner Note:</strong> ' + d.ownerNote + '</div>' : '') +
         '</div>' +
       '</div>';
@@ -547,12 +570,12 @@ function renderDissolutionSection() {
       '<div class="dis-banner declined">' +
         '<div class="dis-banner-icon">❌</div>' +
         '<div class="dis-banner-body">' +
-          '<strong>Request Decline Ho Gayi</strong>' +
+          '<strong>Request Declined</strong>' +
           '<p>Owner ne dissolution request decline ki. Agreement jari rahegi.</p>' +
           (d.ownerNote ? '<div class="dis-meta"><strong>Owner Reason:</strong> ' + d.ownerNote + '</div>' : '') +
         '</div>' +
       '</div>' +
-      '<div class="dis-retry">Dobara request bhejein:</div>';
+      '<div class="dis-retry">Submit a new request:</div>';
     buildForm(el);
   }
 }
@@ -560,8 +583,8 @@ function renderDissolutionSection() {
 async function submitDissolutionReq(agreementId) {
   const reason = (document.getElementById('dis-reason') || {}).value || '';
   const vacate = (document.getElementById('dis-vacate') || {}).value || '';
-  if (!reason.trim()) { showToast('Wajah likhna zaruri hai.', 'error'); return; }
-  if (!confirm('Kya aap dissolution request bhejna chahte hain?')) return;
+  if (!reason.trim()) { showToast('Please enter a reason.', 'error'); return; }
+  if (!confirm('Are you sure you want to send a dissolution request?')) return;
   const btn = document.getElementById('dis-submit-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
   try {
@@ -569,7 +592,7 @@ async function submitDissolutionReq(agreementId) {
     if (vacate) payload.proposedVacateDate = vacate;
     const d = await apiFetch('/user/dissolution', { method: 'POST', body: JSON.stringify(payload) });
     if (d.success) { _dissolution = d.data; showToast(d.message); renderDissolutionSection(); }
-    else { showToast(d.message || 'Request nahi bheji.', 'error'); if (btn) { btn.disabled = false; btn.textContent = '⚠️ Send Dissolution Request'; } }
+    else { showToast(d.message || 'Failed to send request.', 'error'); if (btn) { btn.disabled = false; btn.textContent = '⚠️ Send Dissolution Request'; } }
   } catch { showToast('Network error.', 'error'); if (btn) { btn.disabled = false; btn.textContent = '⚠️ Send Dissolution Request'; } }
 }
 

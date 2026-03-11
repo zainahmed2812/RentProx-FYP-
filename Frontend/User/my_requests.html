@@ -110,14 +110,25 @@
     .sidebar-footer { padding: 20px; border-top: 1px solid #ededed; margin-top: auto; }
     .btn-logout-side { width: 100%; padding: 12px; background: #fff; border: 1px solid #ededed; border-radius: 8px; font-weight: 600; cursor: pointer; color: #666; font-family: inherit; }
     .btn-logout-side:hover { color: #ef4444; border-color: #ef4444; }
-    /* ── MENU TOGGLE ── */
     .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #333; margin-right: 15px; padding: 0; line-height: 1; }
-    /* ── MOBILE ── */
+
+    /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
       .sidebar { position: fixed; left: -100%; top: 0; height: 100%; transition: left 0.3s ease; }
       .sidebar.active { left: 0; }
       .sidebar-overlay.active { display: block; }
       .menu-toggle { display: block; }
+      .content     { padding: 20px 16px; }
+      .topbar      { padding: 0 16px; }
+      .prof-pill span { display: none; }
+      .tabs        { width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+      .req-card    { flex-direction: column; gap: 12px; padding: 16px; }
+      .req-row     { flex-wrap: wrap; }
+    }
+    @media (max-width: 480px) {
+      .page-head h1 { font-size: 1.2rem; }
+      .req-addr     { font-size: 0.9rem; }
+      .btn-sm       { flex: 1 1 100%; text-align: center; }
     }
   </style>
 </head>

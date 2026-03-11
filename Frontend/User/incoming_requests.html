@@ -141,18 +141,53 @@
     .dis-modal-confirm:disabled{ background:#94a3b8; cursor:not-allowed; }
     .dis-modal-cancel-btn{ flex:1; padding:11px; background:#fff; color:var(--muted); border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; font-family:inherit; }
 
+    /* ── SIDEBAR & OVERLAY ── */
+    .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:999; }
+    .sidebar { width:260px; background:#fff; border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; z-index:1001; flex-shrink:0; }
+    .sidebar-logo { padding:0 24px 30px; font-weight:800; color:var(--green); font-size:1.4rem; cursor:pointer; }
+    .nav-group { flex:1; overflow-y:auto; }
+    .nav-link { display:flex; align-items:center; gap:12px; padding:12px 24px; text-decoration:none; color:var(--muted); font-weight:500; font-size:0.95rem; }
+    .nav-link:hover { color:var(--green); background:#f0fdf4; }
+    .nav-link.active { color:var(--green); background:#e8f5e9; border-right:4px solid var(--green); font-weight:700; }
+    .sidebar-footer { padding:20px; border-top:1px solid var(--border); margin-top:auto; }
+    .btn-logout-side { width:100%; padding:12px; background:#fff; border:1px solid var(--border); border-radius:8px; font-weight:600; cursor:pointer; color:var(--muted); font-family:inherit; }
+    .btn-logout-side:hover { color:#ef4444; border-color:#ef4444; }
+    .menu-toggle { display:none; background:none; border:none; font-size:1.5rem; cursor:pointer; color:#333; margin-right:15px; padding:0; line-height:1; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .sidebar { position:fixed; left:-100%; top:0; height:100%; transition:left 0.3s ease; }
+      .sidebar.active { left:0; }
+      .sidebar-overlay.active { display:block; }
+      .menu-toggle { display:block; }
+      .content      { padding: 20px 16px; }
+      .topbar       { padding: 0 16px; height: 58px; }
+      .prof-pill span { display: none; }
+      .req-card     { flex-direction: column; gap: 12px; }
+      .req-actions  { flex-wrap: wrap; }
+      .req-actions .btn-sm { flex: 1 1 45%; }
+      .sum-row      { grid-template-columns: 1fr 1fr; }
+      .dis-modal-box { width: calc(100vw - 32px); padding: 20px 16px; }
+    }
+    @media (max-width: 480px) {
+      .sum-row      { grid-template-columns: 1fr; }
+      .req-actions .btn-sm { flex: 1 1 100%; }
+      .req-header   { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
   </style>
 </head>
 <body>
 
-<nav class="sidebar">
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<nav class="sidebar" id="sidebar">
   <div class="sb-logo" onclick="location.href='homepage.html'">RentProx</div>
   <a href="../homepage.html"          class="nav-link">🔍 Browse Properties</a>
   <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
   <a href="my_rental.html"         class="nav-link">🏡 My Rental</a>
   <a href="incoming_requests.html" class="nav-link active">📩 Incoming Requests</a>
   <a href="addproperty.html"       class="nav-link">➕ Add Property</a>
-  <a href="properties.html"        class="nav-link">🏢 My Properties</a>
+  <a href="properties.html"        class="nav-link">🏢 Property Management</a>
   <a href="ledger.html"            class="nav-link">💰 Rent Ledger</a>
   <div class="sb-footer">
     <button class="btn-logout" id="logout-btn">Log Out</button>
@@ -161,7 +196,10 @@
 
 <div class="main-wrap">
   <header class="topbar">
-    <span class="topbar-title">Incoming Requests</span>
+    <div style="display:flex;align-items:center;">
+      <button class="menu-toggle" id="menu-toggle">☰</button>
+      <span class="topbar-title">Incoming Requests</span>
+    </div>
     <div class="prof-wrap">
       <div class="prof-pill" id="prof-pill">
         <span class="js-user-name">Loading…</span>
@@ -331,7 +369,7 @@ function renderTable(list){
             <button class="btn-decline" onclick="respond('${r.id}','decline')">Decline</button>`;
         } else if(r.status==='ACCEPTED'){
           if(payPending){
-            // ─── Payment verify karo button ───
+            // ─── Verify payment button ───
             actionBtns = `
               <button class="btn-verify-now" onclick="location.href='agreement.html?listing=${r.id}'">
                 💳 Verify Payment
@@ -438,8 +476,8 @@ async function respondDissolution(id, action) {
     ownerNote = prompt('Accept note (optional):') || '';
     if (!confirm('Accept karne se agreement cancel ho jayegi. Confirm?')) return;
   } else {
-    ownerNote = prompt('Decline karne ki wajah likhein (zaruri):') || '';
-    if (!ownerNote.trim()) { showToast('Wajah zaruri hai.', 'error'); return; }
+    ownerNote = prompt('Please enter the reason for declining (required):') || '';
+    if (!ownerNote.trim()) { showToast('Reason is required.', 'error'); return; }
     if (!confirm('Dissolution decline karna chahte hain?')) return;
   }
   try {
@@ -463,7 +501,7 @@ function closeDissolveModal() {
 }
 async function confirmDirectDissolve() {
   var reason = document.getElementById('dis-modal-ta').value.trim();
-  if (!reason) { showToast('Wajah likhna zaruri hai.', 'error'); return; }
+  if (!reason) { showToast('Please enter a reason.', 'error'); return; }
   var btn = document.getElementById('dis-modal-confirm-btn');
   btn.disabled = true; btn.textContent = 'Processing...';
   try {
@@ -485,13 +523,27 @@ function renderEmpty(msg){
   <div class="dis-modal-box">
     <h3>⚠️ Direct Agreement Dissolution</h3>
     <p id="dis-modal-prop"></p>
-    <label class="dis-modal-lbl">Dissolution Ki Wajah *</label>
-    <textarea class="dis-modal-ta" id="dis-modal-ta" placeholder="Kyu agreement dissolve kar rahe hain?"></textarea>
+    <label class="dis-modal-lbl">Reason for Dissolution *</label>
+    <textarea class="dis-modal-ta" id="dis-modal-ta" placeholder="Why are you dissolving this agreement?"></textarea>
     <div class="dis-modal-btns">
       <button class="dis-modal-cancel-btn" onclick="closeDissolveModal()">Cancel</button>
       <button class="dis-modal-confirm" id="dis-modal-confirm-btn" onclick="confirmDirectDissolve()">⚠️ Dissolve Agreement</button>
     </div>
   </div>
 </div>
+
+<script>
+(function(){
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+  var toggle  = document.getElementById('menu-toggle');
+  if(!sidebar || !overlay || !toggle) return;
+  toggle.onclick  = function(){ sidebar.classList.add('active');    overlay.classList.add('active'); };
+  overlay.onclick = function(){ sidebar.classList.remove('active'); overlay.classList.remove('active'); };
+  sidebar.querySelectorAll('.nav-link').forEach(function(a){
+    a.addEventListener('click', function(){ sidebar.classList.remove('active'); overlay.classList.remove('active'); });
+  });
+})();
+</script>
 </body>
 </html>

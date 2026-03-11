@@ -131,6 +131,24 @@
     }
     .img-thumb .remove-btn:hover { background: #ef4444; }
     .img-counter { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; text-align: right; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .main-wrap     { overflow-y: auto; }
+      .content-wrap  { padding: 20px 16px; }
+      .form-section  { padding: 20px 16px; }
+      .hero-banner   { padding: 18px 16px; text-align: center; }
+      .top-bar       { padding: 0 16px; height: 58px; }
+      .profile-trigger span { display: none; }
+      .grid-fields   { grid-template-columns: 1fr !important; }
+      .img-preview-grid { grid-template-columns: repeat(3, 1fr); }
+      .btn-submit    { width: 100%; }
+    }
+    @media (max-width: 480px) {
+      .hero-banner h1 { font-size: 1.2rem; }
+      .hero-banner p  { font-size: 0.82rem; }
+      .img-preview-grid { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 <body>
@@ -259,7 +277,7 @@
       <section class="form-section">
         <div class="section-title">Property Images</div>
         <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px">
-          Max 8 images · JPG, PNG, WEBP · Har image max 5MB · Pehli image main thumbnail hogi
+          Max 8 images · JPG, PNG, WEBP · Max 5MB per image · First image will be the thumbnail
         </p>
 
         <div class="img-upload-zone" id="upload-zone">
@@ -423,10 +441,10 @@
       });
 
       if (data.success) {
-        showToast('Property add ho gayi!');
+        showToast('Property added successfully!');
         setTimeout(() => { window.location.href = 'properties.html'; }, 1500);
       } else {
-        showToast(data.message || 'Property add nahi hui.', 'error');
+        showToast(data.message || 'Failed to add property.', 'error');
       }
     } catch {
       showToast('Network error. Check connection.', 'error');
