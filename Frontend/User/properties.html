@@ -289,7 +289,7 @@
       if (!list || list.length === 0) { renderEmpty(); return; }
 
       grid.innerHTML = list.map(p => {
-        // listings array se active rental check karo
+        // Check active rental from listings array
         const activeListing = (p.listings || []).find(l => l.agreement && l.agreement.status === 'ACTIVE');
         const occupied = activeListing ? 1 : 0;
         const avail    = occupied ? 0 : 1;
@@ -323,8 +323,8 @@
     function renderEmpty() {
       document.getElementById('prop-grid').innerHTML = `
         <div class="empty-state">
-          <p style="font-size:1.1rem;font-weight:600;margin-bottom:10px;">Koi property nahi mili</p>
-          <p>Apni pehli property add karein.</p>
+          <p style="font-size:1.1rem;font-weight:600;margin-bottom:10px;">No properties found</p>
+          <p>Add your first property to get started.</p>
           <button class="btn-post-listing" style="margin-top:16px" onclick="window.location.href='addproperty.html'">+ Add Property</button>
         </div>`;
     }
