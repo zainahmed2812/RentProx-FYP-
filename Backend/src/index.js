@@ -23,6 +23,8 @@ import myRentalRoutes  from './routes/User/myRentedProperty.js';
 import adminComplaints from './routes/Admin/complaints.js';
 import dissolutionRoutes from './routes/User/dissolution.js';
 import ledgerRoutes from './routes/User/ledger.js';
+import { tenantBillRouter, ownerBillRouter } from './routes/User/utilityBills.js';
+
 // Middleware
 import { errorHandler } from './middleware/errorMiddleware.js';
 
@@ -74,6 +76,8 @@ app.use('/api/user',  dissolutionRoutes);
 app.use('/api/owner', dissolutionRoutes);
 app.use('/api/user',  ledgerRoutes);
 app.use('/api/owner', ledgerRoutes);
+app.use('/api/user',  tenantBillRouter);
+app.use('/api/owner', ownerBillRouter);
 
 // ── Health Check ───────────────────────────────────────
 app.get('/api/health', (req, res) => {

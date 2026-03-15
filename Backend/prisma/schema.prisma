@@ -129,6 +129,7 @@ model Agreement {
   dissolutionRequest DissolutionRequest?
   securityPayment    SecurityDepositPayment?
   monthlyPayments    MonthlyRentPayment[]
+  utilityBills       UtilityBill[]
 }
 
 // ─────────────────────────────────────────────────────
@@ -179,6 +180,22 @@ model DissolutionRequest {
 
   agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
   agreementId String    @unique
+}
+
+
+// ─────────────────────────────────────────────────────
+//  UTILITY BILL
+// ─────────────────────────────────────────────────────
+model UtilityBill {
+  id          String   @id @default(cuid())
+  month       String   // "2026-04" format
+  imagePath   String   // server pr path e.g. /uploads/bills/xyz.jpg
+  billType    String   @default("Utility") // Electricity, Gas, Water, etc
+  notes       String   @default("")
+  uploadedAt  DateTime @default(now())
+
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreementId String
 }
 
 // ─────────────────────────────────────────────────────

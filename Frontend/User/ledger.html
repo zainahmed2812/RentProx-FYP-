@@ -96,6 +96,38 @@
 
     .txn-chip{ display:inline-block; font-size:0.72rem; background:#f1f5f9; color:#475569; padding:3px 8px; border-radius:4px; font-family:monospace; margin-top:3px; }
 
+
+
+    /* UTILITY MISS ALERT */
+    .util-alert{ display:flex; align-items:flex-start; gap:12px; background:#fff7ed; border:1.5px solid #fed7aa; border-radius:10px; padding:14px 16px; margin-bottom:14px; }
+    .util-alert-icon{ font-size:1.4rem; flex-shrink:0; margin-top:1px; }
+    .util-alert-body{ flex:1; }
+    .util-alert-title{ font-weight:700; font-size:0.88rem; color:#92400e; }
+    .util-alert-sub{ font-size:0.78rem; color:#b45309; margin-top:3px; }
+    .util-alert.critical{ background:#fff5f5; border-color:#fca5a5; }
+    .util-alert.critical .util-alert-title{ color:#991b1b; }
+    .util-alert.critical .util-alert-sub{ color:#dc2626; }
+    /* UTILITY BILLS */
+    .bills-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-top:10px; }
+    .bill-card{ border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#fff; }
+    .bill-img{ width:100%; height:110px; object-fit:cover; cursor:pointer; background:#f8fafc; }
+    .bill-img-pdf{ width:100%; height:110px; display:flex; align-items:center; justify-content:center; background:#f1f5f9; font-size:2rem; cursor:pointer; }
+    .bill-info{ padding:8px 10px; }
+    .bill-month{ font-weight:700; font-size:0.8rem; }
+    .bill-type{ font-size:0.72rem; color:var(--muted); }
+    .upload-bill-form{ background:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:16px 18px; margin-top:14px; }
+    .upload-bill-form h4{ font-size:0.88rem; color:var(--green); margin-bottom:12px; }
+    .upload-row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .upload-sel{ padding:9px 10px; border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.83rem; outline:none; }
+    .upload-sel:focus{ border-color:var(--green); }
+    .upload-file-btn{ padding:9px 14px; background:#fff; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; font-size:0.83rem; font-family:inherit; }
+    .btn-upload-bill{ padding:9px 18px; background:var(--green); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-family:inherit; white-space:nowrap; }
+    .btn-upload-bill:disabled{ background:#94a3b8; cursor:not-allowed; }
+    /* Image preview modal */
+    .img-modal{ position:fixed; inset:0; background:rgba(0,0,0,0.85); display:none; align-items:center; justify-content:center; z-index:3000; padding:20px; }
+    .img-modal.on{ display:flex; }
+    .img-modal img{ max-width:90vw; max-height:88vh; border-radius:8px; }
+    .img-modal-close{ position:absolute; top:18px; right:22px; color:#fff; font-size:2rem; cursor:pointer; line-height:1; }
     @media(max-width:768px){
       .sidebar{ position:fixed; left:-100%; top:0; height:100%; transition:left 0.3s ease; }
       .sidebar.active{ left:0; }
@@ -167,6 +199,10 @@
   </div>
 </div>
 
+<div class="img-modal" id="img-modal">
+  <span class="img-modal-close" onclick="closeImgModal()">✕</span>
+  <img id="img-modal-src" src="" alt="Bill">
+</div>
 <script src="../api.js"></script>
 <script>
 let currentRole = 'owner';
@@ -232,6 +268,7 @@ function renderOwner(){
 
     return `
     <div class="prop-block">
+      <div id="util-alert-${item.agreement.id}"></div>
       <div class="prop-header">
         <div>
           <div class="prop-title">🏠 ${item.property.address}, ${item.property.city}</div>
@@ -286,8 +323,22 @@ function renderOwner(){
           </div>
         </div>`).join('') : '<div style="color:var(--muted);font-size:0.85rem;padding:8px 0">No monthly payments received yet.</div>'}
       </div>
+
+      <!-- UTILITY BILLS OWNER VIEW -->
+      <div class="pay-section">
+        <div class="sec-label" style="display:flex;justify-content:space-between;align-items:center">
+          <span>🧾 Utility Bills</span>
+          <span style="font-size:0.72rem;color:var(--muted)" id="bills-count-${item.agreement.id}"></span>
+        </div>
+        <div id="bills-wrap-${item.agreement.id}">
+          <div style="color:var(--muted);font-size:0.83rem">Loading...</div>
+        </div>
+      </div>
     </div>`;
   }).join('');
+
+  // Load utility bills for each property async
+  ownerData.forEach(item => loadOwnerBills(item.agreement.id, item.agreement.startDate));
 }
 
 async function ownerVerifySecurity(btn){
@@ -493,7 +544,38 @@ function renderTenant(){
         ⏳ Please wait for your current payment to be verified before submitting the next one.
       </div>`}
     </div>
+
+    <!-- UTILITY BILLS TENANT VIEW + UPLOAD -->
+    <div class="pay-section">
+      <div class="sec-label">🧾 Utility Bills</div>
+      <div id="tenant-bills-wrap">
+        <div style="color:var(--muted);font-size:0.83rem">Loading...</div>
+      </div>
+      <div class="upload-bill-form" style="margin-top:14px">
+        <h4>📤 Naya Utility Bill Upload Karein</h4>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">Image ya PDF — max 5MB</div>
+        <div class="upload-row">
+          <select class="upload-sel" id="bill-month-sel">${generateMonthOptions()}</select>
+          <select class="upload-sel" id="bill-type-sel">
+            <option value="Electricity">⚡ Electricity</option>
+            <option value="Gas">🔥 Gas</option>
+            <option value="Water">💧 Water</option>
+            <option value="Internet">📡 Internet</option>
+            <option value="Other">📄 Other</option>
+          </select>
+          <input type="file" id="bill-file" accept="image/*,.pdf" style="font-size:0.82rem;flex:1;min-width:160px">
+          <button class="btn-upload-bill" id="bill-upload-btn"
+            onclick="tenantUploadBill('${d.agreement.id}')">
+            Upload
+          </button>
+        </div>
+      </div>
+    </div>
   </div>`;
+
+  // Load tenant utility bills
+  if(tenantData && tenantData.agreement && tenantData.agreement.id)
+    loadTenantBills(tenantData.agreement.id);
 }
 
 async function tenantSubmitMonthly(agreementId, month, amount){
@@ -520,6 +602,151 @@ function showEmpty(msg){
   document.getElementById('ledger-content').innerHTML =
     `<div class="empty-state"><h3>${msg}</h3></div>`;
 }
+
+// ── UTILITY BILLS ─────────────────────────────────────
+
+function generateMonthOptions() {
+  const opts = [];
+  const now  = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d   = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const lbl = d.toLocaleDateString('en-PK',{ year:'numeric', month:'long' });
+    opts.push(`<option value="${val}">${lbl}</option>`);
+  }
+  return opts.join('');
+}
+
+async function loadOwnerBills(agreementId, startDate) {
+  try {
+    const d = await apiFetch(`/owner/utility-bills/${agreementId}`);
+    const wrap  = document.getElementById(`bills-wrap-${agreementId}`);
+    const count = document.getElementById(`bills-count-${agreementId}`);
+    if (!wrap) return;
+    const bills = d.data || [];
+    if (count) count.textContent = `${bills.length} bill(s)`;
+
+    // ── Check missing bills from rental startDate (max 3 months) ──
+    const uploadedMonths = new Set(bills.map(b => b.month));
+    const missedMonths   = [];
+    const now            = new Date();
+    const start          = startDate ? new Date(startDate) : now;
+    // Start from the month AFTER rental started, up to last completed month
+    // Max 3 months back
+    for (let i = 1; i <= 3; i++) {
+      const checkDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      // Only check months that are >= rental start month
+      const rentalStart = new Date(start.getFullYear(), start.getMonth(), 1);
+      if (checkDate < rentalStart) break; // Rental hadn't started yet
+      const key = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,'0')}`;
+      const lbl = checkDate.toLocaleDateString('en-PK', { year:'numeric', month:'long' });
+      if (!uploadedMonths.has(key)) missedMonths.push(lbl);
+    }
+
+    const alertBox = document.getElementById(`util-alert-${agreementId}`);
+    if (alertBox) {
+      if (missedMonths.length >= 3) {
+        // All 3 months missing — critical
+        alertBox.innerHTML = `
+          <div class="util-alert critical" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none">
+            <div class="util-alert-icon">🚨</div>
+            <div class="util-alert-body">
+              <div class="util-alert-title">Utility Bills — 3 Months Se Missing!</div>
+              <div class="util-alert-sub">Tenant ne pichle 3 mahine se koi utility bill upload nahi kiya: <strong>${missedMonths.join(', ')}</strong></div>
+            </div>
+          </div>`;
+      } else if (missedMonths.length > 0) {
+        // Some months missing — warning
+        alertBox.innerHTML = `
+          <div class="util-alert" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none">
+            <div class="util-alert-icon">⚠️</div>
+            <div class="util-alert-body">
+              <div class="util-alert-title">Kuch Months Ka Utility Bill Missing Hai</div>
+              <div class="util-alert-sub">In months ka bill nahi aaya: <strong>${missedMonths.join(', ')}</strong></div>
+            </div>
+          </div>`;
+      } else {
+        alertBox.innerHTML = ''; // Sab theek
+      }
+    }
+
+    if (!bills.length) {
+      wrap.innerHTML = '<div style="color:var(--muted);font-size:0.83rem;padding:4px 0">Abhi koi bill upload nahi kiya gaya.</div>';
+      return;
+    }
+    wrap.innerHTML = `<div class="bills-grid">${bills.map(b => billCard(b)).join('')}</div>`;
+  } catch { /* silent */ }
+}
+
+async function loadTenantBills(agreementId) {
+  const wrap = document.getElementById('tenant-bills-wrap');
+  if (!wrap) return;
+  try {
+    const d     = await apiFetch(`/user/utility-bills/${agreementId}`);
+    const bills = d.data || [];
+    if (!bills.length) {
+      wrap.innerHTML = '<div style="color:var(--muted);font-size:0.83rem;padding:4px 0">Abhi koi bill upload nahi kiya.</div>';
+      return;
+    }
+    wrap.innerHTML = `<div class="bills-grid">${bills.map(b => billCard(b)).join('')}</div>`;
+  } catch { wrap.innerHTML = '<div style="color:var(--muted);font-size:0.83rem">Bills load nahi hue.</div>'; }
+}
+
+function billCard(b) {
+  const isPdf = b.imagePath.toLowerCase().endsWith('.pdf');
+  const src   = `${API_BASE.replace('/api','')}${b.imagePath}`;
+  return `
+  <div class="bill-card">
+    ${isPdf
+      ? `<div class="bill-img-pdf" onclick="window.open('${src}','_blank')">📄</div>`
+      : `<img class="bill-img" src="${src}" alt="Bill" loading="lazy" onclick="openImgModal('${src}')">`
+    }
+    <div class="bill-info">
+      <div class="bill-month">${b.month}</div>
+      <div class="bill-type">${b.billType}</div>
+      ${b.notes ? `<div style="font-size:0.7rem;color:var(--muted);margin-top:2px">${b.notes}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+async function tenantUploadBill(agreementId) {
+  const month    = document.getElementById('bill-month-sel')?.value;
+  const billType = document.getElementById('bill-type-sel')?.value;
+  const fileInp  = document.getElementById('bill-file');
+  const btn      = document.getElementById('bill-upload-btn');
+
+  if (!fileInp?.files?.length) { showToast('File select karein.', 'error'); return; }
+  if (!month)                   { showToast('Month select karein.', 'error'); return; }
+
+  btn.disabled    = true;
+  btn.textContent = 'Uploading...';
+
+  try {
+    const form = new FormData();
+    form.append('bill',     fileInp.files[0]);
+    form.append('month',    month);
+    form.append('billType', billType);
+
+    const res = await fetch(`${API_BASE}/user/utility-bills/${agreementId}`, {
+      method:  'POST',
+      headers: { 'Authorization': `Bearer ${Auth.getToken()}` },
+      body:    form
+    });
+    const d = await res.json();
+
+    if (d.success) {
+      showToast(d.message);
+      fileInp.value = '';
+      await loadTenantBills(agreementId);
+    } else {
+      showToast(d.message || 'Upload nahi hua.', 'error');
+    }
+  } catch { showToast('Network error.', 'error'); }
+  finally  { btn.disabled = false; btn.textContent = 'Upload'; }
+}
+
+function openImgModal(src)  { document.getElementById('img-modal-src').src = src; document.getElementById('img-modal').classList.add('on'); }
+function closeImgModal()    { document.getElementById('img-modal').classList.remove('on'); }
 </script>
 </body>
 </html>
