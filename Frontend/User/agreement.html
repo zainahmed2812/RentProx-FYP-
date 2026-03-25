@@ -436,7 +436,7 @@ function renderPaymentSection(){
     <div style="margin-top:16px">
       <p style="font-size:0.83rem;color:var(--muted);margin-bottom:10px">Resubmit payment:</p>
       <div class="pay-input-row">
-        <input class="pay-input" id="txn-id" placeholder="Naya Transaction ID">
+        <input class="pay-input" id="txn-id" placeholder="New Transaction ID">
         <button class="btn-pay" onclick="submitPayment()">Re-Submit</button>
       </div>
     </div>` : ''}
@@ -497,7 +497,7 @@ function renderPaymentSection(){
   }
 
   const statusMap = {
-    PENDING_VERIFICATION: { cls:'pending',  icon:'⏳', title:'Verification Pending',   sub:'Owner verify kar raha hai.' },
+    PENDING_VERIFICATION: { cls:'pending',  icon:'⏳', title:'Verification Pending',   sub:'Owner is verifying.' },
     VERIFIED:             { cls:'verified', icon:'✅', title:'Payment Verified!',       sub:'Confirmed by owner. Agreement is now active.' },
     REJECTED:             { cls:'rejected', icon:'❌', title:'Payment Rejected',  sub: spay.rejectedReason || 'Invalid transaction ID.' },
   };
@@ -521,7 +521,7 @@ function renderPaymentSection(){
     <div style="margin-top:16px">
       <p style="font-size:0.83rem;color:var(--muted);margin-bottom:10px">Resubmit payment:</p>
       <div class="pay-input-row">
-        <input class="pay-input" id="txn-id" placeholder="Naya Transaction ID">
+        <input class="pay-input" id="txn-id" placeholder="New Transaction ID">
         <button class="btn-pay" onclick="submitPayment()">Re-Submit</button>
       </div>
     </div>` : ''}

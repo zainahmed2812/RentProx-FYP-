@@ -131,24 +131,6 @@
     }
     .img-thumb .remove-btn:hover { background: #ef4444; }
     .img-counter { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; text-align: right; }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      .main-wrap     { overflow-y: auto; }
-      .content-wrap  { padding: 20px 16px; }
-      .form-section  { padding: 20px 16px; }
-      .hero-banner   { padding: 18px 16px; text-align: center; }
-      .top-bar       { padding: 0 16px; height: 58px; }
-      .profile-trigger span { display: none; }
-      .grid-fields   { grid-template-columns: 1fr !important; }
-      .img-preview-grid { grid-template-columns: repeat(3, 1fr); }
-      .btn-submit    { width: 100%; }
-    }
-    @media (max-width: 480px) {
-      .hero-banner h1 { font-size: 1.2rem; }
-      .hero-banner p  { font-size: 0.82rem; }
-      .img-preview-grid { grid-template-columns: repeat(2, 1fr); }
-    }
   </style>
 </head>
 <body>
@@ -277,7 +259,7 @@
       <section class="form-section">
         <div class="section-title">Property Images</div>
         <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px">
-          Max 8 images · JPG, PNG, WEBP · Max 5MB per image · First image will be the thumbnail
+          Max 8 images · JPG, PNG, WEBP · Each image max 5MB · first image will be the main display image. High-quality photos get more attention!
         </p>
 
         <div class="img-upload-zone" id="upload-zone">
@@ -435,16 +417,33 @@
     btn.textContent = 'Uploading...';
 
     try {
-      const data = await apiFetch('/user/property', {
-        method: 'POST',
-        body: JSON.stringify({ city, address, area, areaUnit, rentAmount: rent, description: desc })
+      // FormData use karo — text fields + images ek saath bhejo
+      const formData = new FormData();
+      formData.append('city',        city);
+      formData.append('address',     address);
+      formData.append('area',        area);
+      formData.append('areaUnit',    areaUnit);
+      formData.append('rentAmount',  rent);
+      formData.append('description', desc);
+
+      // Images append karo
+      selectedFiles.forEach(file => formData.append('images', file));
+
+      // NOTE: apiFetch JSON bhejta hai — yahan seedha fetch use karo
+      const token = Auth.getToken();
+      const res   = await fetch(`${API_BASE}/user/property`, {
+        method:  'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        // Content-Type mat set karo — browser khud multipart/form-data set karta hai
+        body:    formData,
       });
+      const data = await res.json();
 
       if (data.success) {
-        showToast('Property added successfully!');
+        showToast(`Property added! ${selectedFiles.length} image(s) uploaded.`);
         setTimeout(() => { window.location.href = 'properties.html'; }, 1500);
       } else {
-        showToast(data.message || 'Failed to add property.', 'error');
+        showToast(data.message || 'Property not added.', 'error');
       }
     } catch {
       showToast('Network error. Check connection.', 'error');

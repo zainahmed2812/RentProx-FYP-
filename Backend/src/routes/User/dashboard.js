@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
 
     const [properties, activeRentals, securityPayments, monthlyPayments] = await Promise.all([
 
-      // Owner ki tamam properties
+      // All owner properties
       db.property.findMany({
         where:   { ownerId },
         include: {

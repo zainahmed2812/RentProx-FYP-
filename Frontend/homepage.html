@@ -192,8 +192,9 @@
     .container{ max-width:1280px; margin:0 auto; padding:36px 40px; }
     .grid{
       display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
+      grid-template-columns:repeat(3,1fr);
       gap:22px;
+      align-items:start;
     }
 
     /* CARD */
@@ -325,7 +326,7 @@
     .dropdown-item.logout:hover { background:#fff5f5; }
 
     /* RESPONSIVE */
-    @media (max-width:1024px) { .container { padding:28px 24px; } }
+    @media (max-width:1024px) { .container { padding:28px 24px; } .grid { grid-template-columns:repeat(2,1fr); } }
     @media (max-width:768px) {
       .sidebar { position:fixed; left:-100%; top:0; height:100%; transition:0.3s ease; }
       .sidebar.active { left:0; }
@@ -511,7 +512,7 @@
     /* Fetch cities from backend (merge with PK_CITIES) */
     async function fetchAndMergeCities() {
       try {
-        const res  = await fetch('http://localhost:5000/api/listings?limit=200');
+        const res  = await fetch(`${API_BASE}/listings?limit=200`);
         const data = await res.json();
         if (data.success && data.data.properties) {
           const backendCities = data.data.properties.map(p => p.city).filter(Boolean);
@@ -679,7 +680,7 @@
           ...(filters.unit && { areaUnit: filters.unit }),
           ...(filters.max  && { maxRent:  filters.max  }),
         });
-        const d = await fetch(`http://localhost:5000/api/listings?${p}`).then(r=>r.json());
+        const d = await fetch(`${API_BASE}/listings?${p}`).then(r=>r.json());
         if(!d.success){ g.innerHTML=empty('No properties found.'); return; }
         document.getElementById('total-count').textContent = d.data.pagination.total;
         renderCards(d.data.properties);
@@ -695,7 +696,7 @@
       document.getElementById('grid').innerHTML = list.map(p => {
         const isMyProperty = user && p.owner.id === user.id;
         const imgHtml = (p.images && p.images.length > 0)
-          ? `<img src="http://localhost:5000${p.images[0].url}" alt="${p.address}" style="width:100%;height:100%;object-fit:cover;">`
+          ? `<img src="${API_BASE.replace('/api','')}${p.images[0].url}" alt="${p.address}" style="width:100%;height:100%;object-fit:cover;">`
           : `<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`;
         const badgeClass = isMyProperty ? 'mine' : (p.isAvailable ? '' : 'na');
         const badgeText  = isMyProperty ? '🏠 Your Property' : (p.isAvailable ? 'Available' : 'Rented');
@@ -727,14 +728,14 @@
       document.getElementById('m-body').innerHTML    = '<div class="sk" style="height:180px;border-radius:8px"></div>';
       document.getElementById('m-req').innerHTML     = '';
       document.getElementById('m-send-btn').style.display = 'block';
-      const d = await fetch(`http://localhost:5000/api/listings/${id}`).then(r=>r.json()).catch(()=>null);
+      const d = await fetch(`${API_BASE}/listings/${id}`).then(r=>r.json()).catch(()=>null);
       if(!d?.success){ document.getElementById('m-body').innerHTML='<p style="color:#ef4444">Failed to load property details.</p>'; return; }
       const p = d.data;
       const galleryEl = document.getElementById('m-gallery');
       if(p.images && p.images.length > 0){
         const primary = p.images.find(img=>img.isPrimary) || p.images[0];
-        galleryEl.innerHTML = `<img class="modal-main-img" id="main-img" src="http://localhost:5000${primary.url}" alt="${p.address}">
-          ${p.images.length > 1 ? `<div class="modal-gallery">${p.images.map(img=>`<img src="http://localhost:5000${img.url}" alt="${p.address}" onclick="document.getElementById('main-img').src='http://localhost:5000${img.url}'">`).join('')}</div>` : ''}`;
+        galleryEl.innerHTML = `<img class="modal-main-img" id="main-img" src="${API_BASE.replace('/api','')}${primary.url}" alt="${p.address}">
+          ${p.images.length > 1 ? `<div class="modal-gallery">${p.images.map(img=>`<img src="${API_BASE.replace('/api','')}${img.url}" alt="${p.address}" onclick="document.getElementById('main-img').src='${API_BASE.replace('/api','')}${img.url}'">`).join('')}</div>` : ''}`;
       }
       document.getElementById('m-title').textContent = p.address;
       document.getElementById('m-body').innerHTML = `

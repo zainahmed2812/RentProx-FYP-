@@ -1,9 +1,9 @@
 // src/routes/User/utilityBills.js
 // TENANT → app.use('/api/user',  tenantBillRouter)
 //   POST /api/user/utility-bills/:agreementId   → upload bill
-//   GET  /api/user/utility-bills/:agreementId   → apne bills
+//   GET  /api/user/utility-bills/:agreementId   → tenant's own bills
 // OWNER  → app.use('/api/owner', ownerBillRouter)
-//   GET  /api/owner/utility-bills/:agreementId  → tenant ke bills
+//   GET  /api/owner/utility-bills/:agreementId  → view tenant bills
 
 import express    from 'express';
 import multer     from 'multer';
@@ -33,7 +33,7 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
     const ext     = path.extname(file.originalname).toLowerCase();
-    allowed.includes(ext) ? cb(null, true) : cb(new Error('Sirf images ya PDF allowed hain.'));
+    allowed.includes(ext) ? cb(null, true) : cb(new Error('Only images or PDF files are allowed.'));
   }
 });
 
@@ -47,11 +47,11 @@ tenantBillRouter.use(protect);
 tenantBillRouter.post('/utility-bills/:agreementId', upload.single('bill'), async (req, res) => {
   try {
     if (!req.file)
-      return res.status(400).json({ success: false, message: 'File zaruri hai.' });
+      return res.status(400).json({ success: false, message: 'File is required.' });
 
     const { month, billType = 'Utility', notes = '' } = req.body;
     if (!month)
-      return res.status(400).json({ success: false, message: 'Month zaruri hai.' });
+      return res.status(400).json({ success: false, message: 'Month is required.' });
 
     const agreement = await db.agreement.findUnique({
       where:   { id: req.params.agreementId },
@@ -59,11 +59,11 @@ tenantBillRouter.post('/utility-bills/:agreementId', upload.single('bill'), asyn
     });
 
     if (!agreement)
-      return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
+      return res.status(404).json({ success: false, message: 'Agreement not found.' });
     if (agreement.listing.tenantId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'Yeh aap ki agreement nahi.' });
+      return res.status(403).json({ success: false, message: 'This is not your agreement.' });
     if (agreement.status !== 'ACTIVE')
-      return res.status(400).json({ success: false, message: 'Agreement active nahi hai.' });
+      return res.status(400).json({ success: false, message: 'Agreement is not active.' });
 
     const bill = await db.utilityBill.create({
       data: {
@@ -75,7 +75,7 @@ tenantBillRouter.post('/utility-bills/:agreementId', upload.single('bill'), asyn
       }
     });
 
-    return res.status(201).json({ success: true, data: bill, message: `${month} ka ${billType} bill upload ho gaya!` });
+    return res.status(201).json({ success: true, data: bill, message: `${billType} bill uploaded successfully for ${month}!` });
 
   } catch (err) {
     if (req.file) fs.unlink(req.file.path, () => {});
@@ -93,9 +93,9 @@ tenantBillRouter.get('/utility-bills/:agreementId', async (req, res) => {
     });
 
     if (!agreement)
-      return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
+      return res.status(404).json({ success: false, message: 'Agreement not found.' });
     if (agreement.listing.tenantId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'Yeh aap ki agreement nahi.' });
+      return res.status(403).json({ success: false, message: 'This is not your agreement.' });
 
     const bills = await db.utilityBill.findMany({
       where:   { agreementId: req.params.agreementId },
@@ -124,9 +124,9 @@ ownerBillRouter.get('/utility-bills/:agreementId', async (req, res) => {
     });
 
     if (!agreement)
-      return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
+      return res.status(404).json({ success: false, message: 'Agreement not found.' });
     if (agreement.listing.property.ownerId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
+      return res.status(403).json({ success: false, message: 'This is not your property.' });
 
     const bills = await db.utilityBill.findMany({
       where:   { agreementId: req.params.agreementId },

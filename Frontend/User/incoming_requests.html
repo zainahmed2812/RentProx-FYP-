@@ -474,7 +474,7 @@ async function respondDissolution(id, action) {
   var ownerNote = '';
   if (action === 'accept') {
     ownerNote = prompt('Accept note (optional):') || '';
-    if (!confirm('Accept karne se agreement cancel ho jayegi. Confirm?')) return;
+    if (!confirm('Accepting this will cancel the agreement. Confirm?')) return;
   } else {
     ownerNote = prompt('Please enter the reason for declining (required):') || '';
     if (!ownerNote.trim()) { showToast('Reason is required.', 'error'); return; }

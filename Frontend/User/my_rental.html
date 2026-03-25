@@ -518,7 +518,7 @@ function renderDissolutionSection() {
       '<div class="form-grid">' +
         '<div class="form-group" style="grid-column:1/-1">' +
           '<label class="form-label">Reason for Dissolution *</label>' +
-          '<textarea class="form-input" id="dis-reason" placeholder="Kyu agreement khatam karna chahte hain?" style="min-height:75px;resize:vertical"></textarea>' +
+          '<textarea class="form-input" id="dis-reason" placeholder="why you want to dissolve the agreement?" style="min-height:75px;resize:vertical"></textarea>' +
         '</div>' +
         '<div class="form-group">' +
           '<label class="form-label">Proposed Vacate Date (optional)</label>' +
@@ -571,7 +571,7 @@ function renderDissolutionSection() {
         '<div class="dis-banner-icon">❌</div>' +
         '<div class="dis-banner-body">' +
           '<strong>Request Declined</strong>' +
-          '<p>Owner ne dissolution request decline ki. Agreement jari rahegi.</p>' +
+          '<p>Owner declined dissolution request. Agreement will be continued.</p>' +
           (d.ownerNote ? '<div class="dis-meta"><strong>Owner Reason:</strong> ' + d.ownerNote + '</div>' : '') +
         '</div>' +
       '</div>' +

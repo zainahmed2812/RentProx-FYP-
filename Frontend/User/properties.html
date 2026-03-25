@@ -296,9 +296,12 @@
         const tenant   = activeListing?.tenant;
         return `
           <div class="property-card">
-            <div class="card-image-placeholder">
-              <div class="rental-badge">${occupied ? 'OCCUPIED' : 'AVAILABLE'}</div>
-              <div style="color:#aaa;font-weight:bold;font-size:0.9rem;">${p.address}</div>
+            <div class="card-image-placeholder" style="padding:0;overflow:hidden;">
+              ${p.images && p.images.length > 0
+                ? `<img src="${API_BASE.replace('/api','')}${p.images[0].url}" alt="${p.address}" style="width:100%;height:100%;object-fit:cover;">`
+                : `<div style="color:#aaa;font-weight:bold;font-size:0.9rem;display:flex;align-items:center;justify-content:center;width:100%;height:100%">🏠 ${p.address}</div>`
+              }
+              <div class="rental-badge" style="position:absolute;top:10px;left:10px;background:${occupied?'#ef4444':'var(--primary-green)'}">${occupied ? 'OCCUPIED' : 'AVAILABLE'}</div>
             </div>
             <div class="card-body">
               <div class="price-tag">PKR ${p.rentAmount.toLocaleString()} <span style="font-size:0.8rem;font-weight:400;color:var(--text-muted);">/ month</span></div>
@@ -314,7 +317,10 @@
             <div class="card-actions">
               <button class="btn-action" onclick="openEditModal('${p.id}')">Edit</button>
               <button class="btn-action" onclick="window.location.href='ledger.html'">Ledger</button>
-              <button class="btn-action btn-danger" onclick="deleteProperty('${p.id}')">Delete</button>
+              ${occupied
+                ? `<button class="btn-action btn-danger" disabled title="Cannot delete an occupied property" style="opacity:0.4;cursor:not-allowed;">Delete</button>`
+                : `<button class="btn-action btn-danger" onclick="deleteProperty('${p.id}')">Delete</button>`
+              }
             </div>
           </div>`;
       }).join('');
@@ -374,7 +380,10 @@
     }
 
     async function deleteProperty(id) {
-      if (!confirm('did you want to delete this property? This action cannot be undone.')) return;
+      const prop = allProperties.find(x => x.id === id);
+      const isOccupied = prop && (prop.listings || []).find(l => l.agreement && l.agreement.status === 'ACTIVE');
+      if (isOccupied) { showToast('Cannot delete an occupied property. End the rental first.', 'error'); return; }
+      if (!confirm('Did you want to delete this property? This action cannot be undone.')) return;
       try {
         const data = await apiFetch(`/user/property/${id}`, { method: 'DELETE' });
         if (data.success) {

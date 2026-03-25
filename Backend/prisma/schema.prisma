@@ -45,6 +45,7 @@ model Property {
 
   listings Listing[]
   rentals  Rental[]
+  images   PropertyImage[]
 }
 
 // ─────────────────────────────────────────────────────
@@ -182,6 +183,19 @@ model DissolutionRequest {
   agreementId String    @unique
 }
 
+
+// ─────────────────────────────────────────────────────
+//  PROPERTY IMAGE
+// ─────────────────────────────────────────────────────
+model PropertyImage {
+  id         String   @id @default(cuid())
+  url        String   // e.g. /uploads/properties/xyz.jpg
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+}
 
 // ─────────────────────────────────────────────────────
 //  UTILITY BILL

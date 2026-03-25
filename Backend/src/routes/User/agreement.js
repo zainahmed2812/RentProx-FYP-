@@ -1,9 +1,9 @@
 // src/routes/User/agreement.js
-// GET  /api/user/agreement/:listingId  → agreement dekho
-// PUT  /api/user/agreement/:id         → terms update (owner, DRAFT only)
-// PUT  /api/user/agreement/:id/sign    → sign karo
-// POST /api/user/agreement/:id/pay     → tenant deposit submit kare
-// PUT  /api/user/agreement/:id/verify  → owner verify/reject kare
+// GET  /api/user/agreement/:listingId  → view agreement
+// PUT  /api/user/agreement/:id         → update terms (owner, DRAFT only)
+// PUT  /api/user/agreement/:id/sign    → sign agreement
+// POST /api/user/agreement/:id/pay     → tenant submits deposit
+// PUT  /api/user/agreement/:id/verify  → owner verify/reject
 
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
@@ -25,14 +25,14 @@ router.get('/:listingId', async (req, res) => {
       }
     });
 
-    if (!listing) return res.status(404).json({ success: false, message: 'Listing nahi mili.' });
+    if (!listing) return res.status(404).json({ success: false, message: 'Listing not found.' });
 
     const isOwner  = listing.property.ownerId === req.user.id;
     const isTenant = listing.tenantId         === req.user.id;
 
-    if (!isOwner && !isTenant) return res.status(403).json({ success: false, message: 'Access nahi hai.' });
-    if (listing.status !== 'ACCEPTED') return res.status(400).json({ success: false, message: 'Agreement sirf accepted listings ke liye available hai.' });
-    if (!listing.agreement) return res.status(404).json({ success: false, message: 'Agreement abhi nahi bana.' });
+    if (!isOwner && !isTenant) return res.status(403).json({ success: false, message: 'Access denied.' });
+    if (listing.status !== 'ACCEPTED') return res.status(400).json({ success: false, message: 'Agreement is only available for accepted listings.' });
+    if (!listing.agreement) return res.status(404).json({ success: false, message: 'Agreement has not been created yet.' });
 
     return res.json({
       success: true,
@@ -59,9 +59,9 @@ router.put('/:id', async (req, res) => {
       include: { listing: { include: { property: true } } }
     });
 
-    if (!agreement)                                          return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
-    if (agreement.listing.property.ownerId !== req.user.id) return res.status(403).json({ success: false, message: 'Sirf owner terms update kar sakta hai.' });
-    if (agreement.status !== 'DRAFT')                       return res.status(400).json({ success: false, message: 'Sirf DRAFT agreement update ho sakta hai.' });
+    if (!agreement)                                          return res.status(404).json({ success: false, message: 'Agreement not found.' });
+    if (agreement.listing.property.ownerId !== req.user.id) return res.status(403).json({ success: false, message: 'Only the owner can update terms.' });
+    if (agreement.status !== 'DRAFT')                       return res.status(400).json({ success: false, message: 'Only DRAFT agreements can be updated.' });
 
     const {
       monthlyRent, securityDeposit, advanceMonths,
@@ -89,7 +89,7 @@ router.put('/:id', async (req, res) => {
       }
     });
 
-    return res.json({ success: true, data: updated, message: 'Agreement update ho gaya.' });
+    return res.json({ success: true, data: updated, message: 'Agreement updated successfully.' });
 
   } catch (err) {
     console.error('[agreement PUT]', err);
@@ -105,13 +105,13 @@ router.put('/:id/sign', async (req, res) => {
       include: { listing: { include: { property: true } } }
     });
 
-    if (!agreement)                    return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
-    if (agreement.status === 'ACTIVE') return res.status(400).json({ success: false, message: 'Agreement pehle se active hai.' });
-    if (agreement.status !== 'DRAFT')  return res.status(400).json({ success: false, message: 'Sirf DRAFT sign ho sakta hai.' });
+    if (!agreement)                    return res.status(404).json({ success: false, message: 'Agreement not found.' });
+    if (agreement.status === 'ACTIVE') return res.status(400).json({ success: false, message: 'Agreement is already active.' });
+    if (agreement.status !== 'DRAFT')  return res.status(400).json({ success: false, message: 'Only DRAFT agreements can be signed.' });
 
     const isOwner  = agreement.listing.property.ownerId === req.user.id;
     const isTenant = agreement.listing.tenantId         === req.user.id;
-    if (!isOwner && !isTenant) return res.status(403).json({ success: false, message: 'Access nahi hai.' });
+    if (!isOwner && !isTenant) return res.status(403).json({ success: false, message: 'Access denied.' });
 
     const now        = new Date();
     const updateData = isOwner
@@ -120,15 +120,15 @@ router.put('/:id/sign', async (req, res) => {
 
     const bothSigned = isOwner ? agreement.tenantSigned : agreement.ownerSigned;
 
-    // NOTE: dono sign ke baad bhi DRAFT rahega — pehle deposit verify hogi, tab ACTIVE hoga
+    // NOTE: stays DRAFT after both sign — becomes ACTIVE only after deposit is verified
     const updated = await db.agreement.update({
       where: { id: req.params.id },
       data:  updateData
     });
 
     const msg = bothSigned
-      ? 'Dono ne sign kar liya! Ab tenant security deposit submit kare.'
-      : 'Aap ne sign kar diya. Doosre party ka intezaar hai.';
+      ? 'Both parties have signed! Tenant must now submit the security deposit.'
+      : 'You have signed. Waiting for the other party.';
 
     return res.json({ success: true, data: updated, message: msg, bothSigned });
 
@@ -143,8 +143,8 @@ router.post('/:id/pay', async (req, res) => {
   try {
     const { transactionId, amount } = req.body;
 
-    if (!transactionId?.trim()) return res.status(400).json({ success: false, message: 'Transaction ID zaruri hai.' });
-    if (!amount)                 return res.status(400).json({ success: false, message: 'Amount zaruri hai.' });
+    if (!transactionId?.trim()) return res.status(400).json({ success: false, message: 'Transaction ID is required.' });
+    if (!amount)                 return res.status(400).json({ success: false, message: 'Amount is required.' });
 
     const agreement = await db.agreement.findUnique({
       where:   { id: req.params.id },
@@ -154,14 +154,14 @@ router.post('/:id/pay', async (req, res) => {
       }
     });
 
-    if (!agreement) return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
-    if (agreement.listing.tenantId !== req.user.id) return res.status(403).json({ success: false, message: 'Sirf tenant payment submit kar sakta hai.' });
-    if (!agreement.tenantSigned || !agreement.ownerSigned) return res.status(400).json({ success: false, message: 'Pehle dono parties sign karo.' });
+    if (!agreement) return res.status(404).json({ success: false, message: 'Agreement not found.' });
+    if (agreement.listing.tenantId !== req.user.id) return res.status(403).json({ success: false, message: 'Only the tenant can submit a payment.' });
+    if (!agreement.tenantSigned || !agreement.ownerSigned) return res.status(400).json({ success: false, message: 'Both parties must sign first.' });
 
     if (agreement.securityPayment?.status === 'PENDING_VERIFICATION')
-      return res.status(409).json({ success: false, message: 'Ek payment pehle se verification pending hai.' });
+      return res.status(409).json({ success: false, message: 'A payment is already pending verification.' });
     if (agreement.securityPayment?.status === 'VERIFIED')
-      return res.status(409).json({ success: false, message: 'Payment pehle se verified ho chuki hai.' });
+      return res.status(409).json({ success: false, message: 'Payment has already been verified.' });
 
     // REJECTED thi to delete kar ke nayi submit karo
     if (agreement.securityPayment?.status === 'REJECTED') {
@@ -180,7 +180,7 @@ router.post('/:id/pay', async (req, res) => {
     return res.status(201).json({
       success: true,
       data:    payment,
-      message: 'Payment submit ho gayi! Owner verification ka intezaar karein.'
+      message: 'Payment submitted! Waiting for owner verification.'
     });
 
   } catch (err) {
@@ -195,7 +195,7 @@ router.put('/:id/verify', async (req, res) => {
     const { action, rejectedReason = '' } = req.body;
 
     if (!['verify', 'reject'].includes(action))
-      return res.status(400).json({ success: false, message: "action 'verify' ya 'reject' hona chahiye." });
+      return res.status(400).json({ success: false, message: "action must be 'verify' or 'reject'." });
 
     const agreement = await db.agreement.findUnique({
       where:   { id: req.params.id },
@@ -205,13 +205,13 @@ router.put('/:id/verify', async (req, res) => {
       }
     });
 
-    if (!agreement) return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
+    if (!agreement) return res.status(404).json({ success: false, message: 'Agreement not found.' });
     if (agreement.listing.property.ownerId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'Sirf owner payment verify kar sakta hai.' });
+      return res.status(403).json({ success: false, message: 'Only the owner can verify payments.' });
     if (!agreement.securityPayment)
-      return res.status(404).json({ success: false, message: 'Koi payment submit nahi ki gayi.' });
+      return res.status(404).json({ success: false, message: 'No payment has been submitted.' });
     if (agreement.securityPayment.status !== 'PENDING_VERIFICATION')
-      return res.status(400).json({ success: false, message: 'Yeh payment already process ho chuki hai.' });
+      return res.status(400).json({ success: false, message: 'This payment has already been processed.' });
 
     if (action === 'verify') {
       await db.$transaction(async (tx) => {
@@ -244,14 +244,14 @@ router.put('/:id/verify', async (req, res) => {
           }
         });
       });
-      return res.json({ success: true, message: 'Payment verify ho gayi! Agreement ab ACTIVE hai.' });
+      return res.json({ success: true, message: 'Payment verified! Agreement is now ACTIVE.' });
 
     } else {
       await db.securityDepositPayment.update({
         where: { agreementId: req.params.id },
-        data:  { status: 'REJECTED', rejectedReason: rejectedReason || 'Transaction ID sahi nahi hai.' }
+        data:  { status: 'REJECTED', rejectedReason: rejectedReason || 'Invalid transaction ID.' }
       });
-      return res.json({ success: true, message: 'Payment reject ho gayi.' });
+      return res.json({ success: true, message: 'Payment rejected.' });
     }
 
   } catch (err) {

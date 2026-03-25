@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rent Ledger — RentProx</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     :root {
       --green:#28b446; --green-dark:#1e8c36;
@@ -135,6 +136,42 @@
       .menu-toggle{ display:block; }
       .content{ padding:20px; }
     }
+
+    /* ── OWNER CHART ── */
+    #chart-section{ display:none; }
+    .chart-card{
+      background:#fff; border:1px solid var(--border); border-radius:16px;
+      padding:24px 28px; margin-bottom:28px; box-shadow:var(--shadow);
+    }
+    .chart-top{
+      display:flex; align-items:flex-start; justify-content:space-between;
+      flex-wrap:wrap; gap:14px; margin-bottom:20px;
+    }
+    .chart-top h2{ font-size:1rem; font-weight:700; color:var(--text); }
+    .chart-top p { font-size:0.8rem; color:var(--muted); margin-top:3px; }
+    .chart-legend{ display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+    .leg{ display:flex; align-items:center; gap:6px; font-size:0.74rem; font-weight:600; color:var(--muted); }
+    .leg-dot{ width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+    .chart-stats{
+      display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:22px;
+    }
+    .cstat{
+      background:#f8fafc; border:1px solid var(--border); border-radius:10px;
+      padding:13px 16px;
+    }
+    .cstat-lbl{ font-size:0.67rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.5px; color:var(--muted); margin-bottom:5px; }
+    .cstat-val{ font-size:1.15rem; font-weight:800; color:var(--text); }
+    .cstat-val.g{ color:#28b446; }
+    .cstat-val.o{ color:#c2410c; }
+    .cstat-val.r{ color:#ef4444; }
+    .chart-wrap{ position:relative; width:100%; height:250px; }
+    @media(max-width:900px){ .chart-stats{ grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:600px){
+      .chart-card{ padding:18px 16px; }
+      .chart-stats{ grid-template-columns:repeat(2,1fr); }
+      .chart-wrap{ height:200px; }
+    }
   </style>
 </head>
 <body>
@@ -192,6 +229,46 @@
       <button class="role-tab"        id="tab-tenant" onclick="switchRole('tenant',this)">🧑 As Tenant</button>
     </div>
 
+
+    <!-- ── OWNER STACKED BAR CHART ── -->
+    <div id="chart-section">
+      <div class="chart-card">
+        <div class="chart-top">
+          <div>
+            <h2>📊 Payment Overview — All Properties</h2>
+            <p>Stacked breakdown of verified, pending, and rejected payments per property</p>
+          </div>
+          <div class="chart-legend">
+            <div class="leg"><div class="leg-dot" style="background:#28b446"></div>Verified</div>
+            <div class="leg"><div class="leg-dot" style="background:#f97316"></div>Pending</div>
+            <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Rejected</div>
+            <div class="leg"><div class="leg-dot" style="background:#cbd5e1"></div>Not Submitted</div>
+          </div>
+        </div>
+        <div class="chart-stats">
+          <div class="cstat">
+            <div class="cstat-lbl">Properties</div>
+            <div class="cstat-val" id="cs-props">—</div>
+          </div>
+          <div class="cstat">
+            <div class="cstat-lbl">Total Collected</div>
+            <div class="cstat-val g" id="cs-collected">—</div>
+          </div>
+          <div class="cstat">
+            <div class="cstat-lbl">Pending Verification</div>
+            <div class="cstat-val o" id="cs-pending">—</div>
+          </div>
+          <div class="cstat">
+            <div class="cstat-lbl">Rejected</div>
+            <div class="cstat-val r" id="cs-rejected">—</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="paymentsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
     <div id="ledger-content">
       <div class="sk" style="height:120px;margin-bottom:16px"></div>
       <div class="sk" style="height:120px;margin-bottom:16px"></div>
@@ -233,9 +310,10 @@ async function switchRole(role, el){
   currentRole = role;
   document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
+  document.getElementById('chart-section').style.display = role==='owner' ? 'block' : 'none';
   if(role==='owner'){
     if(!ownerData) await loadOwner();
-    else renderOwner();
+    else { renderOwnerChart(); renderOwner(); }
   } else {
     if(!tenantData) await loadTenant();
     else renderTenant();
@@ -249,6 +327,7 @@ async function loadOwner(){
     const d = await apiFetch('/owner/ledger');
     if(!d.success){ showEmpty('Failed to load data.'); return; }
     ownerData = d.data || [];
+    renderOwnerChart();
     renderOwner();
   } catch { showEmpty('Network error.'); }
 }
@@ -552,8 +631,8 @@ function renderTenant(){
         <div style="color:var(--muted);font-size:0.83rem">Loading...</div>
       </div>
       <div class="upload-bill-form" style="margin-top:14px">
-        <h4>📤 Naya Utility Bill Upload Karein</h4>
-        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">Image ya PDF — max 5MB</div>
+        <h4>📤 Upload New Utility Bill</h4>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px">Image or PDF — max 5MB</div>
         <div class="upload-row">
           <select class="upload-sel" id="bill-month-sel">${generateMonthOptions()}</select>
           <select class="upload-sel" id="bill-type-sel">
@@ -592,6 +671,131 @@ async function tenantSubmitMonthly(agreementId, month, amount){
     else{ showToast(d.message||'Failed to submit payment.','error'); if(btn){ btn.disabled=false; btn.textContent='Submit Payment'; } }
   } catch { showToast('Network error.','error'); if(btn){ btn.disabled=false; btn.textContent='Submit Payment'; } }
 }
+
+// ── OWNER CHART ───────────────────────────────────────
+let chartInst = null;
+
+function renderOwnerChart(){
+  const section = document.getElementById('chart-section');
+  if(!section) return;
+  if(!ownerData || !ownerData.length){ section.style.display='none'; return; }
+  section.style.display = 'block';
+
+  const labels=[], dsVerified=[], dsPending=[], dsRejected=[], dsNotSub=[];
+  let totCollected=0, totPending=0, totRejected=0;
+
+  ownerData.forEach(item => {
+    // Label: first part of address before comma
+    labels.push(item.property.address.split(',')[0].trim());
+
+    const sp   = item.securityPayment;   // null if not yet submitted by tenant
+    const mps  = item.monthlyPayments || [];
+    const rent = item.agreement.monthlyRent;
+    // The actual security deposit amount (from agreement, not from sp.amount which may be 0/null)
+    const secDepAmt = item.agreement.securityDeposit || (rent * 2);
+
+    // ── Security deposit bucket ──
+    // sp is null  → tenant hasn't submitted yet → counts as "Not Submitted"
+    // sp PENDING  → tenant submitted, owner hasn't verified → counts as "Pending"
+    // sp VERIFIED → collected → counts as "Verified"
+    // sp REJECTED → tenant needs to resubmit → counts as "Rejected"
+    let secV=0, secP=0, secR=0, secNS=0;
+    if(!sp){
+      secNS = secDepAmt;           // not submitted at all yet
+    } else {
+      const amt = sp.amount || secDepAmt;
+      if(sp.status === 'VERIFIED')             secV  = amt;
+      else if(sp.status === 'PENDING_VERIFICATION') secP = amt;  // ← THIS is the pending stage you described
+      else if(sp.status === 'REJECTED')        secR  = amt;
+    }
+
+    // ── Monthly payments bucket ──
+    const mpV  = mps.filter(p=>p.status==='VERIFIED').reduce((s,p)=>s+p.amount, 0);
+    const mpP  = mps.filter(p=>p.status==='PENDING_VERIFICATION').reduce((s,p)=>s+p.amount, 0);
+    const mpR  = mps.filter(p=>p.status==='REJECTED').reduce((s,p)=>s+p.amount, 0);
+
+    // Estimate how many monthly payments should have been made so far
+    const start   = item.agreement.startDate ? new Date(item.agreement.startDate) : new Date();
+    const now     = new Date();
+    const elapsed = Math.max(0,
+      (now.getFullYear()-start.getFullYear())*12 + (now.getMonth()-start.getMonth())
+    );
+    const expectedMonthly  = (elapsed + 1) * rent;
+    const accountedMonthly = mpV + mpP + mpR;
+    const mpNS = Math.max(0, expectedMonthly - accountedMonthly);
+
+    // ── Totals ──
+    const totalV  = secV  + mpV;
+    const totalP  = secP  + mpP;   // ← security deposit PENDING shows here as orange
+    const totalR  = secR  + mpR;
+    const totalNS = secNS + mpNS;
+
+    dsVerified.push(Math.round(totalV));
+    dsPending.push(Math.round(totalP));
+    dsRejected.push(Math.round(totalR));
+    dsNotSub.push(Math.round(totalNS));
+
+    totCollected += totalV;
+    totPending   += totalP;
+    totRejected  += totalR;
+  });
+
+  // Summary tiles
+  document.getElementById('cs-props').textContent     = ownerData.length;
+  document.getElementById('cs-collected').textContent = 'PKR ' + Math.round(totCollected).toLocaleString();
+  document.getElementById('cs-pending').textContent   = 'PKR ' + Math.round(totPending).toLocaleString();
+  document.getElementById('cs-rejected').textContent  = 'PKR ' + Math.round(totRejected).toLocaleString();
+
+  const ctx = document.getElementById('paymentsChart').getContext('2d');
+  if(chartInst) chartInst.destroy();
+
+  chartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'Verified',      data:dsVerified, backgroundColor:'#28b446', borderRadius:4, borderSkipped:false },
+        { label:'Pending',       data:dsPending,  backgroundColor:'#f97316', borderRadius:4, borderSkipped:false },
+        { label:'Rejected',      data:dsRejected, backgroundColor:'#ef4444', borderRadius:4, borderSkipped:false },
+        { label:'Not Submitted', data:dsNotSub,   backgroundColor:'#cbd5e1', borderRadius:4, borderSkipped:false },
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          backgroundColor:'#1a1d23',
+          titleFont:{ family:'Plus Jakarta Sans', size:12, weight:'700' },
+          bodyFont: { family:'Plus Jakarta Sans', size:11 },
+          padding:12, cornerRadius:8,
+          callbacks:{
+            label: c => ' ' + c.dataset.label + ': PKR ' + c.parsed.y.toLocaleString()
+          }
+        }
+      },
+      scales:{
+        x:{
+          stacked:true,
+          grid:{ display:false },
+          ticks:{ font:{ family:'Plus Jakarta Sans', size:11 }, color:'#666', maxRotation:25 }
+        },
+        y:{
+          stacked:true,
+          grid:{ color:'#f1f5f9' },
+          border:{ dash:[4,4] },
+          ticks:{
+            font:{ family:'Plus Jakarta Sans', size:11 }, color:'#666',
+            callback: v => 'PKR '+(v>=1000 ? (v/1000).toFixed(0)+'k' : v)
+          }
+        }
+      }
+    }
+  });
+}
+
 
 function showSkeleton(){
   document.getElementById('ledger-content').innerHTML =
@@ -651,8 +855,8 @@ async function loadOwnerBills(agreementId, startDate) {
           <div class="util-alert critical" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none">
             <div class="util-alert-icon">🚨</div>
             <div class="util-alert-body">
-              <div class="util-alert-title">Utility Bills — 3 Months Se Missing!</div>
-              <div class="util-alert-sub">Tenant ne pichle 3 mahine se koi utility bill upload nahi kiya: <strong>${missedMonths.join(', ')}</strong></div>
+              <div class="util-alert-title">Utility Bills — Missing for 3 Months!</div>
+              <div class="util-alert-sub">Tenant has not uploaded any utility bill for the past 3 months: <strong>${missedMonths.join(', ')}</strong></div>
             </div>
           </div>`;
       } else if (missedMonths.length > 0) {
@@ -661,17 +865,17 @@ async function loadOwnerBills(agreementId, startDate) {
           <div class="util-alert" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none">
             <div class="util-alert-icon">⚠️</div>
             <div class="util-alert-body">
-              <div class="util-alert-title">Kuch Months Ka Utility Bill Missing Hai</div>
-              <div class="util-alert-sub">In months ka bill nahi aaya: <strong>${missedMonths.join(', ')}</strong></div>
+              <div class="util-alert-title">Some Monthly Utility Bills Are Missing</div>
+              <div class="util-alert-sub">Bills not received for: <strong>${missedMonths.join(', ')}</strong></div>
             </div>
           </div>`;
       } else {
-        alertBox.innerHTML = ''; // Sab theek
+        alertBox.innerHTML = ''; // All clear
       }
     }
 
     if (!bills.length) {
-      wrap.innerHTML = '<div style="color:var(--muted);font-size:0.83rem;padding:4px 0">Abhi koi bill upload nahi kiya gaya.</div>';
+      wrap.innerHTML = '<div style="color:var(--muted);font-size:0.83rem;padding:4px 0">No bills uploaded yet.</div>';
       return;
     }
     wrap.innerHTML = `<div class="bills-grid">${bills.map(b => billCard(b)).join('')}</div>`;
@@ -685,11 +889,11 @@ async function loadTenantBills(agreementId) {
     const d     = await apiFetch(`/user/utility-bills/${agreementId}`);
     const bills = d.data || [];
     if (!bills.length) {
-      wrap.innerHTML = '<div style="color:var(--muted);font-size:0.83rem;padding:4px 0">Abhi koi bill upload nahi kiya.</div>';
+      wrap.innerHTML = '<div style="color:var(--muted);font-size:0.83rem;padding:4px 0">No bills uploaded yet.</div>';
       return;
     }
     wrap.innerHTML = `<div class="bills-grid">${bills.map(b => billCard(b)).join('')}</div>`;
-  } catch { wrap.innerHTML = '<div style="color:var(--muted);font-size:0.83rem">Bills load nahi hue.</div>'; }
+  } catch { wrap.innerHTML = '<div style="color:var(--muted);font-size:0.83rem">Failed to load bills.</div>'; }
 }
 
 function billCard(b) {
@@ -715,8 +919,8 @@ async function tenantUploadBill(agreementId) {
   const fileInp  = document.getElementById('bill-file');
   const btn      = document.getElementById('bill-upload-btn');
 
-  if (!fileInp?.files?.length) { showToast('File select karein.', 'error'); return; }
-  if (!month)                   { showToast('Month select karein.', 'error'); return; }
+  if (!fileInp?.files?.length) { showToast('Please select a file.', 'error'); return; }
+  if (!month)                   { showToast('Please select a month.', 'error'); return; }
 
   btn.disabled    = true;
   btn.textContent = 'Uploading...';
@@ -739,7 +943,7 @@ async function tenantUploadBill(agreementId) {
       fileInp.value = '';
       await loadTenantBills(agreementId);
     } else {
-      showToast(d.message || 'Upload nahi hua.', 'error');
+      showToast(d.message || 'Upload failed.', 'error');
     }
   } catch { showToast('Network error.', 'error'); }
   finally  { btn.disabled = false; btn.textContent = 'Upload'; }

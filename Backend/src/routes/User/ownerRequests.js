@@ -46,9 +46,9 @@ router.put('/:id/accept', async (req, res) => {
       include: { property: true }
     });
 
-    if (!listing)                                 return res.status(404).json({ success: false, message: 'Request nahi mili.' });
-    if (listing.property.ownerId !== req.user.id) return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
-    if (listing.status !== 'PENDING')             return res.status(400).json({ success: false, message: 'Sirf PENDING request accept ho sakti hai.' });
+    if (!listing)                                 return res.status(404).json({ success: false, message: 'Request not found.' });
+    if (listing.property.ownerId !== req.user.id) return res.status(403).json({ success: false, message: 'This is not your property.' });
+    if (listing.status !== 'PENDING')             return res.status(400).json({ success: false, message: 'Only PENDING requests can be accepted.' });
 
     const result = await db.$transaction(async (tx) => {
       const updatedListing = await tx.listing.update({
@@ -94,7 +94,7 @@ router.put('/:id/accept', async (req, res) => {
       return { listing: updatedListing, agreement };
     });
 
-    return res.json({ success: true, data: result, message: 'Request accept ho gayi! Agreement draft ban gaya.' });
+    return res.json({ success: true, data: result, message: 'Request accepted! Agreement draft created.' });
 
   } catch (err) {
     console.error('[ownerRequests accept]', err);
@@ -110,16 +110,16 @@ router.put('/:id/decline', async (req, res) => {
       include: { property: true }
     });
 
-    if (!listing)                                 return res.status(404).json({ success: false, message: 'Request nahi mili.' });
-    if (listing.property.ownerId !== req.user.id) return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
-    if (listing.status !== 'PENDING')             return res.status(400).json({ success: false, message: 'Sirf PENDING request decline ho sakti hai.' });
+    if (!listing)                                 return res.status(404).json({ success: false, message: 'Request not found.' });
+    if (listing.property.ownerId !== req.user.id) return res.status(403).json({ success: false, message: 'This is not your property.' });
+    if (listing.status !== 'PENDING')             return res.status(400).json({ success: false, message: 'Only PENDING requests can be declined.' });
 
     await db.listing.update({
       where: { id: listing.id },
       data:  { status: 'DECLINED' }
     });
 
-    return res.json({ success: true, message: 'Request decline ho gayi.' });
+    return res.json({ success: true, message: 'Request declined.' });
 
   } catch (err) {
     console.error('[ownerRequests decline]', err);

@@ -1,11 +1,11 @@
 // src/routes/User/tenantRequests.js
 // ══════════════════════════════════════════════════════
 // TENANT — login required
-// POST   /api/user/requests       → property ke liye request bhejo
-// GET    /api/user/requests       → meri sab requests (with status + agreement)
-// DELETE /api/user/requests/:id   → PENDING request wapas lo
+// POST   /api/user/requests       → send a rental request
+// GET    /api/user/requests       → all my requests (with status + agreement)
+// DELETE /api/user/requests/:id   → cancel a PENDING request
 //
-// index.js mein add karo:
+// Add to index.js:
 //   import tenantRequests from './routes/User/tenantRequests.js';
 //   app.use('/api/user/requests', tenantRequests);
 // ══════════════════════════════════════════════════════
@@ -17,7 +17,7 @@ import { protect } from '../../middleware/authMiddleware.js';
 const router = express.Router();
 const db     = new PrismaClient();
 
-router.use(protect);  // sab routes login require karte hain
+router.use(protect);  // all routes require login
 
 // ── POST /api/user/requests ───────────────────────────
 router.post('/', async (req, res) => {
@@ -25,22 +25,22 @@ router.post('/', async (req, res) => {
     const { propertyId, message = '' } = req.body;
     const tenantId = req.user.id;
 
-    if (!propertyId) return res.status(400).json({ success: false, message: 'propertyId zaruri hai.' });
+    if (!propertyId) return res.status(400).json({ success: false, message: 'propertyId is required.' });
 
     const property = await db.property.findUnique({ where: { id: propertyId } });
-    if (!property)           return res.status(404).json({ success: false, message: 'Property nahi mili.' });
-    if (!property.isAvailable) return res.status(400).json({ success: false, message: 'Yeh property available nahi hai.' });
-    if (property.ownerId === tenantId) return res.status(400).json({ success: false, message: 'Apni khud ki property pe request nahi kar sakte.' });
+    if (!property)           return res.status(404).json({ success: false, message: 'Property not found.' });
+    if (!property.isAvailable) return res.status(400).json({ success: false, message: 'This property is not available.' });
+    if (property.ownerId === tenantId) return res.status(400).json({ success: false, message: 'You cannot send a request for your own property.' });
 
-    // Pehle se request check
+    // Check for existing request
     const existing = await db.listing.findUnique({
       where: { propertyId_tenantId: { propertyId, tenantId } }
     });
 
     if (existing) {
-      if (existing.status === 'PENDING')  return res.status(409).json({ success: false, message: 'Aap ne pehle se yeh request bheji hui hai.' });
-      if (existing.status === 'ACCEPTED') return res.status(409).json({ success: false, message: 'Aap ki request pehle se accept ho chuki hai.' });
-      // DECLINED thi — purani delete kar ke nayi banao
+      if (existing.status === 'PENDING')  return res.status(409).json({ success: false, message: 'You have already sent a request for this property.' });
+      if (existing.status === 'ACCEPTED') return res.status(409).json({ success: false, message: 'Your request has already been accepted.' });
+      // Was DECLINED — delete old and create new
       await db.listing.delete({ where: { id: existing.id } });
     }
 
@@ -51,7 +51,7 @@ router.post('/', async (req, res) => {
       }
     });
 
-    return res.status(201).json({ success: true, data: listing, message: 'Request bheji gayi!' });
+    return res.status(201).json({ success: true, data: listing, message: 'Request sent successfully!' });
 
   } catch (err) {
     console.error('[tenantRequests POST]', err);
@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
         property: {
           include: { owner: { select: { id: true, name: true, phone: true, email: true } } }
         },
-        agreement: true   // agar accept hua to agreement bhi aayega
+        agreement: true   // agreement included if accepted
       }
     });
 
@@ -86,13 +86,13 @@ router.delete('/:id', async (req, res) => {
   try {
     const listing = await db.listing.findUnique({ where: { id: req.params.id } });
 
-    if (!listing)                          return res.status(404).json({ success: false, message: 'Request nahi mili.' });
-    if (listing.tenantId !== req.user.id)  return res.status(403).json({ success: false, message: 'Yeh aap ki request nahi.' });
-    if (listing.status   !== 'PENDING')    return res.status(400).json({ success: false, message: 'Sirf PENDING request cancel ho sakti hai.' });
+    if (!listing)                          return res.status(404).json({ success: false, message: 'Request not found.' });
+    if (listing.tenantId !== req.user.id)  return res.status(403).json({ success: false, message: 'This is not your request.' });
+    if (listing.status   !== 'PENDING')    return res.status(400).json({ success: false, message: 'Only PENDING requests can be cancelled.' });
 
     await db.listing.delete({ where: { id: req.params.id } });
 
-    return res.json({ success: true, message: 'Request cancel ho gayi.' });
+    return res.json({ success: true, message: 'Request cancelled successfully.' });
 
   } catch (err) {
     console.error('[tenantRequests DELETE]', err);

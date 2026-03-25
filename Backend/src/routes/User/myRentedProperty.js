@@ -34,7 +34,7 @@ router.get('/my-rental', async (req, res) => {
     });
 
     if (!rental) {
-      return res.json({ success: true, data: null, message: 'Abhi koi active rental nahi hai.' });
+      return res.json({ success: true, data: null, message: 'No active rental found.' });
     }
 
     return res.json({

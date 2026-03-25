@@ -17,9 +17,7 @@ router.get('/', async (req, res) => {
     const { city, areaUnit, maxRent, minRent, page = 1, limit = 12 } = req.query;
 
     const where = {
-      // ─── BUG FIX 1: isAvailable=false properties bilkul na aayein ───
-      // Jab owner accept karta hai → property.isAvailable = false hoti hai
-      // Yeh ensure karta hai k rented properties listing se hatt jaayein
+      // Only show available properties — isAvailable=false means rented out
       isAvailable: true,
 
       // Optional filters
@@ -42,7 +40,8 @@ router.get('/', async (req, res) => {
       take:    parseInt(limit),
       orderBy: { createdAt: 'desc' },
       include: {
-        owner: { select: { id: true, name: true, phone: true } },
+        owner:  { select: { id: true, name: true, phone: true } },
+        images: { orderBy: { isPrimary: 'desc' } },
       }
     });
 
@@ -71,11 +70,12 @@ router.get('/:id', async (req, res) => {
     const property = await db.property.findUnique({
       where:   { id: req.params.id },
       include: {
-        owner: { select: { id: true, name: true, phone: true, email: true } },
+        owner:  { select: { id: true, name: true, phone: true, email: true } },
+        images: { orderBy: { isPrimary: 'desc' } },
       }
     });
 
-    if (!property) return res.status(404).json({ success: false, message: 'Property nahi mili.' });
+    if (!property) return res.status(404).json({ success: false, message: 'Property not found.' });
 
     return res.json({ success: true, data: property });
 

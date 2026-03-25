@@ -9,7 +9,7 @@
 //   GET  /api/user/ledger                   → apni payments
 //   POST /api/user/ledger/:agreementId/pay  → next month submit
 //
-// index.js mein ALAG mount karo:
+// Mount separately in index.js:
 //   app.use('/api/owner', ownerLedgerRoutes);
 //   app.use('/api/user',  userLedgerRoutes);
 // ══════════════════════════════════════════════════════
@@ -88,18 +88,18 @@ ownerLedgerRouter.put('/ledger/:paymentId/verify', async (req, res) => {
     });
 
     if (!payment)
-      return res.status(404).json({ success: false, message: 'Payment nahi mili.' });
+      return res.status(404).json({ success: false, message: 'Payment not found.' });
     if (payment.agreement.listing.property.ownerId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
+      return res.status(403).json({ success: false, message: 'This is not your property.' });
     if (payment.status !== 'PENDING_VERIFICATION')
-      return res.status(400).json({ success: false, message: 'Payment already process ho chuki hai.' });
+      return res.status(400).json({ success: false, message: 'Payment has already been processed.' });
 
     await db.monthlyRentPayment.update({
       where: { id: req.params.paymentId },
       data:  { status: 'VERIFIED', verifiedAt: new Date() }
     });
 
-    return res.json({ success: true, message: 'Payment verify ho gayi!' });
+    return res.json({ success: true, message: 'Payment verified successfully!' });
 
   } catch (err) {
     console.error('[owner ledger verify]', err);
@@ -117,18 +117,18 @@ ownerLedgerRouter.put('/ledger/:paymentId/reject', async (req, res) => {
     });
 
     if (!payment)
-      return res.status(404).json({ success: false, message: 'Payment nahi mili.' });
+      return res.status(404).json({ success: false, message: 'Payment not found.' });
     if (payment.agreement.listing.property.ownerId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'Yeh aap ki property nahi.' });
+      return res.status(403).json({ success: false, message: 'This is not your property.' });
     if (payment.status !== 'PENDING_VERIFICATION')
-      return res.status(400).json({ success: false, message: 'Payment already process ho chuki hai.' });
+      return res.status(400).json({ success: false, message: 'Payment has already been processed.' });
 
     await db.monthlyRentPayment.update({
       where: { id: req.params.paymentId },
-      data:  { status: 'REJECTED', rejectedReason: reason || 'Transaction ID sahi nahi.' }
+      data:  { status: 'REJECTED', rejectedReason: reason || 'Invalid transaction ID.' }
     });
 
-    return res.json({ success: true, message: 'Payment reject ho gayi.' });
+    return res.json({ success: true, message: 'Payment rejected.' });
 
   } catch (err) {
     console.error('[owner ledger reject]', err);
@@ -159,7 +159,7 @@ userLedgerRouter.get('/ledger', async (req, res) => {
     });
 
     if (!rental) {
-      return res.json({ success: true, data: null, message: 'Koi active rental nahi hai.' });
+      return res.json({ success: true, data: null, message: 'No active rental found.' });
     }
 
     const mps         = rental.agreement.monthlyPayments;
@@ -196,8 +196,8 @@ userLedgerRouter.post('/ledger/:agreementId/pay', async (req, res) => {
   try {
     const { transactionId, month, amount } = req.body;
 
-    if (!transactionId?.trim()) return res.status(400).json({ success: false, message: 'Transaction ID zaruri hai.' });
-    if (!month)                  return res.status(400).json({ success: false, message: 'Month zaruri hai.' });
+    if (!transactionId?.trim()) return res.status(400).json({ success: false, message: 'Transaction ID is required.' });
+    if (!month)                  return res.status(400).json({ success: false, message: 'Month is required.' });
 
     const agreement = await db.agreement.findUnique({
       where:   { id: req.params.agreementId },
@@ -205,24 +205,24 @@ userLedgerRouter.post('/ledger/:agreementId/pay', async (req, res) => {
     });
 
     if (!agreement)
-      return res.status(404).json({ success: false, message: 'Agreement nahi mila.' });
+      return res.status(404).json({ success: false, message: 'Agreement not found.' });
     if (agreement.listing.tenantId !== req.user.id)
-      return res.status(403).json({ success: false, message: 'Yeh aap ki agreement nahi.' });
+      return res.status(403).json({ success: false, message: 'This is not your agreement.' });
     if (agreement.status !== 'ACTIVE')
-      return res.status(400).json({ success: false, message: 'Agreement active nahi hai.' });
+      return res.status(400).json({ success: false, message: 'Agreement is not active.' });
 
     const existing = agreement.monthlyPayments.find(p => p.month === month);
     if (existing?.status === 'PENDING_VERIFICATION')
-      return res.status(409).json({ success: false, message: 'Is month ki payment pehle se pending hai.' });
+      return res.status(409).json({ success: false, message: 'A payment for this month is already pending.' });
     if (existing?.status === 'VERIFIED')
-      return res.status(409).json({ success: false, message: 'Is month ki payment pehle se verified hai.' });
+      return res.status(409).json({ success: false, message: 'A payment for this month is already verified.' });
 
     if (existing?.status === 'REJECTED') {
       await db.monthlyRentPayment.update({
         where: { id: existing.id },
         data:  { transactionId: transactionId.trim(), status: 'PENDING_VERIFICATION', rejectedReason: '' }
       });
-      return res.json({ success: true, message: 'Payment dobara submit ho gayi!' });
+      return res.json({ success: true, message: 'Payment resubmitted successfully!' });
     }
 
     await db.monthlyRentPayment.create({
@@ -237,7 +237,7 @@ userLedgerRouter.post('/ledger/:agreementId/pay', async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: `${month} ki payment submit ho gayi! Owner verify karega.`
+      message: `${month} payment submitted successfully! Waiting for owner to verify.`
     });
 
   } catch (err) {
