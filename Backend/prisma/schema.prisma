@@ -130,7 +130,8 @@ model Agreement {
   dissolutionRequest DissolutionRequest?
   securityPayment    SecurityDepositPayment?
   monthlyPayments    MonthlyRentPayment[]
-  utilityBills       UtilityBill[]
+  utilityBills          UtilityBill[]
+  maintenanceRequests   MaintenanceRequest[]
 }
 
 // ─────────────────────────────────────────────────────
@@ -213,6 +214,23 @@ model UtilityBill {
 }
 
 // ─────────────────────────────────────────────────────
+//  MAINTENANCE REQUEST
+// ─────────────────────────────────────────────────────
+model MaintenanceRequest {
+  id          String                    @id @default(cuid())
+  type        String                    // MAINTENANCE | COMPLAINT
+  title       String
+  description String
+  status      MaintenanceRequestStatus  @default(OPEN)
+  adminNote   String                    @default("")
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreementId String
+}
+
+// ─────────────────────────────────────────────────────
 //  ENUMS
 // ─────────────────────────────────────────────────────
 enum AreaUnit {
@@ -245,6 +263,12 @@ enum MonthlyRentPaymentStatus {
   PENDING_VERIFICATION
   VERIFIED
   REJECTED
+}
+
+enum MaintenanceRequestStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
 }
 
 enum SecurityDepositPaymentStatus {

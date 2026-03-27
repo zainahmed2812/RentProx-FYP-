@@ -174,6 +174,66 @@
       .req-actions .btn-sm { flex: 1 1 100%; }
       .req-header   { flex-direction: column; align-items: flex-start; gap: 8px; }
     }
+
+    /* ── MAINTENANCE SECTION ── */
+    .maint-section{ margin-top:32px; }
+    .maint-section-title{
+      font-size:1rem; font-weight:700; margin-bottom:16px;
+      padding-bottom:10px; border-bottom:2px solid var(--border);
+      display:flex; align-items:center; gap:10px;
+    }
+    .maint-card{
+      background:#fff; border:1px solid var(--border); border-radius:12px;
+      padding:20px 22px; margin-bottom:14px;
+      display:flex; align-items:flex-start; gap:16px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+      transition:box-shadow 0.2s;
+    }
+    .maint-card:hover{ box-shadow:0 4px 16px rgba(0,0,0,0.09); }
+    .maint-icon{
+      width:42px; height:42px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.15rem; flex-shrink:0;
+    }
+    .maint-icon.MAINTENANCE{ background:#eff6ff; }
+    .maint-icon.COMPLAINT  { background:#fff7ed; }
+    .maint-icon.OTHER      { background:#f1f5f9; }
+    .maint-body{ flex:1; min-width:0; }
+    .maint-header{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px; }
+    .maint-title{ font-weight:700; font-size:0.93rem; }
+    .maint-meta{ font-size:0.78rem; color:var(--muted); margin-bottom:8px; }
+    .maint-desc{
+      font-size:0.83rem; color:#374151; margin-bottom:12px;
+      background:#f8fafc; border-radius:7px; padding:10px 12px;
+      border-left:3px solid var(--border);
+    }
+    .maint-note{
+      font-size:0.78rem; background:#f0fdf4; padding:7px 10px;
+      border-radius:6px; margin-bottom:10px; color:#166534;
+    }
+    .maint-actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .maint-status-sel{
+      padding:7px 10px; border:1.5px solid var(--border); border-radius:7px;
+      font-size:0.8rem; font-family:inherit; cursor:pointer; outline:none;
+      background:#fff;
+    }
+    .maint-status-sel:focus{ border-color:var(--green); }
+    .maint-note-inp{
+      padding:7px 10px; border:1.5px solid var(--border); border-radius:7px;
+      font-size:0.8rem; font-family:inherit; min-width:180px; flex:1; outline:none;
+    }
+    .maint-note-inp:focus{ border-color:var(--green); }
+    .btn-maint-update{
+      padding:8px 16px; background:var(--green); color:#fff;
+      border:none; border-radius:7px; font-size:0.8rem;
+      font-weight:700; cursor:pointer; font-family:inherit;
+      white-space:nowrap;
+    }
+    .btn-maint-update:hover{ background:#1e8c36; }
+    .badge-OPEN       { background:#fff7ed; color:#c2410c; }
+    .badge-IN_PROGRESS{ background:#eff6ff; color:#1d4ed8; }
+    .badge-RESOLVED   { background:#e8f5e9; color:#15803d; }
+    .maint-empty{ text-align:center; padding:24px; color:var(--muted); font-size:0.88rem; }
   </style>
 </head>
 <body>
@@ -181,7 +241,7 @@
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
 <nav class="sidebar" id="sidebar">
-  <div class="sb-logo" onclick="location.href='homepage.html'">RentProx</div>
+  <div class="sb-logo" onclick="location.href='../homepage.html'">RentProx</div>
   <a href="../homepage.html"          class="nav-link">🔍 Browse Properties</a>
   <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
   <a href="my_rental.html"         class="nav-link">🏡 My Rental</a>
@@ -238,6 +298,7 @@
       <div class="sum-card declined"><div class="sum-label">Declined</div><div class="sum-val" id="cnt-declined">—</div></div>
       <div class="sum-card alerts"  ><div class="sum-label">Pay Pending</div><div class="sum-val" id="cnt-alerts">0</div></div>
       <div class="sum-card dis-sum"><div class="sum-label">Dissolution</div><div class="sum-val" id="cnt-dis">0</div></div>
+      <div class="sum-card" style="border-top:3px solid #3b82f6"><div class="sum-label">Maintenance</div><div class="sum-val" id="cnt-maint" style="color:#1d4ed8">0</div></div>
     </div>
 
     <!-- TABS -->
@@ -251,6 +312,10 @@
     <div id="table-wrap">
       <div class="sk"></div><div class="sk"></div><div class="sk"></div>
     </div>
+
+    <!-- ─── MAINTENANCE REQUESTS (neeche) ─── -->
+    <div id="maint-alerts-wrap" class="maint-section"></div>
+
   </div>
 </div>
 
@@ -290,6 +355,7 @@ async function loadRequests(){
     renderPaymentAlerts(allData.paymentAlerts || []);
     renderTable(allData.all);
     await loadDissolutionAlerts();
+    await loadMaintenanceRequests();
   } catch{
     showToast('Network error.','error');
     renderEmpty('not connected with backend.');
@@ -430,6 +496,83 @@ async function respond(id, action){
 
 // ══════════════════ DISSOLUTION OWNER ════════════════
 let _curDisAgreementId = null;
+
+
+// ── MAINTENANCE REQUESTS ──────────────────────────────
+async function loadMaintenanceRequests(){
+  try{
+    const d = await apiFetch('/owner/maintenance-requests');
+    if(!d.success) return;
+    const requests = d.data || [];
+
+    const openCount = requests.filter(r=>r.status!=='RESOLVED').length;
+    const cntEl = document.getElementById('cnt-maint');
+    if(cntEl) cntEl.textContent = openCount;
+
+    const wrap = document.getElementById('maint-alerts-wrap');
+    if(!wrap) return;
+
+    if(!requests.length){
+      wrap.innerHTML = '';
+      return;
+    }
+
+    const iconMap  = { MAINTENANCE:'🔧', COMPLAINT:'⚠️', OTHER:'📝' };
+
+    wrap.innerHTML = `
+      <div class="maint-section-title">
+        🔧 Maintenance & Complaint Requests
+        <span style="font-size:0.78rem;font-weight:400;color:var(--muted)">
+          ${requests.length} total &nbsp;·&nbsp; ${openCount} open
+        </span>
+      </div>
+      ${requests.map(r=>`
+      <div class="maint-card" id="maint-card-${r.id}">
+        <div class="maint-icon ${r.type||'OTHER'}">${iconMap[r.type]||'📝'}</div>
+        <div class="maint-body">
+          <div class="maint-header">
+            <span class="maint-title">${r.title}</span>
+            <span class="badge badge-${r.status}">${r.status.replace('_',' ')}</span>
+          </div>
+          <div class="maint-meta">
+            🏠 <strong>${r.property?.address||'—'}, ${r.property?.city||''}</strong>
+            &nbsp;·&nbsp; 👤 ${r.tenant?.name||'—'} (${r.tenant?.phone||''})
+            &nbsp;·&nbsp; 📅 ${new Date(r.createdAt).toLocaleDateString('en-PK')}
+          </div>
+          <div class="maint-desc">${r.description}</div>
+          ${r.adminNote ? `<div class="maint-note">📝 Your Note: ${r.adminNote}</div>` : ''}
+          <div class="maint-actions">
+            <select class="maint-status-sel" id="maint-sel-${r.id}">
+              <option value="OPEN"        ${r.status==='OPEN'?'selected':''}>Open</option>
+              <option value="IN_PROGRESS" ${r.status==='IN_PROGRESS'?'selected':''}>In Progress</option>
+              <option value="RESOLVED"    ${r.status==='RESOLVED'?'selected':''}>Resolved</option>
+            </select>
+            <input class="maint-note-inp" type="text"
+              id="maint-note-${r.id}"
+              placeholder="Add a note (optional)"
+              value="${r.adminNote||''}">
+            <button class="btn-maint-update" onclick="updateMaintenance('${r.id}')">
+              Update
+            </button>
+          </div>
+        </div>
+      </div>`).join('')}`;
+
+  } catch(e){ console.error('[maintenance load]', e); }
+}
+
+async function updateMaintenance(id){
+  const status    = document.getElementById(`maint-sel-${id}`)?.value;
+  const adminNote = document.getElementById(`maint-note-${id}`)?.value || '';
+  try{
+    const d = await apiFetch(`/owner/maintenance-requests/${id}`,{
+      method:'PUT',
+      body: JSON.stringify({ status, adminNote })
+    });
+    if(d.success){ showToast('Status updated!'); await loadMaintenanceRequests(); }
+    else showToast(d.message||'Update failed.','error');
+  } catch{ showToast('Network error.','error'); }
+}
 
 async function loadDissolutionAlerts() {
   try {

@@ -108,6 +108,11 @@
     .util-alert.critical{ background:#fff5f5; border-color:#fca5a5; }
     .util-alert.critical .util-alert-title{ color:#991b1b; }
     .util-alert.critical .util-alert-sub{ color:#dc2626; }
+
+    /* TENANT PROPERTY TABS */
+    .tenant-prop-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .tenant-prop-tab{ padding:8px 16px; border:1.5px solid var(--border); border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer; background:#fff; font-family:inherit; color:var(--muted); transition:all 0.15s; }
+    .tenant-prop-tab.active{ background:var(--green); color:#fff; border-color:var(--green); }
     /* UTILITY BILLS */
     .bills-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-top:10px; }
     .bill-card{ border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#fff; }
@@ -178,7 +183,7 @@
 
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <nav class="sidebar" id="sidebar">
-  <div class="sidebar-logo" onclick="location.href='../index.html'">RentProx</div>
+  <div class="sidebar-logo" onclick="location.href='../homepage.html'">RentProx</div>
   <div class="nav-group">
     <a href="../homepage.html"       class="nav-link">🔍 Browse Properties</a>
     <a href="my_requests.html"       class="nav-link">📋 My Requests</a>
@@ -284,7 +289,9 @@
 <script>
 let currentRole = 'owner';
 let ownerData   = null;
-let tenantData  = null;
+let tenantData       = null;
+let allTenantRentals = [];
+let activeTenantIdx  = 0;
 
 (async function init(){
   const user = await Auth.guard('../login_plm.html');
@@ -331,6 +338,118 @@ async function loadOwner(){
     renderOwner();
   } catch { showEmpty('Network error.'); }
 }
+
+// ── OWNER STATS ───────────────────────────────────────
+async function renderOwnerStats(){
+  const wrap = document.getElementById('owner-stats-wrap');
+  if(!wrap || !ownerData) return;
+
+  // Aggregate stats
+  let totalCollected  = 0;
+  let pendingCount    = 0;
+  let totalProperties = ownerData.length;
+  let billsOnTime     = 0;
+  let billsMissed     = 0;
+
+  const utilRows = [];
+  const now = new Date();
+
+  for(const item of ownerData){
+    const mps = item.monthlyPayments || [];
+    const sp  = item.securityPayment;
+
+    totalCollected += mps.filter(p=>p.status==='VERIFIED').reduce((s,p)=>s+p.amount,0);
+    if(sp?.status==='VERIFIED') totalCollected += sp.amount;
+    pendingCount   += mps.filter(p=>p.status==='PENDING_VERIFICATION').length;
+    if(sp?.status==='PENDING_VERIFICATION') pendingCount++;
+
+    // Utility bill check (last 3 months from start)
+    const bills    = await apiFetch(`/owner/utility-bills/${item.agreement.id}`).catch(()=>({data:[]}));
+    const uploaded = new Set((bills.data||[]).map(b=>b.month));
+    const start    = new Date(item.agreement.startDate);
+    let missed = 0, covered = 0;
+    for(let i=1;i<=3;i++){
+      const cd = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      const rs = new Date(start.getFullYear(), start.getMonth(), 1);
+      if(cd < rs) break;
+      const key = `${cd.getFullYear()}-${String(cd.getMonth()+1).padStart(2,'0')}`;
+      uploaded.has(key) ? covered++ : missed++;
+    }
+    billsOnTime += covered;
+    billsMissed += missed;
+
+    utilRows.push({
+      property: item.property,
+      tenant:   item.tenant,
+      covered,
+      missed,
+      lastBill: (bills.data||[]).length ? (bills.data[0].month) : '—',
+    });
+  }
+
+  // Stats cards
+  wrap.style.display = 'block';
+  wrap.innerHTML = `
+  <div class="owner-stats-bar">
+    <div class="stat-card">
+      <div class="stat-card-label">Total Collected</div>
+      <div class="stat-card-val stat-green">PKR ${totalCollected.toLocaleString()}</div>
+      <div class="stat-card-sub">Verified payments</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Pending Verification</div>
+      <div class="stat-card-val ${pendingCount>0?'stat-orange':'stat-green'}">${pendingCount}</div>
+      <div class="stat-card-sub">Awaiting your action</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Active Properties</div>
+      <div class="stat-card-val">${totalProperties}</div>
+      <div class="stat-card-sub">Currently rented out</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Utility Bills Status</div>
+      <div class="stat-card-val ${billsMissed>0?'stat-red':'stat-green'}">${billsMissed > 0 ? billsMissed+' Missing' : 'All Good ✓'}</div>
+      <div class="stat-card-sub">${billsOnTime} months covered</div>
+    </div>
+  </div>
+
+  ${utilRows.length ? `
+  <div class="util-status-wrap">
+    <div class="util-status-title">🧾 Utility Bills — Property-wise Status</div>
+    <div style="overflow-x:auto">
+    <table class="util-table">
+      <thead><tr>
+        <th>Property</th>
+        <th>Tenant</th>
+        <th>Last Bill</th>
+        <th>Last 3 Months</th>
+        <th>Status</th>
+      </tr></thead>
+      <tbody>
+        ${utilRows.map(r=>`
+        <tr>
+          <td><strong>${r.property.address}</strong><br><span style="color:var(--muted);font-size:0.75rem">${r.property.city}</span></td>
+          <td>${r.tenant.name}<br><span style="color:var(--muted);font-size:0.75rem">${r.tenant.phone}</span></td>
+          <td>${r.lastBill}</td>
+          <td>
+            <span style="color:var(--green)">✅ ${r.covered}</span> covered &nbsp;
+            ${r.missed > 0 ? `<span style="color:#ef4444">❌ ${r.missed}</span> missing` : ''}
+          </td>
+          <td>
+            ${r.missed===0
+              ? '<span class="badge b-verified">ON TIME</span>'
+              : r.missed>=3
+                ? '<span class="badge b-rejected">3 MONTHS MISSED</span>'
+                : '<span class="badge b-pending">PARTIAL</span>'
+            }
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>` : ''}`;
+}
+
 
 function renderOwner(){
   const wrap = document.getElementById('ledger-content');
@@ -471,34 +590,68 @@ async function loadTenant(){
     const d = await apiFetch('/user/my-rental');
     if(!d.success){ showEmpty('Failed to load data.'); return; }
 
-    // myRentedProperty.js returns: { listing, property, agreement, owner, complaints }
-    // We need to reshape this into what renderTenant() expects
     if(!d.data){
       tenantData = null;
       renderTenant();
       return;
     }
 
-    const { listing, property, agreement, owner } = d.data;
+    // Store all rentals for multi-property support
+    allTenantRentals = d.data.rentals || [];
 
-    // Fetch payment details from the agreement
-    const paymentsRes = await apiFetch(`/user/ledger/${agreement.id}/payments`).catch(()=>null);
+    if(!allTenantRentals.length){
+      tenantData = null;
+      renderTenant();
+      return;
+    }
 
-    tenantData = {
-      property,
-      agreement,
-      owner,
-      securityPayment:  agreement.securityPayment  || paymentsRes?.data?.securityPayment  || null,
-      monthlyPayments:  agreement.monthlyPayments   || paymentsRes?.data?.monthlyPayments  || [],
-      canSubmitNext:    paymentsRes?.data?.canSubmitNext ?? true,
-      nextMonth:        paymentsRes?.data?.nextMonth     || getCurrentMonth(),
-    };
+    // Load first rental by default
+    await setActiveTenantRental(0);
 
-    renderTenant();
   } catch(e) {
     console.error('[loadTenant]', e);
-    showEmpty('Network error. Make sure you are logged in and have an active rental.');
+    showEmpty('Network error. Login check karein aur active rental hona chahiye.');
   }
+}
+
+async function setActiveTenantRental(idx){
+  activeTenantIdx = idx;
+  const r = allTenantRentals[idx];
+  if(!r) return;
+
+  // agreement.monthlyPayments already included from my-rental
+  const mps         = r.agreement.monthlyPayments || [];
+  const lastPayment = mps[mps.length - 1];
+  const canSubmitNext = !lastPayment || lastPayment.status === 'VERIFIED';
+
+  // Compute next month
+  let nextMonth;
+  if(!mps.length){
+    const now = new Date();
+    nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  } else {
+    const months = mps.map(p=>p.month).sort();
+    const last   = months[months.length-1];
+    const [yr,mo] = last.split('-').map(Number);
+    const nd = new Date(yr, mo, 1);
+    nextMonth = `${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  tenantData = {
+    property:        r.property,
+    agreement:       r.agreement,
+    securityPayment: r.agreement.securityPayment || null,
+    monthlyPayments: mps,
+    nextMonth,
+    canSubmitNext,
+  };
+
+  renderTenant();
+}
+
+async function switchTenantRental(idx){
+  showSkeleton();
+  await setActiveTenantRental(idx);
 }
 
 // Helper: get current month in "YYYY-MM" format
@@ -514,6 +667,19 @@ function renderTenant(){
     return;
   }
 
+  // Multi-property tabs — show karo agar 1 se zyada rentals hain
+  let tabsHtml = '';
+  if(allTenantRentals.length > 1){
+    tabsHtml = '<div class="tenant-prop-tabs">' +
+      allTenantRentals.map((r, i) =>
+        `<button class="tenant-prop-tab ${i===activeTenantIdx?'active':''}"
+          onclick="switchTenantRental(${i})">
+          🏠 ${r.property.address}, ${r.property.city}
+        </button>`
+      ).join('') +
+    '</div>';
+  }
+
   const d   = tenantData;
   const sp  = d.securityPayment;
   const mps = d.monthlyPayments || [];
@@ -525,7 +691,7 @@ function renderTenant(){
 
   const lastRejected = [...mps].reverse().find(p=>p.status==='REJECTED');
 
-  wrap.innerHTML = `
+  wrap.innerHTML = tabsHtml + `
   <div class="prop-block">
     <div class="prop-header">
       <div>

@@ -200,6 +200,55 @@
       .dis-banner    { flex-direction: column; }
       .chip          { font-size: 0.65rem; }
     }
+
+    /* ── PROPERTY TAB SWITCHER ── */
+    .prop-tabs-bar{
+      background:var(--white);
+      border-bottom:1px solid var(--border);
+      padding:0 36px;
+      position:sticky;
+      top:68px;          /* sticks just below the topbar */
+      z-index:80;
+      box-shadow:0 2px 6px rgba(0,0,0,0.04);
+    }
+    .prop-tabs{
+      display:flex;
+      gap:4px;
+      overflow-x:auto;
+      padding:10px 0;
+      scrollbar-width:none;
+    }
+    .prop-tabs::-webkit-scrollbar{ display:none; }
+    .prop-tab-btn{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 16px;
+      border-radius:8px;
+      border:1.5px solid var(--border);
+      background:var(--white);
+      color:var(--muted);
+      font-family:inherit;
+      font-size:0.82rem;
+      font-weight:600;
+      cursor:pointer;
+      white-space:nowrap;
+      transition:all 0.18s;
+    }
+    .prop-tab-btn:hover{
+      border-color:var(--green);
+      color:var(--green);
+      background:#f0fdf4;
+    }
+    .prop-tab-btn.active{
+      background:var(--green);
+      border-color:var(--green);
+      color:#fff;
+      box-shadow:0 2px 8px rgba(40,180,70,0.25);
+    }
+    @media(max-width:768px){
+      .prop-tabs-bar{ padding:0 16px; top:58px; }
+    }
   </style>
 </head>
 <body>
@@ -252,6 +301,10 @@
     </div>
   </header>
 
+  <div id="prop-tabs-bar" class="prop-tabs-bar" style="display:none">
+    <div class="prop-tabs" id="prop-tabs"></div>
+  </div>
+
   <div id="main-content" style="padding:32px">
     <div class="sk" style="height:180px;margin-bottom:20px"></div>
     <div class="sk" style="height:80px;margin-bottom:20px"></div>
@@ -261,9 +314,11 @@
 
 <script src="../api.js"></script>
 <script>
-let rentalData    = null;
-let allComplaints = [];
-let curTab        = 'all';
+let rentalData      = null;
+let allComplaints   = [];
+let allRentals      = [];
+let activeRentalIdx = 0;
+let curTab          = 'all';
 
 (async function init(){
   const user = await Auth.guard('../login_plm.html');
@@ -283,16 +338,60 @@ async function loadRental(){
   try{
     const d = await apiFetch('/user/my-rental');
     if(!d.success){ renderError(d.message); return; }
+    if(!d.data){ renderNoRental(); return; }
 
-    if(!d.data){
-      renderNoRental(); return;
-    }
+    allRentals = d.data.rentals || [];
+    if(!allRentals.length){ renderNoRental(); return; }
 
-    rentalData    = d.data;
-    allComplaints = d.data.complaints || [];
-    renderAll();
-    await loadDissolutionStatus(rentalData.agreement.id);
-  } catch{ renderError('An error occurred while fetching rental data.'); }
+    buildPropTabs();
+    setActiveRental(0);
+
+  } catch(e){
+    console.error('[loadRental]', e);
+    renderError('An error occurred while fetching rental data.');
+  }
+}
+
+function buildPropTabs(){
+  const bar  = document.getElementById('prop-tabs-bar');
+  const cont = document.getElementById('prop-tabs');
+  if(!bar || !cont) return;
+
+  if(allRentals.length <= 1){
+    bar.style.display = 'none';
+    return;
+  }
+
+  bar.style.display = 'block';
+  cont.innerHTML = allRentals.map((r, i) =>
+    `<button class="prop-tab-btn" id="prop-tab-${i}" onclick="switchRental(${i})">
+      🏠 ${r.property.address}, ${r.property.city}
+    </button>`
+  ).join('');
+}
+
+function switchRental(idx){
+  document.querySelectorAll('.prop-tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+  setActiveRental(idx);
+}
+
+function setActiveRental(idx){
+  const r = allRentals[idx];
+  if(!r) return;
+
+  activeRentalIdx = idx;
+  rentalData = {
+    rental:    r,
+    property:  r.property,
+    agreement: r.agreement,
+    owner:     r.owner,
+  };
+  allComplaints = r.maintenanceRequests || [];
+
+  renderAll();
+  loadDissolutionStatus(r.agreement.id);
 }
 
 function renderAll(){
@@ -367,6 +466,10 @@ function renderAll(){
     <div class="complaint-section">
       <h2>🔧 Maintenance Request / Complaint</h2>
       <div class="form-grid">
+        <div class="form-group" id="maint-prop-group" style="grid-column:1/-1;display:none">
+          <label class="form-label">Property</label>
+          <select class="form-input" id="c-property"></select>
+        </div>
         <div class="form-group">
           <label class="form-label">Request Type</label>
           <select class="form-input" id="c-type">
@@ -401,6 +504,18 @@ function renderAll(){
   `;
 
   renderComplaints(allComplaints);
+
+  // Property selector for maintenance form (multiple rentals)
+  const cPropGroup = document.getElementById('maint-prop-group');
+  const cPropSel   = document.getElementById('c-property');
+  if(cPropSel && allRentals.length > 1){
+    if(cPropGroup) cPropGroup.style.display = '';
+    cPropSel.innerHTML = allRentals.map(r=>
+      `<option value="${r.agreement.id}">${r.property.address}, ${r.property.city}</option>`
+    ).join('');
+    // Set to current active rental
+    cPropSel.value = rentalData.agreement?.id || '';
+  }
 
   // Inject dissolution card (will be filled by JS later)
   const mainContent = document.getElementById('main-content');
@@ -447,6 +562,12 @@ async function submitComplaint(){
   const title = document.getElementById('c-title').value.trim();
   const desc  = document.getElementById('c-desc').value.trim();
 
+  // Property select karo — multiple rentals hain to selector se, warna current rental
+  let agreementId = rentalData.agreement?.id;
+  const propSel   = document.getElementById('c-property');
+  if(propSel && propSel.value) agreementId = propSel.value;
+
+  if(!agreementId){ showToast('Agreement ID nahi mila.','error'); return; }
   if(!title){ showToast('Title is required.','error'); return; }
   if(!desc)  { showToast('Description is required.','error'); return; }
 
@@ -454,21 +575,18 @@ async function submitComplaint(){
   btn.disabled=true; btn.textContent='Submitting...';
 
   try{
-    const d = await apiFetch('/user/complaints',{
+    const d = await apiFetch('/user/maintenance',{
       method:'POST',
-      body: JSON.stringify({
-        propertyId: rentalData.property.id,
-        type, title, description: desc
-      })
+      body: JSON.stringify({ agreementId, type, title, description: desc })
     });
     if(d.success){
       showToast(d.message);
       document.getElementById('c-title').value='';
       document.getElementById('c-desc').value='';
-      allComplaints.unshift({ ...d.data, property:{ address:rentalData.property.address, city:rentalData.property.city } });
+      allComplaints.unshift({ ...d.data });
       renderComplaints(allComplaints);
     } else {
-      showToast(d.message||' Not submitted.','error');
+      showToast(d.message||'Not submitted.','error');
     }
   } catch{ showToast('Network error.','error'); }
   finally{ btn.disabled=false; btn.textContent='Submit Request'; }

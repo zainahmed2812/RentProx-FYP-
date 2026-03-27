@@ -78,7 +78,9 @@ app.use('/api/user',  ledgerRoutes);
 app.use('/api/owner', ledgerRoutes);
 app.use('/api/user',  tenantBillRouter);
 app.use('/api/owner', ownerBillRouter);
-
+app.use('/api/owner', myRentalRoutes); 
+  // NEW — owner maintenance routes ke liye
+  app.use('/api/owner', myRentalRoutes);
 // ── Health Check ───────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'RentProx API working' });
